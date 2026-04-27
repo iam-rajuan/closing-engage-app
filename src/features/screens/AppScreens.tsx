@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router, type Href } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
-import { BackHandler, Image, Pressable, StyleSheet, View } from 'react-native';
+import { BackHandler, Image, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import {
   CheckCircle2,
   ChevronRight,
@@ -77,6 +77,7 @@ function StatGrid({ stats }: { stats: { label: string; value: string }[] }) {
 
 export function OnboardingScreen() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const { height, width } = useWindowDimensions();
   const completeOnboarding = useAuthStore((state) => state.completeOnboarding);
   const finish = async () => {
     await completeOnboarding();
@@ -109,6 +110,14 @@ export function OnboardingScreen() {
     },
   ];
   const slide = slides[Math.min(activeIndex, slides.length - 1)]!;
+  const isCompact = height < 820;
+  const isNarrow = width < 390;
+  const frameSize = Math.min(width - 76, isCompact ? 262 : 286);
+  const heroImageSize = frameSize - 44;
+  const workflowImageSize = Math.min(width * 0.62, isCompact ? 222 : 244);
+  const securityImageSize = Math.min(width * 0.42, isCompact ? 148 : 164);
+  const titleSize = isNarrow ? 26 : 28;
+  const descriptionSize = isNarrow ? 15 : 16;
   const goNext = () => {
     if (activeIndex === slides.length - 1) {
       void finish();
@@ -132,9 +141,9 @@ export function OnboardingScreen() {
 
   return (
     <ScreenContainer scroll={false}>
-      <View style={styles.onboardingScreen}>
-        <View style={styles.onboardingHeader}>
-          <BrandLogo width={118} />
+        <View style={styles.onboardingScreen}>
+          <View style={styles.onboardingHeader}>
+          <BrandLogo width={isCompact ? 112 : 118} />
           {activeIndex < slides.length - 1 ? (
             <Pressable hitSlop={12} onPress={finish}>
               <AppText style={styles.skipText}>Skip</AppText>
@@ -142,43 +151,90 @@ export function OnboardingScreen() {
           ) : null}
         </View>
 
-        <View style={styles.onboardingBody}>
-          <View style={slide.framed ? styles.onboardingImageFrame : styles.onboardingImagePlain}>
-            <Image source={slide.image} style={slide.imageStyle} resizeMode="contain" />
-          </View>
-
-          <View style={styles.onboardingCopy}>
-            <AppText style={styles.onboardingTitle}>{slide.title}</AppText>
-            <AppText style={styles.onboardingDescription}>{slide.description}</AppText>
-          </View>
-
-          {activeIndex === 2 ? (
-            <View style={styles.onboardingFeatureRow}>
-              <View style={styles.onboardingFeatureCard}>
-                <ShieldCheck color={colors.primary} size={22} />
-                <AppText style={styles.onboardingFeatureText}>Encrypted</AppText>
-              </View>
-              <View style={styles.onboardingFeatureCard}>
-                <Zap color={colors.primary} size={22} />
-                <AppText style={styles.onboardingFeatureText}>Instant</AppText>
-              </View>
-            </View>
-          ) : null}
-
-          <View style={styles.onboardingDots}>
-            {slides.map((item) => (
-              <View
-                key={item.title}
-                style={[styles.onboardingDot, item.title === slide.title && styles.onboardingDotActive]}
+        <View
+          style={[
+            styles.onboardingBody,
+            isCompact && styles.onboardingBodyCompact,
+            activeIndex === 2 && styles.onboardingBodySecurity,
+          ]}
+        >
+          <View
+            style={[
+              styles.onboardingContent,
+              isCompact && styles.onboardingContentCompact,
+              activeIndex === 2 && styles.onboardingContentSecurity,
+            ]}
+          >
+            <View
+              style={[
+                slide.framed ? styles.onboardingImageFrame : styles.onboardingImagePlain,
+                slide.framed && { width: frameSize, height: frameSize },
+              ]}
+            >
+              <Image
+                source={slide.image}
+                style={[
+                  slide.imageStyle,
+                  activeIndex === 0 && { width: heroImageSize, height: heroImageSize },
+                  activeIndex === 1 && { width: workflowImageSize, height: workflowImageSize },
+                  activeIndex === 2 && { width: securityImageSize, height: securityImageSize },
+                ]}
+                resizeMode="contain"
               />
-            ))}
+            </View>
+
+            <View
+              style={[
+                styles.onboardingCopy,
+                activeIndex === 0 && styles.onboardingCopyWelcome,
+                activeIndex === 1 && styles.onboardingCopyWorkflow,
+                activeIndex === 2 && styles.onboardingCopyCompact,
+                isCompact && styles.onboardingCopySmall,
+              ]}
+            >
+              <AppText style={[styles.onboardingTitle, { fontSize: titleSize, lineHeight: titleSize + 6 }]}>
+                {slide.title}
+              </AppText>
+              <AppText
+                style={[
+                  styles.onboardingDescription,
+                  { fontSize: descriptionSize, lineHeight: descriptionSize + 8 },
+                ]}
+              >
+                {slide.description}
+              </AppText>
+            </View>
+
+            {activeIndex === 2 ? (
+              <View style={[styles.onboardingFeatureRow, isCompact && styles.onboardingFeatureRowCompact]}>
+                <View style={styles.onboardingFeatureCard}>
+                  <ShieldCheck color={colors.primary} size={24} />
+                  <AppText style={styles.onboardingFeatureText}>Encrypted</AppText>
+                </View>
+                <View style={styles.onboardingFeatureCard}>
+                  <Zap color={colors.primary} size={24} />
+                  <AppText style={styles.onboardingFeatureText}>Instant</AppText>
+                </View>
+              </View>
+            ) : null}
+          </View>
+
+          <View style={[styles.onboardingFooter, isCompact && styles.onboardingFooterCompact]}>
+            <View style={styles.onboardingDots}>
+              {slides.map((item) => (
+                <View
+                  key={item.title}
+                  style={[styles.onboardingDot, item.title === slide.title && styles.onboardingDotActive]}
+                />
+              ))}
+            </View>
+
+            <Pressable style={styles.onboardingButton} onPress={goNext}>
+              <AppText style={styles.onboardingButtonText}>{slide.buttonLabel}</AppText>
+              {activeIndex === 1 ? <ChevronRight color={colors.white} size={25} strokeWidth={2.6} /> : null}
+            </Pressable>
           </View>
         </View>
-
-        <Pressable style={styles.onboardingButton} onPress={goNext}>
-          <AppText style={styles.onboardingButtonText}>{slide.buttonLabel}</AppText>
-          {activeIndex === 1 ? <ChevronRight color={colors.white} size={19} /> : null}
-        </Pressable>
       </View>
     </ScreenContainer>
   );
@@ -199,7 +255,7 @@ export function LoginScreen() {
     <ScreenContainer contentStyle={styles.authScreen}>
       <View style={styles.centerBlock}>
         <LogoMark />
-        <AppText variant="subtitle">Welcome back</AppText>
+        <AppText style={styles.loginTitle}>Welcome back</AppText>
         <AppText muted>Your soft space is waiting for you.</AppText>
       </View>
       <AppCard style={styles.formCard}>
@@ -536,8 +592,8 @@ function SettingsForm({ role }: { role: 'company' | 'notary' }) {
 const styles = StyleSheet.create({
   onboardingScreen: { flex: 1, backgroundColor: colors.background },
   onboardingHeader: {
-    height: 66,
-    paddingHorizontal: 16,
+    height: 62,
+    paddingHorizontal: 20,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -545,71 +601,104 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
-  skipText: { color: '#697386', fontSize: 17, fontWeight: '700' },
+  skipText: { color: '#697386', fontSize: 16, fontWeight: '700' },
   onboardingBody: {
     flex: 1,
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 28,
+    justifyContent: 'space-between',
+    paddingHorizontal: 28,
+    paddingTop: 26,
+    paddingBottom: 18,
   },
-  onboardingImagePlain: { alignItems: 'center', justifyContent: 'center' },
+  onboardingBodyCompact: {
+    paddingHorizontal: 28,
+    paddingTop: 18,
+    paddingBottom: 14,
+  },
+  onboardingBodySecurity: {
+    paddingTop: 18,
+  },
+  onboardingContent: {
+    width: '100%',
+    alignItems: 'center',
+    flexShrink: 1,
+  },
+  onboardingContentCompact: {
+    paddingTop: 0,
+  },
+  onboardingContentSecurity: {
+    paddingTop: 4,
+  },
+  onboardingImagePlain: {
+    minHeight: 198,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   onboardingImageFrame: {
-    width: 320,
-    height: 320,
-    borderRadius: 22,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.white,
     ...shadows.card,
   },
-  onboardingImageOne: { width: 255, height: 255, borderRadius: 6 },
-  onboardingImageTwo: { width: 280, height: 280, marginTop: 24 },
-  onboardingImageThree: { width: 192, height: 192, marginTop: 51 },
-  onboardingCopy: { alignItems: 'center', marginTop: 34, gap: 18 },
+  onboardingImageOne: { borderRadius: 7 },
+  onboardingImageTwo: {},
+  onboardingImageThree: {},
+  onboardingCopy: { alignItems: 'center', gap: 12 },
+  onboardingCopyWelcome: { marginTop: 28 },
+  onboardingCopyWorkflow: { marginTop: 30 },
+  onboardingCopyCompact: { marginTop: 22 },
+  onboardingCopySmall: { gap: 10, marginTop: 20 },
   onboardingTitle: {
     color: '#1b202c',
-    fontSize: 29,
-    lineHeight: 37,
     fontWeight: '800',
     textAlign: 'center',
+    width: '100%',
   },
   onboardingDescription: {
     color: '#4b5565',
-    fontSize: 18,
-    lineHeight: 28,
+    fontWeight: '400',
     textAlign: 'center',
+    width: '100%',
   },
   onboardingFeatureRow: {
     width: '100%',
     flexDirection: 'row',
-    gap: 18,
-    marginTop: 60,
+    gap: 14,
+    marginTop: 24,
+  },
+  onboardingFeatureRowCompact: {
+    marginTop: 18,
   },
   onboardingFeatureCard: {
     flex: 1,
-    height: 76,
+    height: 70,
     borderRadius: 10,
     backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 6,
     ...shadows.card,
   },
-  onboardingFeatureText: { color: '#4b5565', fontSize: 13, fontWeight: '700' },
+  onboardingFeatureText: { color: '#4b5565', fontSize: 12, fontWeight: '700' },
+  onboardingFooter: {
+    width: '100%',
+    gap: 18,
+  },
+  onboardingFooterCompact: {
+    gap: 14,
+  },
   onboardingDots: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    marginTop: 38,
   },
-  onboardingDot: { width: 8, height: 8, borderRadius: radius.full, backgroundColor: '#bfc8d8' },
-  onboardingDotActive: { width: 24, backgroundColor: colors.primary },
+  onboardingDot: { width: 7, height: 7, borderRadius: radius.full, backgroundColor: '#bfc8d8' },
+  onboardingDotActive: { width: 22, backgroundColor: colors.primary },
   onboardingButton: {
-    height: 58,
-    marginHorizontal: 26,
-    marginBottom: 76,
-    borderRadius: 7,
+    height: 52,
+    borderRadius: 8,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
@@ -617,10 +706,11 @@ const styles = StyleSheet.create({
     gap: 8,
     ...shadows.button,
   },
-  onboardingButtonText: { color: colors.white, fontSize: 18, fontWeight: '700' },
+  onboardingButtonText: { color: colors.white, fontSize: 17, fontWeight: '700' },
   center: { textAlign: 'center' },
   authScreen: { justifyContent: 'center', minHeight: '100%' },
   centerBlock: { alignItems: 'center', gap: spacing.sm },
+  loginTitle: { color: colors.text, fontSize: 30, lineHeight: 38, fontWeight: '800' },
   formCard: { gap: spacing.md },
   rightLink: { color: colors.primary, textAlign: 'right' },
   segment: { flexDirection: 'row', padding: spacing.xs, borderRadius: radius.md, backgroundColor: colors.graySoft },
