@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Bell, ChevronLeft } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { colors, radius, spacing } from '@/theme';
+import { BrandLogo } from './BrandLogo';
 import { AppText } from './AppText';
 
 type Props = {
@@ -20,10 +21,10 @@ export function AppHeader({ title, subtitle, back, avatar = 'A' }: Props) {
             <ChevronLeft color={colors.primary} size={20} />
           </Pressable>
         ) : (
-          <View style={styles.logo}><AppText style={styles.logoText}>CE</AppText></View>
+          <BrandLogo width={116} />
         )}
         <View>
-          {title ? <AppText variant="subtitle">{title}</AppText> : <AppText weight="bold">Closing Engage</AppText>}
+          {title ? <AppText variant="subtitle">{title}</AppText> : null}
           {subtitle ? <AppText variant="caption" muted>{subtitle}</AppText> : null}
         </View>
       </View>
@@ -52,19 +53,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: spacing.md,
-  },
-  logo: {
-    width: 28,
-    height: 28,
-    borderRadius: radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.blueSoft,
-  },
-  logoText: {
-    color: colors.primary,
-    fontSize: 11,
-    fontWeight: '700',
   },
   avatar: {
     width: 28,

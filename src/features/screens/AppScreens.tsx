@@ -1,24 +1,24 @@
+import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router, type Href } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { BackHandler, Image, Pressable, StyleSheet, View } from 'react-native';
 import {
   CheckCircle2,
   ChevronRight,
   Download,
   FileText,
-  LockKeyhole,
   Phone,
   Plus,
   Printer,
   Send,
   ShieldCheck,
   Upload,
-  UserRound,
   UserPlus,
   Zap,
 } from 'lucide-react-native';
 import { AppButton } from '@/components/common/AppButton';
+import { BrandLogo } from '@/components/common/BrandLogo';
 import { AppCard } from '@/components/common/AppCard';
 import { AppHeader } from '@/components/common/AppHeader';
 import { AppInput } from '@/components/common/AppInput';
@@ -46,15 +46,11 @@ import {
   teamMembers,
 } from '@/constants/mockData';
 import { useAuthStore } from '@/features/auth/auth.store';
-import { colors, radius, spacing } from '@/theme';
+import { colors, radius, shadows, spacing } from '@/theme';
 import { LoginForm, MemberForm, OrderForm, loginSchema, memberSchema, orderSchema } from '@/utils/validation';
 
 function LogoMark() {
-  return (
-    <View style={styles.logoMark}>
-      <AppText style={styles.logoMarkText}>CE</AppText>
-    </View>
-  );
+  return <BrandLogo width={156} />;
 }
 
 function FieldRow({ label, value }: { label: string; value: string }) {
@@ -80,41 +76,110 @@ function StatGrid({ stats }: { stats: { label: string; value: string }[] }) {
 }
 
 export function OnboardingScreen() {
+  const [activeIndex, setActiveIndex] = useState(0);
   const completeOnboarding = useAuthStore((state) => state.completeOnboarding);
   const finish = async () => {
     await completeOnboarding();
-    router.replace('/auth/login');
+    router.push('/auth/login');
   };
   const slides = [
-    ['Welcome to Closing Engage', 'Connect with notaries and manage closing orders seamlessly'],
-    ['Manage Orders Easily', 'Create, assign, and track orders in real-time'],
-    ['Fast, Secure, and Reliable', 'Upload documents, communicate, and complete signings with confidence'],
+    {
+      title: 'Welcome to Closing\nEngage',
+      description: 'Connect with notaries and manage\nclosing orders seamlessly',
+      image: require('../../../assets/onboarding/professional-collaboration.png'),
+      imageStyle: styles.onboardingImageOne,
+      framed: true,
+      buttonLabel: 'Next',
+    },
+    {
+      title: 'Manage Orders Easily',
+      description: 'Create, assign, and track orders in\nreal-time',
+      image: require('../../../assets/onboarding/dashboard-workflow.png'),
+      imageStyle: styles.onboardingImageTwo,
+      framed: false,
+      buttonLabel: 'Next',
+    },
+    {
+      title: 'Fast, Secure, and\nReliable',
+      description: 'Upload documents, communicate, and\ncomplete signings with confidence',
+      image: require('../../../assets/onboarding/security-illustration.png'),
+      imageStyle: styles.onboardingImageThree,
+      framed: false,
+      buttonLabel: 'Get Started',
+    },
   ];
+  const slide = slides[Math.min(activeIndex, slides.length - 1)]!;
+  const goNext = () => {
+    if (activeIndex === slides.length - 1) {
+      void finish();
+      return;
+    }
+    setActiveIndex((value) => value + 1);
+  };
+
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (activeIndex > 0) {
+        setActiveIndex((value) => value - 1);
+        return true;
+      }
+
+      return false;
+    });
+
+    return () => subscription.remove();
+  }, [activeIndex]);
+
   return (
-    <ScreenContainer contentStyle={styles.onboarding}>
-      <View style={styles.headerLine}>
-        <View style={styles.brandMini}><LogoMark /><AppText variant="caption">Closing Engage</AppText></View>
-        <Pressable onPress={finish}><AppText variant="caption" muted>Skip</AppText></Pressable>
-      </View>
-      {slides.map((slide, index) => (
-        <AppCard key={slide[0]} style={styles.onboardCard}>
-          <View style={styles.heroBox}>
-            {index === 0 ? <UserRound color={colors.white} size={72} /> : index === 1 ? <FileText color={colors.primary} size={72} /> : <LockKeyhole color={colors.white} size={54} />}
+    <ScreenContainer scroll={false}>
+      <View style={styles.onboardingScreen}>
+        <View style={styles.onboardingHeader}>
+          <BrandLogo width={118} />
+          {activeIndex < slides.length - 1 ? (
+            <Pressable hitSlop={12} onPress={finish}>
+              <AppText style={styles.skipText}>Skip</AppText>
+            </Pressable>
+          ) : null}
+        </View>
+
+        <View style={styles.onboardingBody}>
+          <View style={slide.framed ? styles.onboardingImageFrame : styles.onboardingImagePlain}>
+            <Image source={slide.image} style={slide.imageStyle} resizeMode="contain" />
           </View>
-          <AppText variant="subtitle" style={styles.center}>{slide[0]}</AppText>
-          <AppText muted style={styles.center}>{slide[1]}</AppText>
-          {index === 2 ? (
-            <View style={styles.featureRow}>
-              <AppCard style={styles.featureMini}><ShieldCheck color={colors.primary} size={18} /><AppText variant="caption">Encrypted</AppText></AppCard>
-              <AppCard style={styles.featureMini}><Zap color={colors.primary} size={18} /><AppText variant="caption">Instant</AppText></AppCard>
+
+          <View style={styles.onboardingCopy}>
+            <AppText style={styles.onboardingTitle}>{slide.title}</AppText>
+            <AppText style={styles.onboardingDescription}>{slide.description}</AppText>
+          </View>
+
+          {activeIndex === 2 ? (
+            <View style={styles.onboardingFeatureRow}>
+              <View style={styles.onboardingFeatureCard}>
+                <ShieldCheck color={colors.primary} size={22} />
+                <AppText style={styles.onboardingFeatureText}>Encrypted</AppText>
+              </View>
+              <View style={styles.onboardingFeatureCard}>
+                <Zap color={colors.primary} size={22} />
+                <AppText style={styles.onboardingFeatureText}>Instant</AppText>
+              </View>
             </View>
           ) : null}
-          <View style={styles.dots}>
-            {slides.map((_, dot) => <View key={dot} style={[styles.dot, dot === index && styles.dotActive]} />)}
+
+          <View style={styles.onboardingDots}>
+            {slides.map((item) => (
+              <View
+                key={item.title}
+                style={[styles.onboardingDot, item.title === slide.title && styles.onboardingDotActive]}
+              />
+            ))}
           </View>
-          <AppButton title={index === 2 ? 'Get Started' : 'Next'} onPress={finish} />
-        </AppCard>
-      ))}
+        </View>
+
+        <Pressable style={styles.onboardingButton} onPress={goNext}>
+          <AppText style={styles.onboardingButtonText}>{slide.buttonLabel}</AppText>
+          {activeIndex === 1 ? <ChevronRight color={colors.white} size={19} /> : null}
+        </Pressable>
+      </View>
     </ScreenContainer>
   );
 }
@@ -429,6 +494,11 @@ export function NotarySettingsScreen() {
 function SettingsForm({ role }: { role: 'company' | 'notary' }) {
   const logout = useAuthStore((state) => state.logout);
   const isCompany = role === 'company';
+  const signOut = async () => {
+    await logout();
+    router.replace('/onboarding');
+  };
+
   return (
     <ScreenContainer>
       <AppHeader title={isCompany ? 'Alex Thompson' : 'Sarah Miller'} subtitle={isCompany ? 'Estate Flux Title' : 'sarah.miller@realtygroup.com'} avatar={isCompany ? 'AT' : 'SM'} />
@@ -457,25 +527,98 @@ function SettingsForm({ role }: { role: 'company' | 'notary' }) {
       </AppCard>
       <AppCard style={styles.formCard}><AppText weight="bold">Security Settings</AppText><AppInput label="Current Password" value="********" secureTextEntry /><AppInput label="New Password" placeholder="Enter new password" /><AppInput label="Confirm New Password" placeholder="Confirm new password" /><AppButton title="Update Password" variant="secondary" /></AppCard>
       <AppCard style={styles.formCard}><AppText weight="bold">Notification Preferences</AppText><ToggleRow label="Email Notifications" /><ToggleRow label="Order Updates" /><ToggleRow label="Document Updates" /></AppCard>
-      {isCompany ? <View style={styles.actionRow}><AppButton title="Cancel" variant="secondary" /><AppButton title="Save Changes" /></View> : <AppButton title="Sign Out" variant="danger" onPress={() => void logout().then(() => router.replace('/auth/login'))} />}
+      {isCompany ? <View style={styles.actionRow}><AppButton title="Cancel" variant="secondary" /><AppButton title="Save Changes" /></View> : null}
+      <AppButton title="Sign Out" variant="danger" onPress={() => void signOut()} />
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  onboarding: { gap: spacing.xxl },
-  headerLine: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  brandMini: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  logoMark: { width: 42, height: 42, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.blueSoft },
-  logoMarkText: { color: colors.primary, fontWeight: '800' },
-  onboardCard: { alignItems: 'center', gap: spacing.lg },
-  heroBox: { width: 176, height: 136, borderRadius: radius.lg, backgroundColor: colors.text, alignItems: 'center', justifyContent: 'center' },
+  onboardingScreen: { flex: 1, backgroundColor: colors.background },
+  onboardingHeader: {
+    height: 66,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: '#f8fbff',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  skipText: { color: '#697386', fontSize: 17, fontWeight: '700' },
+  onboardingBody: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 28,
+  },
+  onboardingImagePlain: { alignItems: 'center', justifyContent: 'center' },
+  onboardingImageFrame: {
+    width: 320,
+    height: 320,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.white,
+    ...shadows.card,
+  },
+  onboardingImageOne: { width: 255, height: 255, borderRadius: 6 },
+  onboardingImageTwo: { width: 280, height: 280, marginTop: 24 },
+  onboardingImageThree: { width: 192, height: 192, marginTop: 51 },
+  onboardingCopy: { alignItems: 'center', marginTop: 34, gap: 18 },
+  onboardingTitle: {
+    color: '#1b202c',
+    fontSize: 29,
+    lineHeight: 37,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  onboardingDescription: {
+    color: '#4b5565',
+    fontSize: 18,
+    lineHeight: 28,
+    textAlign: 'center',
+  },
+  onboardingFeatureRow: {
+    width: '100%',
+    flexDirection: 'row',
+    gap: 18,
+    marginTop: 60,
+  },
+  onboardingFeatureCard: {
+    flex: 1,
+    height: 76,
+    borderRadius: 10,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    ...shadows.card,
+  },
+  onboardingFeatureText: { color: '#4b5565', fontSize: 13, fontWeight: '700' },
+  onboardingDots: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 38,
+  },
+  onboardingDot: { width: 8, height: 8, borderRadius: radius.full, backgroundColor: '#bfc8d8' },
+  onboardingDotActive: { width: 24, backgroundColor: colors.primary },
+  onboardingButton: {
+    height: 58,
+    marginHorizontal: 26,
+    marginBottom: 76,
+    borderRadius: 7,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    ...shadows.button,
+  },
+  onboardingButtonText: { color: colors.white, fontSize: 18, fontWeight: '700' },
   center: { textAlign: 'center' },
-  featureRow: { flexDirection: 'row', gap: spacing.md },
-  featureMini: { alignItems: 'center', gap: spacing.xs, minWidth: 120 },
-  dots: { flexDirection: 'row', gap: spacing.xs },
-  dot: { width: 6, height: 6, borderRadius: radius.full, backgroundColor: colors.border },
-  dotActive: { width: 20, backgroundColor: colors.primary },
   authScreen: { justifyContent: 'center', minHeight: '100%' },
   centerBlock: { alignItems: 'center', gap: spacing.sm },
   formCard: { gap: spacing.md },

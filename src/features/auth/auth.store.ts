@@ -46,7 +46,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ token, user });
   },
   logout: async () => {
-    await Promise.all([SecureStore.deleteItemAsync(TOKEN_KEY), SecureStore.deleteItemAsync(USER_KEY)]);
-    set({ token: null, user: null });
+    await Promise.all([
+      SecureStore.deleteItemAsync(TOKEN_KEY),
+      SecureStore.deleteItemAsync(USER_KEY),
+      SecureStore.deleteItemAsync(ONBOARDING_KEY),
+    ]);
+    set({ token: null, user: null, hasCompletedOnboarding: false });
   },
 }));
