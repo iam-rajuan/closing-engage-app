@@ -24,6 +24,7 @@ import {
   ChevronLeft,
   Info,
   Building,
+  Bell,
   Clock,
   ArrowRight,
   ChevronDown,
@@ -1086,34 +1087,192 @@ export function CompanySettingsScreen() {
   return <SettingsForm role="company" />;
 }
 
-function StatGrid({ stats }: { stats: { label: string; value: string }[] }) {
+function StatCard({ label, value, icon, sublabel, color }: any) {
   return (
-    <View style={notaryStyles.statGrid}>
-      {stats.map((stat, i) => (
-        <AppCard key={i} style={notaryStyles.statCard}>
-          <AppText variant="caption" muted weight="bold" style={{ fontSize: 9 }}>{stat.label.toUpperCase()}</AppText>
-          <AppText variant="subtitle" weight="bold" style={notaryStyles.statValue}>{stat.value}</AppText>
-        </AppCard>
-      ))}
-    </View>
+    <AppCard style={notaryStyles.statCard}>
+      <View style={[notaryStyles.iconBox, { backgroundColor: color + '15' }]}>
+        {icon}
+      </View>
+      <View style={notaryStyles.statTextContent}>
+        <AppText variant="caption" muted weight="bold" style={{ fontSize: 10, letterSpacing: 0.5 }}>{sublabel}</AppText>
+        <AppText weight="bold" style={notaryStyles.statLabel}>{label}</AppText>
+      </View>
+      <AppText style={notaryStyles.statValueLarge}>{value}</AppText>
+    </AppCard>
+  );
+}
+
+function NotaryOrderCard({ order }: { order: any }) {
+  const initials = order.clientName.split(' ').map((n: string) => n[0]).join('');
+  
+  return (
+    <AppCard style={notaryStyles.orderCard}>
+      <View style={notaryStyles.orderTop}>
+        <View style={[notaryStyles.initialsAvatar, { backgroundColor: '#dbeafe' }]}>
+          <AppText weight="bold" style={{ color: '#1d4ed8' }}>{initials}</AppText>
+        </View>
+        <View style={{ flex: 1 }}>
+          <AppText weight="bold" style={notaryStyles.orderClientName}>{order.clientName}</AppText>
+          <AppText variant="caption" muted style={{ fontWeight: '600' }}>#{order.orderNumber.replace('#', '')}</AppText>
+        </View>
+        <Badge label={order.status} tone={order.status === 'In Progress' ? 'blue' : 'gray'} />
+      </View>
+
+      <View style={notaryStyles.orderInfoRow}>
+        <View style={notaryStyles.infoItem}>
+          <MapPin size={16} color="#0a49a8" />
+          <View>
+            <AppText variant="caption" muted weight="bold">LOCATION</AppText>
+            <AppText variant="caption" weight="bold" style={{ color: '#0f172a' }}>Denver, CO</AppText>
+          </View>
+        </View>
+        <View style={notaryStyles.infoItem}>
+          <Calendar size={16} color="#0a49a8" />
+          <View>
+            <AppText variant="caption" muted weight="bold">DATE & TIME</AppText>
+            <AppText variant="caption" weight="bold" style={{ color: '#0f172a' }}>{order.signingDate}</AppText>
+          </View>
+        </View>
+      </View>
+
+      <View style={notaryStyles.orderFooter}>
+        <View style={{ flex: 1 }}>
+          {order.status === 'Pending Upload' ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Info size={14} color="#ef4444" />
+              <AppText variant="caption" weight="bold" style={{ color: '#ef4444' }}>Action Required</AppText>
+            </View>
+          ) : order.status === 'Assigned' ? (
+            <AppText variant="caption" muted weight="bold">Pending initial signature</AppText>
+          ) : (
+            <View style={notaryStyles.avatarGroup}>
+              <Image source={{ uri: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=64&auto=format&fit=crop' }} style={notaryStyles.miniAvatar} />
+              <Image source={{ uri: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=64&auto=format&fit=crop' }} style={[notaryStyles.miniAvatar, { marginLeft: -10 }]} />
+            </View>
+          )}
+        </View>
+        <Pressable style={notaryStyles.viewDetailsBtn} onPress={() => router.push(`/notary/assigned/${order.id}` as Href)}>
+          <AppText weight="bold" style={notaryStyles.viewDetailsText}>VIEW DETAILS</AppText>
+          <ArrowRight size={16} color="#0a49a8" />
+        </Pressable>
+      </View>
+    </AppCard>
   );
 }
 
 const notaryStyles = StyleSheet.create({
-  statGrid: {
+  header: {
     flexDirection: 'row',
-    gap: 10,
-    marginVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
   },
   statCard: {
-    flex: 1,
-    padding: 12,
+    flexDirection: 'row',
     alignItems: 'center',
+    padding: 16,
+    gap: 16,
+    marginBottom: 12,
+  },
+  iconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statTextContent: {
+    flex: 1,
     gap: 2,
   },
-  statValue: {
-    fontSize: 18,
+  statLabel: {
+    fontSize: 16,
+    color: '#1e293b',
+  },
+  statValueLarge: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 24,
+    marginBottom: 16,
+  },
+  liveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    gap: 6,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#ef4444',
+  },
+  orderCard: {
+    padding: 16,
+    marginBottom: 16,
+    gap: 16,
+  },
+  orderTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  initialsAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  orderClientName: {
+    fontSize: 16,
+    color: '#0f172a',
+  },
+  orderInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  infoItem: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'center',
+  },
+  orderFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+  },
+  avatarGroup: {
+    flexDirection: 'row',
+  },
+  miniAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  viewDetailsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  viewDetailsText: {
+    fontSize: 12,
     color: '#0a49a8',
+    letterSpacing: 0.5,
   },
 });
 
@@ -1123,22 +1282,71 @@ export function NotaryHomeScreen() {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 1200);
   };
+  
   return (
-    <ScreenContainer refreshing={refreshing} onRefresh={handleRefresh} contentStyle={{ paddingBottom: 20 }}>
-      <AppHeader name="Sarah Miller" onProfilePress={() => router.push('/notary/settings')} />
-      <View style={{ marginTop: 8 }}>
-        <AppText variant="subtitle">Assigned Workload</AppText>
-        <AppText muted style={{ fontSize: 13, marginTop: 2 }}>Manage your active signing appointments from a central atrium.</AppText>
+    <ScreenContainer refreshing={refreshing} onRefresh={handleRefresh} contentStyle={{ paddingBottom: 40 }}>
+      <View style={notaryStyles.header}>
+        <BrandLogo width={140} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <Pressable>
+            <Bell color="#334155" size={24} />
+          </Pressable>
+          <Pressable onPress={() => router.push('/notary/settings')}>
+            <Image 
+              source={{ uri: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=256&auto=format&fit=crop' }} 
+              style={{ width: 36, height: 36, borderRadius: 18 }} 
+            />
+          </Pressable>
+        </View>
       </View>
+
+      <View style={{ marginTop: 24, marginBottom: 20 }}>
+        <AppText weight="bold" style={{ fontSize: 28, color: '#0a49a8' }}>Assigned Workload</AppText>
+        <AppText muted style={{ fontSize: 14, marginTop: 8, lineHeight: 20 }}>
+          Manage your active signing appointments and document verifications from a central atrium.
+        </AppText>
+      </View>
+
       <AppButton 
         title="Upload Documents" 
-        icon={<Upload color={colors.white} size={18} />} 
+        icon={<Upload color="#fff" size={18} />} 
         onPress={() => router.push('/notary/documents/upload')} 
-        style={{ marginTop: 16 }}
+        style={{ marginBottom: 24, backgroundColor: '#0a49a8' }}
       />
-      <StatGrid stats={[{ label: 'Total Assigned', value: '24' }, { label: 'In Progress', value: '08' }, { label: 'Completed', value: '13' }]} />
-      <SectionHeader title="Assigned Orders" action="LIVE UPDATES" />
-      {notaryOrders.map((order) => <OrderCard key={order.id} order={order} href={`/notary/assigned/${order.id}` as Href} />)}
+
+      <StatCard 
+        label="Total Assigned" 
+        sublabel="GLOBAL" 
+        value="24" 
+        color="#3b82f6" 
+        icon={<FileText color="#3b82f6" size={20} />} 
+      />
+      <StatCard 
+        label="In Progress" 
+        sublabel="ACTIVE" 
+        value="08" 
+        color="#f97316" 
+        icon={<Zap color="#f97316" size={20} />} 
+      />
+      <StatCard 
+        label="Completed" 
+        sublabel="HISTORY" 
+        value="13" 
+        color="#22c55e" 
+        icon={<CheckCircle2 color="#22c55e" size={20} />} 
+      />
+
+      <View style={notaryStyles.sectionTitleRow}>
+        <AppText weight="bold" style={{ fontSize: 18, color: '#0a49a8' }}>Assigned Orders</AppText>
+        <View style={notaryStyles.liveBadge}>
+          <View style={notaryStyles.dot} />
+          <AppText variant="caption" weight="bold" style={{ color: '#64748b' }}>LIVE UPDATES</AppText>
+        </View>
+      </View>
+
+      {notaryOrders.map((order) => (
+        <NotaryOrderCard key={order.id} order={order} />
+      ))}
     </ScreenContainer>
   );
 }
@@ -2310,5 +2518,4 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
 });
-
 
