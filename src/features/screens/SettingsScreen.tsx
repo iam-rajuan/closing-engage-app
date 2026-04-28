@@ -1,32 +1,47 @@
+import { useState } from 'react';
+import { StyleSheet, View, Pressable, Image, TextInput } from 'react-native';
 import { router } from 'expo-router';
-import { StyleSheet, View, ScrollView } from 'react-native';
-import { LogOut, User, Shield, Bell, ChevronRight } from 'lucide-react-native';
+import { 
+  ChevronRight, 
+  Edit2, 
+  Shield, 
+  Bell, 
+  LogOut, 
+  User, 
+  Building2, 
+  Lock,
+  Info
+} from 'lucide-react-native';
 import { AppHeader } from '@/components/common/AppHeader';
 import { AppText } from '@/components/common/AppText';
 import { AppCard } from '@/components/common/AppCard';
+import { AppButton } from '@/components/common/AppButton';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
+import { Badge } from '@/components/common/Badge';
 import { ToggleRow } from '@/components/settings/ToggleRow';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { colors, shadows, spacing } from '@/theme';
 
-function SettingsItem({ icon: Icon, label, value, onPress, color = '#64748b' }: any) {
+function SectionHeading({ title }: { title: string }) {
   return (
-    <Pressable style={styles.settingsItem} onPress={onPress}>
-      <View style={styles.settingsItemLeft}>
-        <View style={[styles.settingsIconBox, { backgroundColor: `${color}10` }]}>
-          <Icon color={color} size={20} />
-        </View>
-        <AppText weight="bold" style={styles.settingsLabel}>{label}</AppText>
-      </View>
-      <View style={styles.settingsItemRight}>
-        {value && <AppText muted style={styles.settingsValue}>{value}</AppText>}
-        <ChevronRight color="#cbd5e1" size={20} />
-      </View>
-    </Pressable>
+    <AppText weight="bold" style={styles.sectionLabel}>{title.toUpperCase()}</AppText>
   );
 }
 
-import { Pressable } from 'react-native';
+function InputField({ label, value, placeholder, secureTextEntry }: any) {
+  return (
+    <View style={styles.inputGroup}>
+      <AppText style={styles.fieldLabel}>{label}</AppText>
+      <TextInput 
+        style={styles.input} 
+        value={value} 
+        placeholder={placeholder}
+        secureTextEntry={secureTextEntry}
+        placeholderTextColor="#94a3b8"
+      />
+    </View>
+  );
+}
 
 export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
   const logout = useAuthStore((state) => state.logout);
@@ -38,143 +53,287 @@ export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
   };
 
   return (
-    <ScreenContainer scroll>
-      <AppHeader back title="Settings" />
-      
-      <View style={styles.profileSection}>
-        <View style={styles.profileAvatarLarge}>
-          <AppText weight="bold" style={styles.avatarText}>
-            {user?.name?.charAt(0) || 'A'}
-          </AppText>
-        </View>
-        <AppText variant="subtitle" style={styles.profileName}>{user?.name || 'Alex Thompson'}</AppText>
-        <AppText muted>{user?.email || 'alex@company.com'}</AppText>
-        <Badge label={role === 'company' ? 'SIGNING COMPANY' : 'NOTARY'} tone="blue" style={styles.roleBadge} />
-      </View>
-
-      <View style={styles.settingsSection}>
-        <AppText variant="caption" muted weight="bold" style={styles.sectionLabel}>ACCOUNT SETTINGS</AppText>
-        <AppCard style={styles.settingsCard}>
-          <SettingsItem icon={User} label="Profile Information" value="Edit" color={colors.primary} />
-          <View style={styles.divider} />
-          <SettingsItem icon={Shield} label="Security & Password" color="#10b981" />
-        </AppCard>
-      </View>
-
-      <View style={styles.settingsSection}>
-        <AppText variant="caption" muted weight="bold" style={styles.sectionLabel}>NOTIFICATIONS</AppText>
-        <AppCard style={styles.settingsCard}>
-          <ToggleRow label="Push Notifications" />
-          <View style={styles.divider} />
-          <ToggleRow label="Email Updates" />
-        </AppCard>
-      </View>
-
-      <View style={styles.settingsSection}>
-        <AppCard style={styles.settingsCard}>
-          <SettingsItem 
-            icon={LogOut} 
-            label="Log Out" 
-            color="#ef4444" 
-            onPress={handleLogout} 
+    <View style={{ flex: 1 }}>
+      <ScreenContainer scroll contentStyle={styles.container}>
+        <AppHeader onProfilePress={() => {}} />
+        
+        {/* Profile Header Card */}
+      <AppCard style={styles.profileHeaderCard}>
+        <View style={styles.avatarWrapper}>
+          <Image 
+            source={{ uri: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=256&auto=format&fit=crop' }} 
+            style={styles.avatarLg} 
           />
+          <Pressable style={styles.editAvatarBtn}>
+            <Edit2 color="#fff" size={12} />
+          </Pressable>
+        </View>
+        
+        <AppText variant="subtitle" style={styles.profileName}>Alex Thompson</AppText>
+        <AppText muted style={styles.profileEmail}>alex.t@estateflux.com</AppText>
+        
+        <Badge label="Estate Flux Title" tone="blue" style={styles.companyBadge} />
+        
+        <Pressable style={styles.editProfileBtn}>
+          <AppText weight="bold" style={styles.editProfileText}>Edit Profile</AppText>
+        </Pressable>
+      </AppCard>
+
+      {/* Personal Information */}
+      <View style={styles.section}>
+        <SectionHeading title="Personal Information" />
+        <AppCard style={styles.fieldsCard}>
+          <InputField label="Full Name" value="Alex Thompson" />
+          <InputField label="Email Address" value="alex.t@estateflux.com" />
+          <InputField label="Phone Number" value="+1 (555) 902-4412" />
         </AppCard>
       </View>
+
+      {/* Company Information */}
+      <View style={styles.section}>
+        <SectionHeading title="Company Information" />
+        <AppCard style={styles.fieldsCard}>
+          <InputField label="Company Name" value="Estate Flux Title" />
+          <InputField label="Company Email" value="ops@estateflux.com" />
+          <InputField label="Contact Number" value="+1 (555) 200-1100" />
+          <InputField label="Business Address" value="782 Commerce Blvd, Austin TX" />
+        </AppCard>
+      </View>
+
+      {/* Security Settings */}
+      <View style={styles.section}>
+        <SectionHeading title="Security Settings" />
+        <AppCard style={styles.fieldsCard}>
+          <InputField label="Current Password" value="********" secureTextEntry />
+          <InputField label="New Password" placeholder="Enter new password" secureTextEntry />
+          <InputField label="Confirm New Password" placeholder="Confirm new password" secureTextEntry />
+          <AppButton title="Update Password" style={styles.updatePasswordBtn} />
+        </AppCard>
+      </View>
+
+      {/* Notifications */}
+      <View style={styles.section}>
+        <SectionHeading title="Notification Preferences" />
+        <AppCard style={styles.toggleCard}>
+          <ToggleRow label="Email Notifications" defaultEnabled />
+          <View style={styles.divider} />
+          <ToggleRow label="Order Updates" defaultEnabled />
+          <View style={styles.divider} />
+          <ToggleRow label="Document Updates" />
+        </AppCard>
+      </View>
+
+      {/* Legal & About */}
+      <View style={styles.section}>
+        <Pressable style={styles.linkItem} onPress={() => router.push('/company/privacy')}>
+          <AppText weight="bold" style={styles.linkText}>Privacy Policy</AppText>
+          <ChevronRight color="#64748b" size={20} />
+        </Pressable>
+        <View style={styles.divider} />
+        <Pressable style={styles.linkItem} onPress={() => router.push('/company/terms')}>
+          <AppText weight="bold" style={styles.linkText}>Terms & Conditions</AppText>
+          <ChevronRight color="#64748b" size={20} />
+        </Pressable>
+        <View style={styles.divider} />
+        <Pressable style={styles.linkItem} onPress={() => router.push('/company/about')}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <AppText weight="bold" style={styles.linkText}>About</AppText>
+            <Badge label="NEW" tone="blue" />
+          </View>
+          <ChevronRight color="#64748b" size={20} />
+        </Pressable>
+      </View>
+
+      {/* Logout */}
+      <Pressable style={styles.logoutBtn} onPress={handleLogout}>
+        <LogOut color="#ef4444" size={20} />
+        <AppText weight="bold" style={styles.logoutText}>Log Out</AppText>
+      </Pressable>
       
       <AppText variant="caption" muted style={styles.versionText}>Version 1.0.4 (Build 42)</AppText>
     </ScreenContainer>
+
+    <View style={styles.footerActions}>
+      <Pressable style={styles.cancelBtn}>
+        <AppText weight="bold" style={styles.cancelText}>Cancel</AppText>
+      </Pressable>
+      <Pressable style={styles.saveBtn}>
+        <AppText weight="bold" style={styles.saveText}>Save Changes</AppText>
+      </Pressable>
+    </View>
+    </View>
   );
 }
 
-import { Badge } from '@/components/common/Badge';
-
 const styles = StyleSheet.create({
-  profileSection: {
-    alignItems: 'center',
-    paddingVertical: 24,
+  container: {
+    paddingBottom: 100,
   },
-  profileAvatarLarge: {
-    width: 90,
-    height: 90,
-    borderRadius: 24, // Modern squared look
-    backgroundColor: colors.primary,
+  profileHeaderCard: {
+    alignItems: 'center',
+    padding: 24,
+    marginTop: 16,
+    gap: 8,
+  },
+  avatarWrapper: {
+    position: 'relative',
+    marginBottom: 8,
+  },
+  avatarLg: {
+    width: 100,
+    height: 100,
+    borderRadius: 20,
+    backgroundColor: '#f1f5f9',
+  },
+  editAvatarBtn: {
+    position: 'absolute',
+    bottom: -4,
+    right: -4,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#1d63d2',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
-    ...shadows.card,
-  },
-  avatarText: {
-    color: colors.white,
-    fontSize: 28,
-    fontWeight: '700',
-    lineHeight: 34,
+    borderWidth: 2,
+    borderColor: '#fff',
   },
   profileName: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: '800',
     color: '#0f172a',
+    lineHeight: 28,
+  },
+  profileEmail: {
+    fontSize: 14,
+    marginTop: -4,
+  },
+  companyBadge: {
     marginTop: 4,
-    lineHeight: 26,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 10,
   },
-  roleBadge: {
-    marginTop: 10,
+  editProfileBtn: {
+    marginTop: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    backgroundColor: '#fff',
   },
-  settingsSection: {
-    marginTop: 24,
+  editProfileText: {
+    color: '#0a49a8',
+    fontSize: 14,
+  },
+  section: {
+    marginTop: 28,
   },
   sectionLabel: {
-    marginBottom: 10,
+    fontSize: 12,
+    color: '#64748b',
+    marginBottom: 12,
     marginLeft: 4,
-    letterSpacing: 0.8,
-    fontSize: 11,
+    letterSpacing: 0.5,
   },
-  settingsCard: {
+  fieldsCard: {
+    padding: 16,
+    gap: 16,
+  },
+  inputGroup: {
+    gap: 8,
+  },
+  fieldLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748b',
+  },
+  input: {
+    height: 48,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    fontSize: 14,
+    color: '#1e293b',
+    fontWeight: '600',
+  },
+  updatePasswordBtn: {
+    marginTop: 8,
+    backgroundColor: '#0a49a8',
+    height: 48,
+    borderRadius: 10,
+  },
+  toggleCard: {
     padding: 0,
     overflow: 'hidden',
-    borderRadius: 14,
-  },
-  settingsItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 18,
-  },
-  settingsItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  settingsIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  settingsLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1e293b',
-  },
-  settingsItemRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  settingsValue: {
-    fontSize: 14,
   },
   divider: {
     height: 1,
     backgroundColor: '#f1f5f9',
-    marginHorizontal: 18,
+  },
+  linkItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 18,
+    paddingHorizontal: 4,
+  },
+  linkText: {
+    fontSize: 15,
+    color: '#1e293b',
+  },
+  footerActions: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderColor: '#f1f5f9',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    ...shadows.lg,
+  },
+  cancelBtn: {
+    flex: 1,
+    height: 50,
+    borderRadius: 12,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelText: {
+    color: '#64748b',
+  },
+  saveBtn: {
+    flex: 1,
+    height: 50,
+    borderRadius: 12,
+    backgroundColor: '#0a49a8',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveText: {
+    color: '#fff',
+  },
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    marginTop: 40,
+    paddingVertical: 16,
+  },
+  logoutText: {
+    color: '#ef4444',
+    fontSize: 16,
   },
   versionText: {
     textAlign: 'center',
-    marginTop: 40,
-    marginBottom: 60,
-    fontSize: 12,
+    marginTop: 20,
+    marginBottom: 40,
   },
 });
-
-
