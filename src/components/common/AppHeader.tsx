@@ -10,9 +10,28 @@ type Props = {
   subtitle?: string;
   back?: boolean;
   avatar?: string;
+  name?: string;
+  onProfilePress?: () => void;
 };
 
-export function AppHeader({ title, subtitle, back, avatar }: Props) {
+export function AppHeader({ title, subtitle, back, avatar, name = "Alex Thompson", onProfilePress }: Props) {
+  const initials = name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase();
+
+  const handlePress = () => {
+    if (onProfilePress) {
+      onProfilePress();
+    } else {
+      // Default navigation to profile/settings
+      router.push('/company/settings');
+    }
+  };
+
+  const defaultAvatar = 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=256&auto=format&fit=crop';
+
   return (
     <View style={styles.header}>
       <View style={styles.left}>
@@ -30,12 +49,20 @@ export function AppHeader({ title, subtitle, back, avatar }: Props) {
       </View>
       <View style={styles.right}>
         <Bell color={colors.textMuted} size={22} />
-        <View style={styles.avatarContainer}>
-          <Image 
-            source={{ uri: avatar || 'file:///home/iam-rajuan/.gemini/antigravity/brain/fd2e95bd-c627-41ac-8ff1-6aed5adf67b8/professional_executive_avatar_1777342511054.png' }} 
-            style={styles.avatar} 
-          />
-        </View>
+        <Pressable onPress={handlePress} style={styles.avatarWrapper}>
+          <View style={styles.avatarContainer}>
+            {avatar || defaultAvatar ? (
+              <Image 
+                source={{ uri: avatar || defaultAvatar }} 
+                style={styles.avatar} 
+              />
+            ) : (
+              <View style={styles.initialsContainer}>
+                <AppText weight="bold" style={styles.initialsText}>{initials}</AppText>
+              </View>
+            )}
+          </View>
+        </Pressable>
       </View>
     </View>
   );
@@ -63,16 +90,34 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
   },
+  avatarWrapper: {
+    padding: 2,
+  },
   avatarContainer: {
     width: 32,
     height: 32,
-    borderRadius: 6,
+    borderRadius: 16, // Circle for modern look
     overflow: 'hidden',
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#eff6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
   },
   avatar: {
     width: '100%',
     height: '100%',
+  },
+  initialsContainer: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+  },
+  initialsText: {
+    color: colors.white,
+    fontSize: 12,
   },
   iconButton: {
     width: 32,

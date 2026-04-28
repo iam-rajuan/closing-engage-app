@@ -304,7 +304,6 @@ export function CompanyHomeScreen() {
 
   const handleRefresh = () => {
     setRefreshing(true);
-    // Smooth data refresh simulation (Industry standard)
     setTimeout(() => setRefreshing(false), 1500);
   };
 
@@ -315,7 +314,7 @@ export function CompanyHomeScreen() {
       refreshing={refreshing}
       onRefresh={handleRefresh}
     >
-      <AppHeader />
+      <AppHeader onProfilePress={() => router.push('/company/settings')} />
       <View style={styles.homeGreeting}>
         <AppText variant="caption" muted style={styles.overviewLabel}>Overview</AppText>
         <AppText variant="subtitle" style={styles.greetingText}>Good morning, Alex.</AppText>
@@ -339,7 +338,7 @@ export function CompanyOrdersScreen() {
 
   return (
     <ScreenContainer refreshing={refreshing} onRefresh={handleRefresh}>
-      <AppHeader title="Orders" subtitle="Manage and track all your closing orders" />
+      <AppHeader title="Orders" subtitle="Manage and track all your closing orders" onProfilePress={() => router.push('/company/settings')} />
       <AppButton title="Create New Order" icon={<Plus color={colors.white} size={18} />} onPress={() => router.push('/company/orders/create')} />
       <StatGrid stats={[{ label: 'Total Orders', value: '1,248' }, { label: 'Pending Review', value: '56' }, { label: 'Completed Today', value: '850' }]} />
       <AppInput placeholder="Search orders..." />
@@ -361,7 +360,7 @@ export function CreateOrderScreen() {
   );
   return (
     <ScreenContainer>
-      <AppHeader back title="Create New Order" />
+      <AppHeader back title="Create New Order" onProfilePress={() => router.push('/company/settings')} />
       <AppCard style={styles.formCard}>
         <AppText weight="bold">Order Information</AppText>
         {input('title', 'Order Title', 'e.g. Smith Refinance')}
@@ -397,7 +396,7 @@ export function CreateOrderScreen() {
 export function CompanyOrderDetailsScreen() {
   return (
     <ScreenContainer>
-      <AppHeader back title="Order Details" />
+      <AppHeader back title="Order Details" onProfilePress={() => router.push('/company/settings')} />
       <AppCard style={styles.formCard}>
         <View style={styles.topRow}><AppText variant="subtitle">Order #CE-9421</AppText><Badge label="APPROVED" tone="green" /></View>
         <FieldRow label="Client" value="Mila Waters" />
@@ -421,7 +420,7 @@ export function DocumentsScreen() {
   };
   return (
     <ScreenContainer refreshing={refreshing} onRefresh={handleRefresh}>
-      <AppHeader title="Documents" subtitle="Access and download your approved files" />
+      <AppHeader title="Documents" subtitle="Access and download your approved files" onProfilePress={() => router.push('/company/settings')} />
       <AppInput placeholder="Filter by Order" />
       <View style={styles.filterRow}><Badge label="PDF Only" /><Badge label="Filter by Date" tone="gray" /><Badge label="Clear" tone="gray" /></View>
       {documents.map((doc) => <DocumentCard key={doc.id} doc={doc} onView={() => router.push(`/company/documents/${doc.id}`)} />)}
@@ -434,7 +433,7 @@ export function DocumentsScreen() {
 export function DocumentViewScreen() {
   return (
     <ScreenContainer>
-      <AppHeader back title="Document View" />
+      <AppHeader back title="Document View" onProfilePress={() => router.push('/company/settings')} />
       <View style={styles.preview}><FileText color={colors.border} size={120} /><View style={styles.zoomBar}><AppText variant="caption" style={{ color: colors.white }}>85%   ·   1/12</AppText></View></View>
       <View style={styles.actionRow}><AppButton title="Download" icon={<Download color={colors.white} size={16} />} /><AppButton title="Print" variant="secondary" icon={<Printer color={colors.primary} size={16} />} /></View>
       <AppCard style={styles.formCard}><View style={styles.topRow}><AppText weight="bold">File Details</AppText><Badge label="Approved" tone="green" /></View><FieldRow label="Name" value="Closing_Disclosure_Final.pdf" /><FieldRow label="Size" value="2.4 MB" /><FieldRow label="Date" value="Apr 15, 2026" /><FieldRow label="Uploaded By" value="Janet Doe (Notary)" /></AppCard>
@@ -452,7 +451,7 @@ export function TeamScreen() {
   };
   return (
     <ScreenContainer refreshing={refreshing} onRefresh={handleRefresh}>
-      <AppHeader title="Team Management" subtitle="Manage your company team members and roles" />
+      <AppHeader title="Team Management" subtitle="Manage your company team members and roles" onProfilePress={() => router.push('/company/settings')} />
       <AppButton title="Add Member" icon={<UserPlus color={colors.white} size={18} />} onPress={() => router.push('/company/team/add')} />
       <AppInput placeholder="Search members..." />
       <View style={styles.filterRow}><Badge label="Role: All" tone="gray" /><Badge label="Status: Active" tone="gray" /></View>
@@ -466,7 +465,7 @@ export function AddMemberScreen() {
   const submit = handleSubmit(() => router.replace('/company/team'));
   return (
     <ScreenContainer>
-      <AppHeader back title="Add New Member" />
+      <AppHeader back title="Add New Member" onProfilePress={() => router.push('/company/settings')} />
       <AppCard style={styles.formCard}>
         <Controller control={control} name="fullName" render={({ field }) => <AppInput label="FULL NAME" placeholder="e.g. Alexander Pierce" value={field.value} onChangeText={field.onChange} error={errors.fullName?.message} />} />
         <Controller control={control} name="phone" render={({ field }) => <AppInput label="PHONE" placeholder="+1 (555) 000-0000" value={field.value} onChangeText={field.onChange} />} />
@@ -495,7 +494,7 @@ export function NotaryHomeScreen() {
   };
   return (
     <ScreenContainer refreshing={refreshing} onRefresh={handleRefresh}>
-      <AppHeader avatar="SM" />
+      <AppHeader name="Sarah Miller" onProfilePress={() => router.push('/notary/settings')} />
       <AppText variant="subtitle">Assigned Workload</AppText>
       <AppText muted>Manage your active signing appointments and document verifications from a central atrium.</AppText>
       <AppButton title="Upload Documents" icon={<Upload color={colors.white} size={18} />} onPress={() => router.push('/notary/documents/upload')} />
@@ -509,7 +508,7 @@ export function NotaryHomeScreen() {
 export function NotaryAssignedScreen() {
   return (
     <ScreenContainer>
-      <AppHeader title="Assigned" />
+      <AppHeader title="Assigned" onProfilePress={() => router.push('/notary/settings')} />
       <AppInput placeholder="Filter by Order" />
       <View style={styles.filterRow}><Badge label="ALL ORDERS" /><Badge label="ASSIGNED" tone="gray" /><Badge label="IN PROGRESS" tone="gray" /></View>
       <SectionHeader title="Current Assignments" />
@@ -522,7 +521,7 @@ export function NotaryAssignedScreen() {
 export function NotaryOrderDetailsScreen() {
   return (
     <ScreenContainer>
-      <AppHeader back title="Order Details" />
+      <AppHeader back title="Order Details" onProfilePress={() => router.push('/notary/settings')} />
       <Badge label="ASSIGNED" />
       <AppCard style={styles.formCard}><AppText weight="bold">Workflow Progress</AppText><FieldRow label="Docs Ready to Print" value="Completed Oct 23, 11:30 AM" /><FieldRow label="Docs Printed by Notary" value="Waiting for confirmation" /><FieldRow label="Scanbacks Uploaded" value="Final step" /></AppCard>
       <AppCard style={styles.formCard}><FieldRow label="Client" value="Jonathan Aris" /><FieldRow label="Signing Schedule" value="Oct 24, 2023 at 2:00 PM" /><FieldRow label="Property Addresses" value="123 Oak St, Austin, TX 78701 · San Francisco, CA" /></AppCard>
@@ -539,7 +538,7 @@ export function ScheduleClosingScreen() {
   const times = ['09:00 AM', '10:30 AM', '11:15 AM', '12:45 PM', '02:00 PM', '02:15 PM', '03:30 PM', '04:00 PM', '05:15 PM'];
   return (
     <ScreenContainer>
-      <AppHeader back title="Schedule Closing" />
+      <AppHeader back title="Schedule Closing" onProfilePress={() => router.push('/notary/settings')} />
       <SectionHeader title="Select Date" action="April 2026" />
       <AppCard style={styles.calendar}>
         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => <AppText key={`${day}${index}`} variant="caption" muted style={styles.dayCell}>{day}</AppText>)}
@@ -567,7 +566,7 @@ export function ChatScreen() {
 export function UploadDocumentsScreen() {
   return (
     <ScreenContainer>
-      <AppHeader title="Upload Documents" />
+      <AppHeader title="Upload Documents" onProfilePress={() => router.push('/notary/settings')} />
       <AppInput label="Selected Order" value="#CE-90210 - Jonathan Harker" editable={false} />
       <AppCard style={styles.formCard}><UploadBox title="Drag & Drop Scanbacks" subtitle="Upload high-resolution PDF scans only" /><AppButton title="Browse Files" /></AppCard>
       <AppCard style={styles.formCard}><AppText weight="bold">Uploaded Files (1)</AppText><FieldRow label="scanback_signed_final.pdf" value="4.2 MB" /><FieldRow label="Verification Complete" value="100%" /></AppCard>
@@ -584,7 +583,7 @@ export function NotaryDocumentsScreen() {
 export function CredentialsScreen() {
   return (
     <ScreenContainer>
-      <AppHeader title="Primary Commission" avatar="SM" />
+      <AppHeader title="Primary Commission" onProfilePress={() => router.push('/notary/settings')} />
       <AppCard style={styles.formCard}><View style={styles.topRow}><AppText variant="subtitle">California Secretary of State</AppText><Badge label="Verified" tone="green" /></View><FieldRow label="License Number" value="2348910-CA" /><FieldRow label="Expiry Date" value="Oct 24, 2026" /><FieldRow label="E&O Coverage" value="$100,000.00" /><AppButton title="Update information" /></AppCard>
       <AppCard><View style={styles.topRow}><AppText weight="bold">Background Screening</AppText><Badge label="Pending Review" tone="orange" /></View><AppText muted>Verification in progress. Estimated completion by May 12, 2024.</AppText></AppCard>
       <SectionHeader title="Credential History" action="Filter" />
@@ -608,7 +607,7 @@ function SettingsForm({ role }: { role: 'company' | 'notary' }) {
 
   return (
     <ScreenContainer>
-      <AppHeader title={isCompany ? 'Alex Thompson' : 'Sarah Miller'} subtitle={isCompany ? 'Estate Flux Title' : 'sarah.miller@realtygroup.com'} avatar={isCompany ? 'AT' : 'SM'} />
+      <AppHeader title={isCompany ? 'Alex Thompson' : 'Sarah Miller'} subtitle={isCompany ? 'Estate Flux Title' : 'sarah.miller@realtygroup.com'} avatar={isCompany ? 'AT' : 'SM'} onProfilePress={() => {}} />
       <AppButton title="Edit Profile" variant="secondary" />
       <AppCard style={styles.formCard}>
         <AppText weight="bold">Personal Information</AppText>
@@ -711,6 +710,7 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     textAlign: 'center',
     width: '100%',
+    maxWidth: 280,
   },
   onboardingFeatureRow: {
     width: '100%',
