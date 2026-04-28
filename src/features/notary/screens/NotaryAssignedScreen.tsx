@@ -15,7 +15,7 @@ export function NotaryAssignedScreen() {
   const [activeTab, setActiveTab] = useState('ALL ORDERS');
   
   return (
-    <ScreenContainer scroll contentStyle={{ paddingBottom: 40 }}>
+    <ScreenContainer scroll contentStyle={{ paddingBottom: 16 }}>
       <View style={notaryStyles.header}>
         <BrandLogo width={140} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>

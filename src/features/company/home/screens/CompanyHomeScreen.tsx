@@ -91,40 +91,40 @@ export function CompanyHomeScreen() {
 
 const styles = StyleSheet.create({
   homeContainer: {
-    paddingBottom: 40,
+    paddingBottom: 16,
   },
   homeGreeting: {
-    marginTop: 16,
+    marginTop: 12,
     gap: 2,
   },
   overviewLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '500',
     color: '#64748b',
   },
   greetingText: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '700',
     color: '#0f172a',
-    lineHeight: 28,
+    lineHeight: 26,
   },
   statsContainer: {
-    gap: 12,
-    marginTop: 20,
-    marginBottom: 20,
+    gap: 10,
+    marginTop: 16,
+    marginBottom: 16,
   },
   statsRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
   },
   statCard: {
     flex: 1,
-    padding: 14,
-    gap: 4,
+    padding: 12,
+    gap: 3,
   },
   statIcon: {
-    width: 32,
-    height: 32,
+    width: 30,
+    height: 30,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -137,20 +137,20 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '800',
     color: '#0f172a',
-    lineHeight: 28,
+    lineHeight: 26,
     letterSpacing: -0.3,
   },
   pipeline: {
     marginBottom: 4,
   },
   sectionHeader: {
-    marginTop: 20,
-    marginBottom: 12,
+    marginTop: 16,
+    marginBottom: 10,
   },
   orderList: {
-    gap: 12,
+    gap: 10,
   },
 });

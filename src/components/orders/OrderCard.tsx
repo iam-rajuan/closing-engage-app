@@ -79,8 +79,8 @@ export function OrderCard({ order, href }: { order: Order; href: Href }) {
 
 const styles = StyleSheet.create({
   card: {
-    padding: 14,
-    gap: 10,
+    padding: 12,
+    gap: 8,
   },
   topRow: {
     flexDirection: 'row',
@@ -94,10 +94,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   clientName: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '700',
     color: '#0f172a',
-    lineHeight: 22,
+    lineHeight: 20,
     marginTop: -2,
   },
   locationRow: {
@@ -107,10 +107,10 @@ const styles = StyleSheet.create({
     marginTop: -2,
   },
   locationText: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#64748b',
     flex: 1,
-    lineHeight: 18,
+    lineHeight: 16,
   },
   divider: {
     height: 1,
@@ -177,8 +177,8 @@ const styles = StyleSheet.create({
   // Ghost button — matches Figma exactly
   detailsBtn: {
     backgroundColor: '#f1f5f9',
-    height: 40,
-    borderRadius: 10,
+    height: 36,
+    borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   detailsBtnText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
     color: '#334155',
   },

@@ -244,32 +244,32 @@ export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
 /* ─── STYLES ─── */
 const s = StyleSheet.create({
   container: {
-    paddingBottom: 60,
+    paddingBottom: 16,
   },
 
   /* Profile Section */
   profileSection: {
     alignItems: 'center',
-    paddingVertical: 24,
-    gap: 6,
+    paddingVertical: 16,
+    gap: 4,
   },
   avatarOuter: {
     position: 'relative',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   avatarImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: '#f1f5f9',
   },
   editAvatarBtn: {
     position: 'absolute',
-    bottom: 2,
-    right: 2,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    bottom: 0,
+    right: 0,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: '#0a49a8',
     alignItems: 'center',
     justifyContent: 'center',
@@ -277,62 +277,62 @@ const s = StyleSheet.create({
     borderColor: '#fff',
   },
   profileName: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '800',
     color: '#0f172a',
-    lineHeight: 28,
+    lineHeight: 24,
   },
   profileEmail: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#94a3b8',
     marginTop: -2,
   },
   editProfileBtn: {
-    marginTop: 12,
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderRadius: 20,
+    marginTop: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 18,
     backgroundColor: '#0f172a',
   },
   editProfileText: {
     color: '#fff',
-    fontSize: 13,
+    fontSize: 12,
   },
 
   /* Section */
   section: {
-    marginTop: 28,
+    marginTop: 22,
   },
   sectionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 14,
+    gap: 8,
+    marginBottom: 10,
   },
   sectionIconBox: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 7,
     backgroundColor: '#eff6ff',
     alignItems: 'center',
     justifyContent: 'center',
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#0f172a',
   },
 
   /* Fields Card */
   fieldsCard: {
-    padding: 16,
-    gap: 18,
-    borderRadius: 14,
+    padding: 14,
+    gap: 14,
+    borderRadius: 12,
   },
   inputGroup: {
-    gap: 6,
+    gap: 5,
   },
   fieldLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
     color: '#94a3b8',
     letterSpacing: 0.5,
@@ -340,17 +340,17 @@ const s = StyleSheet.create({
   inputShell: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 48,
+    height: 44,
     backgroundColor: '#f8fafc',
     borderRadius: 10,
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     borderWidth: 1,
     borderColor: '#f1f5f9',
   },
   input: {
     flex: 1,
-    height: 48,
-    fontSize: 14,
+    height: 44,
+    fontSize: 13,
     color: '#1e293b',
     fontWeight: '600',
   },
@@ -360,7 +360,7 @@ const s = StyleSheet.create({
 
   /* Update Password */
   updatePasswordBtn: {
-    height: 48,
+    height: 42,
     backgroundColor: '#eff6ff',
     borderRadius: 10,
     alignItems: 'center',
@@ -370,24 +370,24 @@ const s = StyleSheet.create({
   },
   updatePasswordText: {
     color: '#0a49a8',
-    fontSize: 14,
+    fontSize: 13,
   },
 
   /* Toggle Card */
   toggleCard: {
     padding: 0,
     overflow: 'hidden',
-    borderRadius: 14,
+    borderRadius: 12,
   },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 16,
-    paddingHorizontal: 18,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
   },
   toggleLabel: {
-    fontSize: 15,
+    fontSize: 14,
     color: '#1e293b',
   },
   divider: {
@@ -400,11 +400,11 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 18,
+    paddingVertical: 14,
     paddingHorizontal: 4,
   },
   linkText: {
-    fontSize: 15,
+    fontSize: 14,
     color: '#1e293b',
   },
 
@@ -413,16 +413,16 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
-    marginTop: 32,
-    paddingVertical: 16,
+    gap: 8,
+    marginTop: 24,
+    paddingVertical: 12,
     borderWidth: 1.5,
     borderColor: '#fee2e2',
-    borderRadius: 12,
+    borderRadius: 10,
     backgroundColor: '#fffbfb',
   },
   logoutText: {
     color: '#ef4444',
-    fontSize: 15,
+    fontSize: 14,
   },
 });

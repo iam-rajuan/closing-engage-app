@@ -28,12 +28,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '700',
     color: '#0f172a',
   },
   action: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#1d63d2',
   },

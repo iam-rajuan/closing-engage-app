@@ -14,22 +14,22 @@ export function ScheduleClosingScreen() {
   const [selectedTime, setSelectedTime] = useState('02:00 PM');
   
   return (
-    <ScreenContainer scroll contentStyle={{ paddingBottom: 40 }}>
+    <ScreenContainer scroll contentStyle={{ paddingBottom: 16 }}>
       <View style={notaryStyles.detailsHeader}>
         <Pressable onPress={() => router.back()}><ChevronLeft color="#0a49a8" size={24} /></Pressable>
-        <AppText weight="bold" style={{ fontSize: 17, color: '#0f172a' }}>Schedule Closing</AppText>
+        <AppText weight="bold" style={{ fontSize: 15, color: '#0f172a' }}>Schedule Closing</AppText>
         <Pressable><Info color="#64748b" size={20} /></Pressable>
       </View>
 
-      <View style={{ marginTop: 24 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <AppText weight="bold" style={{ fontSize: 18, color: '#1e293b' }}>Select Date</AppText>
+      <View style={{ marginTop: 16 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <AppText weight="bold" style={{ fontSize: 15, color: '#1e293b' }}>Select Date</AppText>
           <Pressable style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <AppText weight="bold" style={{ color: '#2563eb', fontSize: 14 }}>April 2026</AppText>
-            <ChevronDown size={18} color="#2563eb" />
+            <AppText weight="bold" style={{ color: '#2563eb', fontSize: 13 }}>April 2026</AppText>
+            <ChevronDown size={16} color="#2563eb" />
           </Pressable>
         </View>
-        <AppCard style={{ padding: 20 }}>
+        <AppCard style={{ padding: 16 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
             {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) => (
               <AppText key={day} variant="caption" muted weight="bold" style={{ width: 32, textAlign: 'center' }}>{day}</AppText>
@@ -50,9 +50,9 @@ export function ScheduleClosingScreen() {
         </AppCard>
       </View>
 
-      <View style={{ marginTop: 32 }}>
-        <AppText weight="bold" style={{ fontSize: 18, color: '#1e293b', marginBottom: 16 }}>Select Time</AppText>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+      <View style={{ marginTop: 24 }}>
+        <AppText weight="bold" style={{ fontSize: 15, color: '#1e293b', marginBottom: 12 }}>Select Time</AppText>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
           {times.map((time) => (
             <Pressable 
               key={time} 
@@ -67,22 +67,22 @@ export function ScheduleClosingScreen() {
         </View>
       </View>
 
-      <View style={{ marginTop: 32 }}>
-        <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 16 }}>PREVIEW SELECTION</AppText>
-        <AppCard style={{ backgroundColor: '#f1f5f9', flexDirection: 'row', alignItems: 'center', padding: 20, gap: 16 }}>
-          <View style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' }}>
-            <Calendar size={22} color="#2563eb" />
+      <View style={{ marginTop: 24 }}>
+        <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 12 }}>PREVIEW SELECTION</AppText>
+        <AppCard style={{ backgroundColor: '#f1f5f9', flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12 }}>
+          <View style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' }}>
+            <Calendar size={20} color="#2563eb" />
           </View>
           <View>
             <AppText variant="caption" muted weight="bold">Closing Engagement</AppText>
-            <AppText weight="bold" style={{ fontSize: 16, color: '#1e293b' }}>Tuesday, Apr 24 • 02:00 PM</AppText>
+            <AppText weight="bold" style={{ fontSize: 14, color: '#1e293b' }}>Tuesday, Apr 24 • 02:00 PM</AppText>
           </View>
         </AppCard>
       </View>
 
       <AppButton 
         title="Confirm Schedule" 
-        style={{ marginTop: 32, height: 52, backgroundColor: '#1d4ed8' }}
+        style={{ marginTop: 24, height: 48, backgroundColor: '#1d4ed8' }}
       />
     </ScreenContainer>
   );

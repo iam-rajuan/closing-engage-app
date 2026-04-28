@@ -28,14 +28,14 @@ export function ProgressPipeline({ items, style }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    gap: 14,
-    padding: 20,
+    gap: 10,
+    padding: 16,
   },
   title: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700',
     color: '#0f172a',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   item: {
     gap: 6,
@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
     color: '#0f172a',
   },
   track: {
-    height: 6,
+    height: 5,
     borderRadius: radius.full,
     backgroundColor: '#e2e8f0',
     overflow: 'hidden',

@@ -161,13 +161,13 @@ export function CredentialsScreen() {
 /* ─── STYLES ─── */
 const s = StyleSheet.create({
   container: {
-    paddingBottom: 40,
+    paddingBottom: 16,
   },
   /* Commission Card */
   commissionCard: {
     marginTop: 8,
-    padding: 20,
-    borderRadius: 16,
+    padding: 16,
+    borderRadius: 14,
     gap: 4,
   },
   commissionTop: {
@@ -197,18 +197,18 @@ const s = StyleSheet.create({
     letterSpacing: 0.3,
   },
   commissionTitle: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: '800',
     color: '#0f172a',
-    lineHeight: 32,
+    lineHeight: 28,
     marginTop: 4,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   /* Two-col layout */
   twoCol: {
     flexDirection: 'row',
-    gap: 24,
-    marginBottom: 16,
+    gap: 20,
+    marginBottom: 12,
   },
   colItem: {
     gap: 4,
@@ -219,7 +219,7 @@ const s = StyleSheet.create({
     fontWeight: '600',
   },
   colValue: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#0f172a',
     fontWeight: '700',
   },
@@ -238,12 +238,12 @@ const s = StyleSheet.create({
   },
   eoPriceBox: {
     backgroundColor: '#f1f5f9',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 8,
   },
   eoPrice: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '800',
     color: '#0a49a8',
   },
@@ -259,22 +259,22 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    height: 50,
+    height: 44,
     backgroundColor: '#0a49a8',
-    borderRadius: 12,
+    borderRadius: 10,
     ...shadows.button,
   },
   updateBtnText: {
     color: '#fff',
-    fontSize: 15,
+    fontSize: 14,
   },
 
   /* Screening Card */
   screeningCard: {
-    marginTop: 16,
-    padding: 20,
-    borderRadius: 16,
-    gap: 12,
+    marginTop: 12,
+    padding: 16,
+    borderRadius: 14,
+    gap: 10,
   },
   screeningTop: {
     flexDirection: 'row',
@@ -282,9 +282,9 @@ const s = StyleSheet.create({
     alignItems: 'flex-start',
   },
   screeningIconBox: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#f1f5f9',
     alignItems: 'center',
     justifyContent: 'center',
@@ -330,11 +330,11 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 32,
-    marginBottom: 16,
+    marginTop: 24,
+    marginBottom: 12,
   },
   historyTitle: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '800',
     color: '#0f172a',
   },
@@ -351,9 +351,9 @@ const s = StyleSheet.create({
 
   /* Credential Card */
   credCard: {
-    marginBottom: 12,
-    padding: 16,
-    borderRadius: 14,
+    marginBottom: 10,
+    padding: 14,
+    borderRadius: 12,
   },
   credRow: {
     flexDirection: 'row',
@@ -361,9 +361,9 @@ const s = StyleSheet.create({
     alignItems: 'flex-start',
   },
   credIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 38,
+    height: 38,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -414,16 +414,16 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    height: 50,
-    borderRadius: 12,
+    height: 44,
+    borderRadius: 10,
     borderWidth: 1.5,
     borderColor: '#e2e8f0',
     backgroundColor: '#fff',
-    marginTop: 8,
-    marginBottom: 20,
+    marginTop: 6,
+    marginBottom: 8,
   },
   uploadBtnText: {
-    fontSize: 15,
+    fontSize: 14,
     color: '#0a49a8',
   },
 });

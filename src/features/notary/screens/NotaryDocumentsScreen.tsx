@@ -121,25 +121,25 @@ export function NotaryDocumentsScreen() {
 /* ─── STYLES ─── */
 const s = StyleSheet.create({
   container: {
-    paddingBottom: 40,
+    paddingBottom: 16,
   },
 
   /* Page Title */
   pageTitle: {
-    fontSize: 26,
+    fontSize: 20,
     fontWeight: '800',
     color: '#0a49a8',
     marginTop: 8,
-    marginBottom: 20,
-    lineHeight: 32,
+    marginBottom: 16,
+    lineHeight: 26,
   },
 
   /* Order Selector */
   orderCard: {
-    padding: 16,
-    borderRadius: 14,
-    gap: 10,
-    marginBottom: 16,
+    padding: 14,
+    borderRadius: 12,
+    gap: 8,
+    marginBottom: 12,
   },
   orderLabel: {
     fontSize: 11,
@@ -165,36 +165,36 @@ const s = StyleSheet.create({
 
   /* Upload Area */
   uploadCard: {
-    padding: 24,
-    borderRadius: 16,
-    gap: 20,
-    marginBottom: 24,
+    padding: 16,
+    borderRadius: 14,
+    gap: 16,
+    marginBottom: 20,
     alignItems: 'center',
   },
   dropZone: {
     width: '100%',
-    minHeight: 160,
+    minHeight: 130,
     borderWidth: 1.5,
     borderStyle: 'dashed',
     borderColor: '#cbd5e1',
-    borderRadius: 14,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: 8,
     backgroundColor: '#f8fbff',
-    paddingVertical: 24,
+    paddingVertical: 20,
   },
   cloudIconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#eff6ff',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   dropTitle: {
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '800',
     color: '#0f172a',
   },
@@ -204,16 +204,16 @@ const s = StyleSheet.create({
   },
   browseBtn: {
     width: '100%',
-    height: 50,
+    height: 44,
     backgroundColor: '#0a49a8',
-    borderRadius: 12,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     ...shadows.button,
   },
   browseBtnText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 14,
   },
 
   /* Uploaded Files */
@@ -225,10 +225,10 @@ const s = StyleSheet.create({
     marginBottom: 12,
   },
   fileCard: {
-    padding: 16,
-    borderRadius: 14,
-    gap: 14,
-    marginBottom: 20,
+    padding: 14,
+    borderRadius: 12,
+    gap: 12,
+    marginBottom: 16,
   },
   fileRow: {
     flexDirection: 'row',
@@ -296,10 +296,10 @@ const s = StyleSheet.create({
 
   /* Submission Guide */
   guideCard: {
-    padding: 20,
-    borderRadius: 16,
-    gap: 16,
-    marginBottom: 24,
+    padding: 16,
+    borderRadius: 14,
+    gap: 12,
+    marginBottom: 20,
     backgroundColor: '#f8fbff',
     borderWidth: 1,
     borderColor: '#e8edf2',
@@ -332,15 +332,15 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
-    height: 54,
+    gap: 8,
+    height: 48,
     backgroundColor: '#0a49a8',
-    borderRadius: 12,
+    borderRadius: 10,
     ...shadows.button,
-    marginBottom: 20,
+    marginBottom: 8,
   },
   submitBtnText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 15,
   },
 });

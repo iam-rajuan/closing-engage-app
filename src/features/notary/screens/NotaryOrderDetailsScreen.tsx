@@ -14,17 +14,17 @@ export function NotaryOrderDetailsScreen() {
     <ScreenContainer scroll={false}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
       >
         <View style={notaryStyles.detailsHeader}>
           <Pressable onPress={() => router.back()}><ChevronLeft color="#0a49a8" size={24} /></Pressable>
-          <AppText weight="bold" style={{ fontSize: 17, color: '#0f172a' }}>Order Details</AppText>
+          <AppText weight="bold" style={{ fontSize: 15, color: '#0f172a' }}>Order Details</AppText>
           <Badge label="ASSIGNED" tone="blue" style={{ paddingHorizontal: 12 }} />
         </View>
 
-        <View style={{ marginTop: 24 }}>
-          <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 16 }}>WORKFLOW PROGRESS</AppText>
-          <AppCard style={{ padding: 20 }}>
+        <View style={{ marginTop: 16 }}>
+          <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 12 }}>WORKFLOW PROGRESS</AppText>
+          <AppCard style={{ padding: 16 }}>
             {[
               { label: 'Docs Ready to Print', sub: 'Completed Oct 23, 11:30 AM', status: 'done' },
               { label: 'Docs Printed by Notary', sub: 'Waiting for confirmation', status: 'active' },
@@ -47,14 +47,14 @@ export function NotaryOrderDetailsScreen() {
           </AppCard>
         </View>
 
-        <View style={{ marginTop: 24, gap: 12 }}>
+        <View style={{ marginTop: 16, gap: 10 }}>
           <AppCard style={notaryStyles.infoStrip}>
             <View style={[notaryStyles.iconCircle, { backgroundColor: '#eff6ff' }]}>
               <UserRound size={18} color="#2563eb" />
             </View>
             <View>
               <AppText variant="caption" muted weight="bold">CLIENT</AppText>
-              <AppText weight="bold" style={{ fontSize: 15, color: '#0f172a' }}>Jonathan Aris</AppText>
+              <AppText weight="bold" style={{ fontSize: 14, color: '#0f172a' }}>Jonathan Aris</AppText>
             </View>
           </AppCard>
           <AppCard style={notaryStyles.infoStrip}>
@@ -63,14 +63,14 @@ export function NotaryOrderDetailsScreen() {
             </View>
             <View>
               <AppText variant="caption" muted weight="bold">SIGNING SCHEDULE</AppText>
-              <AppText weight="bold" style={{ fontSize: 15, color: '#0f172a' }}>Oct 24, 2023 at 2:00 PM</AppText>
+              <AppText weight="bold" style={{ fontSize: 14, color: '#0f172a' }}>Oct 24, 2023 at 2:00 PM</AppText>
             </View>
           </AppCard>
         </View>
 
-        <View style={{ marginTop: 24 }}>
-          <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 16 }}>PROPERTY ADDRESSES</AppText>
-          <AppCard style={{ padding: 16, gap: 16 }}>
+        <View style={{ marginTop: 16 }}>
+          <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 12 }}>PROPERTY ADDRESSES</AppText>
+          <AppCard style={{ padding: 14, gap: 12 }}>
             <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
               <MapPin size={18} color="#2563eb" />
               <AppText weight="bold" style={{ color: '#334155', fontSize: 14 }}>123 Oak St, Austin, TX 78701</AppText>
@@ -90,15 +90,15 @@ export function NotaryOrderDetailsScreen() {
           <ArrowRight size={20} color="#64748b" />
         </Pressable>
 
-        <AppCard style={{ backgroundColor: '#f8fafc', padding: 20, marginTop: 16 }}>
+        <AppCard style={{ backgroundColor: '#f8fafc', padding: 16, marginTop: 12 }}>
           <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 12 }}>SPECIAL INSTRUCTIONS</AppText>
           <AppText style={{ fontSize: 14, color: '#475569', lineHeight: 22 }}>
             Please ensure all signatures are in blue ink. Scan and upload the full package once completed.
           </AppText>
         </AppCard>
 
-        <View style={{ marginTop: 24 }}>
-          <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 16 }}>PROVIDED DOCUMENTS</AppText>
+        <View style={{ marginTop: 16 }}>
+          <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 12 }}>PROVIDED DOCUMENTS</AppText>
           <AppCard style={{ padding: 0 }}>
             {[
               { name: 'Closing_Instructions.pdf', size: '1.2 MB' },
@@ -121,8 +121,8 @@ export function NotaryOrderDetailsScreen() {
           </AppCard>
         </View>
 
-        <View style={{ marginTop: 24 }}>
-          <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 16 }}>UPLOAD SCANBACKS</AppText>
+        <View style={{ marginTop: 16 }}>
+          <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 12 }}>UPLOAD SCANBACKS</AppText>
           <UploadBox title="Tap to browse or drop here" subtitle="PDF, JPG up to 25MB" />
           <AppCard style={{ marginTop: 12, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12, borderColor: '#eff6ff', borderWidth: 1 }}>
             <FileText size={20} color="#ef4444" />
@@ -136,8 +136,8 @@ export function NotaryOrderDetailsScreen() {
 
         <AppButton 
           title="Submit Documents" 
-          icon={<Send color="#fff" size={18} />}
-          style={{ marginTop: 32, backgroundColor: '#0a49a8', height: 50 }}
+          icon={<Send color="#fff" size={16} />}
+          style={{ marginTop: 24, backgroundColor: '#0a49a8', height: 46 }}
         />
       </ScrollView>
 

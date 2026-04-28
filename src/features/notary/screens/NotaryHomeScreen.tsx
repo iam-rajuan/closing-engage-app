@@ -19,7 +19,7 @@ export function NotaryHomeScreen() {
   };
   
   return (
-    <ScreenContainer refreshing={refreshing} onRefresh={handleRefresh} contentStyle={{ paddingBottom: 40 }}>
+    <ScreenContainer refreshing={refreshing} onRefresh={handleRefresh} contentStyle={{ paddingBottom: 16 }}>
       <View style={notaryStyles.header}>
         <BrandLogo width={140} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -35,19 +35,19 @@ export function NotaryHomeScreen() {
         </View>
       </View>
 
-      <View style={{ marginTop: 16, marginBottom: 16 }}>
-        <AppText weight="bold" style={{ fontSize: 24, color: '#0a49a8' }}>Assigned Workload</AppText>
-        <AppText muted style={{ fontSize: 13, marginTop: 4, lineHeight: 18 }}>
-          Manage your active signing appointments and document verifications from a central atrium.
+      <View style={{ marginTop: 12, marginBottom: 12 }}>
+        <AppText weight="bold" style={{ fontSize: 20, color: '#0a49a8' }}>Assigned Workload</AppText>
+        <AppText muted style={{ fontSize: 12, marginTop: 3, lineHeight: 17 }}>
+          Manage your active signing appointments and document verifications.
         </AppText>
       </View>
 
       <AppButton 
         title="Upload Documents" 
-        icon={<Upload color="#fff" size={18} />} 
+        icon={<Upload color="#fff" size={16} />} 
         onPress={() => router.push('/notary/documents/upload')} 
-        style={{ marginBottom: 32, backgroundColor: '#0a49a8', height: 48 }}
-        textStyle={{ fontSize: 15 }}
+        style={{ marginBottom: 20, backgroundColor: '#0a49a8', height: 44 }}
+        textStyle={{ fontSize: 14 }}
       />
 
       <StatCard 
@@ -55,25 +55,25 @@ export function NotaryHomeScreen() {
         sublabel="GLOBAL" 
         value="24" 
         color="#3b82f6" 
-        icon={<FileText color="#3b82f6" size={20} />} 
+        icon={<FileText color="#3b82f6" size={18} />} 
       />
       <StatCard 
         label="In Progress" 
         sublabel="ACTIVE" 
         value="08" 
         color="#f97316" 
-        icon={<Zap color="#f97316" size={20} />} 
+        icon={<Zap color="#f97316" size={18} />} 
       />
       <StatCard 
         label="Completed" 
         sublabel="HISTORY" 
         value="13" 
         color="#22c55e" 
-        icon={<CheckCircle2 color="#22c55e" size={20} />} 
+        icon={<CheckCircle2 color="#22c55e" size={18} />} 
       />
 
       <View style={notaryStyles.sectionTitleRow}>
-        <AppText weight="bold" style={{ fontSize: 18, color: '#0a49a8' }}>Assigned Orders</AppText>
+        <AppText weight="bold" style={{ fontSize: 15, color: '#0a49a8' }}>Assigned Orders</AppText>
         <View style={notaryStyles.liveBadge}>
           <View style={notaryStyles.dot} />
           <AppText variant="caption" weight="bold" style={{ color: '#64748b' }}>LIVE UPDATES</AppText>
