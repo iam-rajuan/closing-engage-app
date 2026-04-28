@@ -63,24 +63,6 @@ export default function CompanyLayout() {
           tabBarIcon: ({ color }) => <Settings color={color} size={22} /> 
         }} 
       />
-      <Tabs.Screen
-        name="about"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="terms"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="privacy"
-        options={{
-          href: null,
-        }}
-      />
     </Tabs>
   );
 }

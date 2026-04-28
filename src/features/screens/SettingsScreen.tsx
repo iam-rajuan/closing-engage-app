@@ -52,10 +52,25 @@ export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
     router.replace('/auth/login');
   };
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleSave = () => {
+    alert('Settings Saved Successfully');
+  };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 1500);
+  };
+
   return (
-    <View style={{ flex: 1 }}>
-      <ScreenContainer scroll contentStyle={styles.container}>
-        <AppHeader onProfilePress={() => {}} />
+    <ScreenContainer 
+      scroll 
+      contentStyle={styles.container}
+      refreshing={refreshing}
+      onRefresh={handleRefresh}
+    >
+      <AppHeader onProfilePress={() => {}} />
         
         {/* Profile Header Card */}
       <AppCard style={styles.profileHeaderCard}>
@@ -72,7 +87,9 @@ export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
         <AppText variant="subtitle" style={styles.profileName}>Alex Thompson</AppText>
         <AppText muted style={styles.profileEmail}>alex.t@estateflux.com</AppText>
         
-        <Badge label="Estate Flux Title" tone="blue" style={styles.companyBadge} />
+        <View style={styles.badgeRow}>
+          <Badge label="Estate Flux Title" tone="blue" style={styles.companyBadge} />
+        </View>
         
         <Pressable style={styles.editProfileBtn}>
           <AppText weight="bold" style={styles.editProfileText}>Edit Profile</AppText>
@@ -125,17 +142,17 @@ export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
 
       {/* Legal & About */}
       <View style={styles.section}>
-        <Pressable style={styles.linkItem} onPress={() => router.push('/company/privacy')}>
+        <Pressable style={styles.linkItem} onPress={() => router.push('/company/settings/privacy')}>
           <AppText weight="bold" style={styles.linkText}>Privacy Policy</AppText>
           <ChevronRight color="#64748b" size={20} />
         </Pressable>
         <View style={styles.divider} />
-        <Pressable style={styles.linkItem} onPress={() => router.push('/company/terms')}>
+        <Pressable style={styles.linkItem} onPress={() => router.push('/company/settings/terms')}>
           <AppText weight="bold" style={styles.linkText}>Terms & Conditions</AppText>
           <ChevronRight color="#64748b" size={20} />
         </Pressable>
         <View style={styles.divider} />
-        <Pressable style={styles.linkItem} onPress={() => router.push('/company/about')}>
+        <Pressable style={styles.linkItem} onPress={() => router.push('/company/settings/about')}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <AppText weight="bold" style={styles.linkText}>About</AppText>
             <Badge label="NEW" tone="blue" />
@@ -151,23 +168,21 @@ export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
       </Pressable>
       
       <AppText variant="caption" muted style={styles.versionText}>Version 1.0.4 (Build 42)</AppText>
+      <View style={styles.footerActions}>
+        <Pressable style={styles.cancelBtn}>
+          <AppText weight="bold" style={styles.cancelText}>Cancel</AppText>
+        </Pressable>
+        <Pressable style={styles.saveBtn} onPress={handleSave}>
+          <AppText weight="bold" style={styles.saveText}>Save Changes</AppText>
+        </Pressable>
+      </View>
     </ScreenContainer>
-
-    <View style={styles.footerActions}>
-      <Pressable style={styles.cancelBtn}>
-        <AppText weight="bold" style={styles.cancelText}>Cancel</AppText>
-      </Pressable>
-      <Pressable style={styles.saveBtn}>
-        <AppText weight="bold" style={styles.saveText}>Save Changes</AppText>
-      </Pressable>
-    </View>
-    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    paddingBottom: 100,
+    paddingBottom: 40,
   },
   profileHeaderCard: {
     alignItems: 'center',
@@ -209,10 +224,16 @@ const styles = StyleSheet.create({
     marginTop: -4,
   },
   companyBadge: {
-    marginTop: 4,
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 10,
+    alignSelf: 'center',
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    width: '100%',
+    marginTop: 4,
   },
   editProfileBtn: {
     marginTop: 16,
@@ -291,11 +312,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopWidth: 1,
     borderColor: '#f1f5f9',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    ...shadows.lg,
+    marginTop: 32,
+    ...shadows.sm,
   },
   cancelBtn: {
     flex: 1,
@@ -324,12 +342,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    marginTop: 40,
-    paddingVertical: 16,
+    marginTop: 32,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: '#fee2e2',
+    borderRadius: 12,
+    backgroundColor: '#fffbff',
   },
   logoutText: {
     color: '#ef4444',
-    fontSize: 16,
+    fontSize: 15,
   },
   versionText: {
     textAlign: 'center',
