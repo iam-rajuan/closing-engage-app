@@ -12,7 +12,10 @@ import { notaryStyles } from '@/features/notary/styles';
 export function NotaryOrderDetailsScreen() {
   return (
     <ScreenContainer scroll={false}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
+      >
         <View style={notaryStyles.detailsHeader}>
           <Pressable onPress={() => router.back()}><ChevronLeft color="#0a49a8" size={24} /></Pressable>
           <AppText weight="bold" style={{ fontSize: 17, color: '#0f172a' }}>Order Details</AppText>
@@ -140,7 +143,7 @@ export function NotaryOrderDetailsScreen() {
 
       <Pressable 
         style={notaryStyles.floatingChat} 
-        onPress={() => router.push('/notary/chat')}
+        onPress={() => router.push('/notary/assigned/chat')}
       >
         <MessageCircle color="#fff" size={24} />
         <View style={notaryStyles.onlineDotSmall} />

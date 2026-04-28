@@ -21,7 +21,6 @@ export default function NotaryLayout() {
       <Tabs.Screen name="credentials" options={{ title: 'Notary', tabBarIcon: ({ color }) => <BadgeCheck color={color} size={20} /> }} />
       <Tabs.Screen name="settings" options={{ title: 'Settings', tabBarIcon: ({ color }) => <Settings color={color} size={20} /> }} />
       <Tabs.Screen name="documents/upload" options={{ href: null }} />
-      <Tabs.Screen name="chat" options={{ href: null }} />
     </Tabs>
   );
 }

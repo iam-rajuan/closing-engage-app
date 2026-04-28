@@ -6,6 +6,7 @@ export default function AssignedLayout() {
       <Stack.Screen name="index" />
       <Stack.Screen name="[id]" />
       <Stack.Screen name="schedule" />
+      <Stack.Screen name="chat" />
     </Stack>
   );
 }
