@@ -80,6 +80,15 @@ function DetailField({ label, value, icon }: { label: string; value: string; ico
   );
 }
 
+function FieldRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.fieldRow}>
+      <AppText variant="caption" muted style={styles.fieldLabel}>{label}</AppText>
+      <AppText style={styles.fieldValue}>{value}</AppText>
+    </View>
+  );
+}
+
 export function OnboardingScreen() {
   const [activeIndex, setActiveIndex] = useState(0);
   const { height, width } = useWindowDimensions();
@@ -1094,7 +1103,7 @@ function StatCard({ label, value, icon, sublabel, color }: any) {
         {icon}
       </View>
       <View style={notaryStyles.statTextContent}>
-        <AppText variant="caption" muted weight="bold" style={{ fontSize: 10, letterSpacing: 0.5 }}>{sublabel}</AppText>
+        <AppText variant="caption" muted weight="bold" style={{ fontSize: 9, letterSpacing: 0.6 }}>{sublabel}</AppText>
         <AppText weight="bold" style={notaryStyles.statLabel}>{label}</AppText>
       </View>
       <AppText style={notaryStyles.statValueLarge}>{value}</AppText>
@@ -1109,28 +1118,28 @@ function NotaryOrderCard({ order }: { order: any }) {
     <AppCard style={notaryStyles.orderCard}>
       <View style={notaryStyles.orderTop}>
         <View style={[notaryStyles.initialsAvatar, { backgroundColor: '#dbeafe' }]}>
-          <AppText weight="bold" style={{ color: '#1d4ed8' }}>{initials}</AppText>
+          <AppText weight="bold" style={{ color: '#1d4ed8', fontSize: 15 }}>{initials}</AppText>
         </View>
         <View style={{ flex: 1 }}>
           <AppText weight="bold" style={notaryStyles.orderClientName}>{order.clientName}</AppText>
-          <AppText variant="caption" muted style={{ fontWeight: '600' }}>#{order.orderNumber.replace('#', '')}</AppText>
+          <AppText variant="caption" muted style={{ fontWeight: '600', fontSize: 12 }}>#{order.orderNumber.replace('#', '')}</AppText>
         </View>
         <Badge label={order.status} tone={order.status === 'In Progress' ? 'blue' : 'gray'} />
       </View>
 
       <View style={notaryStyles.orderInfoRow}>
         <View style={notaryStyles.infoItem}>
-          <MapPin size={16} color="#0a49a8" />
+          <MapPin size={15} color="#0a49a8" />
           <View>
-            <AppText variant="caption" muted weight="bold">LOCATION</AppText>
-            <AppText variant="caption" weight="bold" style={{ color: '#0f172a' }}>Denver, CO</AppText>
+            <AppText variant="caption" muted weight="bold" style={{ fontSize: 9 }}>LOCATION</AppText>
+            <AppText weight="bold" style={{ color: '#0f172a', fontSize: 13 }}>Denver, CO</AppText>
           </View>
         </View>
         <View style={notaryStyles.infoItem}>
-          <Calendar size={16} color="#0a49a8" />
+          <Calendar size={15} color="#0a49a8" />
           <View>
-            <AppText variant="caption" muted weight="bold">DATE & TIME</AppText>
-            <AppText variant="caption" weight="bold" style={{ color: '#0f172a' }}>{order.signingDate}</AppText>
+            <AppText variant="caption" muted weight="bold" style={{ fontSize: 9 }}>DATE & TIME</AppText>
+            <AppText weight="bold" style={{ color: '#0f172a', fontSize: 13 }}>{order.signingDate}</AppText>
           </View>
         </View>
       </View>
@@ -1143,7 +1152,7 @@ function NotaryOrderCard({ order }: { order: any }) {
               <AppText variant="caption" weight="bold" style={{ color: '#ef4444' }}>Action Required</AppText>
             </View>
           ) : order.status === 'Assigned' ? (
-            <AppText variant="caption" muted weight="bold">Pending initial signature</AppText>
+            <AppText weight="bold" style={{ color: '#64748b', fontSize: 11 }}>Pending initial signature</AppText>
           ) : (
             <View style={notaryStyles.avatarGroup}>
               <Image source={{ uri: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=64&auto=format&fit=crop' }} style={notaryStyles.miniAvatar} />
@@ -1170,27 +1179,27 @@ const notaryStyles = StyleSheet.create({
   statCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    gap: 16,
-    marginBottom: 12,
+    padding: 12,
+    gap: 14,
+    marginBottom: 8,
   },
   iconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 38,
+    height: 38,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   statTextContent: {
     flex: 1,
-    gap: 2,
+    gap: 1,
   },
   statLabel: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#1e293b',
   },
   statValueLarge: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: '800',
     color: '#0f172a',
   },
@@ -1198,43 +1207,43 @@ const notaryStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 24,
-    marginBottom: 16,
+    marginTop: 20,
+    marginBottom: 12,
   },
   liveBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f1f5f9',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 20,
-    gap: 6,
+    gap: 5,
   },
   dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
     backgroundColor: '#ef4444',
   },
   orderCard: {
-    padding: 16,
-    marginBottom: 16,
-    gap: 16,
+    padding: 14,
+    marginBottom: 12,
+    gap: 14,
   },
   orderTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
   initialsAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 38,
+    height: 38,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   orderClientName: {
-    fontSize: 16,
+    fontSize: 18,
     color: '#0f172a',
   },
   orderInfoRow: {
@@ -1243,7 +1252,7 @@ const notaryStyles = StyleSheet.create({
   },
   infoItem: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
     alignItems: 'center',
   },
   orderFooter: {
@@ -1258,21 +1267,21 @@ const notaryStyles = StyleSheet.create({
     flexDirection: 'row',
   },
   miniAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 2,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1.5,
     borderColor: '#fff',
   },
   viewDetailsBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
   },
   viewDetailsText: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#0a49a8',
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
   },
 });
 
@@ -1300,9 +1309,9 @@ export function NotaryHomeScreen() {
         </View>
       </View>
 
-      <View style={{ marginTop: 24, marginBottom: 20 }}>
-        <AppText weight="bold" style={{ fontSize: 28, color: '#0a49a8' }}>Assigned Workload</AppText>
-        <AppText muted style={{ fontSize: 14, marginTop: 8, lineHeight: 20 }}>
+      <View style={{ marginTop: 16, marginBottom: 16 }}>
+        <AppText weight="bold" style={{ fontSize: 24, color: '#0a49a8' }}>Assigned Workload</AppText>
+        <AppText muted style={{ fontSize: 13, marginTop: 4, lineHeight: 18 }}>
           Manage your active signing appointments and document verifications from a central atrium.
         </AppText>
       </View>
@@ -1311,7 +1320,8 @@ export function NotaryHomeScreen() {
         title="Upload Documents" 
         icon={<Upload color="#fff" size={18} />} 
         onPress={() => router.push('/notary/documents/upload')} 
-        style={{ marginBottom: 24, backgroundColor: '#0a49a8' }}
+        style={{ marginBottom: 32, backgroundColor: '#0a49a8', height: 48 }}
+        textStyle={{ fontSize: 15 }}
       />
 
       <StatCard 
@@ -1743,6 +1753,19 @@ const styles = StyleSheet.create({
     color: '#64748b',
     marginBottom: 6,
     letterSpacing: 0.5,
+  },
+  fieldRow: {
+    gap: 2,
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#e2e8f0',
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 12,
   },
   datePicker: {
     height: 44,
@@ -2518,4 +2541,3 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
 });
-
