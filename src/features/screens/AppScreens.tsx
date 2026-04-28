@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   Upload,
   UserPlus,
+  UserRound,
   Zap,
   Search,
   SlidersHorizontal,
@@ -1283,6 +1284,139 @@ const notaryStyles = StyleSheet.create({
     color: '#0a49a8',
     letterSpacing: 0.4,
   },
+  statusRefCard: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 16,
+    padding: 20,
+    gap: 20,
+  },
+  statusRefItem: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 6,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    marginTop: 20,
+    padding: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  tabItem: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  tabItemActive: {
+    backgroundColor: '#0a49a8',
+  },
+  tabText: {
+    fontSize: 11,
+    color: '#64748b',
+  },
+  tabTextActive: {
+    color: '#fff',
+  },
+  detailsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+  },
+  timelineItem: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  timelineLeft: {
+    alignItems: 'center',
+  },
+  timelineDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#e2e8f0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  timelineActiveInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#1d4ed8',
+  },
+  timelineLine: {
+    width: 2,
+    flex: 1,
+    backgroundColor: '#f1f5f9',
+    marginVertical: 4,
+  },
+  infoStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 16,
+  },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scheduleLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 24,
+    paddingVertical: 4,
+  },
+  docItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 16,
+  },
+  dateCell: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dateCellActive: {
+    backgroundColor: '#1d4ed8',
+    ...shadows.button,
+  },
+  dateText: {
+    fontSize: 14,
+    color: '#334155',
+  },
+  timeButton: {
+    width: '31%',
+    height: 48,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+  },
+  timeButtonActive: {
+    borderColor: '#2563eb',
+    backgroundColor: '#eff6ff',
+  },
+  timeButtonText: {
+    fontSize: 13,
+    color: '#475569',
+  },
 });
 
 export function NotaryHomeScreen() {
@@ -1361,30 +1495,209 @@ export function NotaryHomeScreen() {
   );
 }
 
-export function NotaryAssignedScreen() {
+function StatusReference() {
   return (
-    <ScreenContainer>
-      <AppHeader title="Assigned" onProfilePress={() => router.push('/notary/settings')} />
-      <AppInput placeholder="Filter by Order" />
-      <View style={styles.filterRow}><Badge label="ALL ORDERS" /><Badge label="ASSIGNED" tone="gray" /><Badge label="IN PROGRESS" tone="gray" /></View>
-      <SectionHeader title="Current Assignments" />
-      {notaryOrders.map((order) => <OrderCard key={order.id} order={order} href={`/notary/assigned/${order.id}` as Href} />)}
-      <AppCard style={styles.formCard}><AppText weight="bold">Status Reference</AppText><FieldRow label="Status: Assigned" value="Order is confirmed and awaiting notary action." /><FieldRow label="Status: In Progress" value="The signing process has been initiated." /><FieldRow label="Status: Submitted" value="Documentation has been uploaded and is in review." /></AppCard>
+    <View style={{ marginTop: 32, marginBottom: 40 }}>
+      <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 16 }}>STATUS REFERENCE</AppText>
+      <View style={notaryStyles.statusRefCard}>
+        {[
+          { label: 'Status: Assigned', desc: 'Order is confirmed and awaiting notary action.', color: '#2563eb' },
+          { label: 'Status: In Progress', desc: 'The signing process has been initiated by the notary.', color: '#64748b' },
+          { label: 'Status: Submitted', desc: 'Documentation has been uploaded and is in review.', color: '#94a3b8' },
+        ].map((item, i) => (
+          <View key={i} style={notaryStyles.statusRefItem}>
+            <View style={[notaryStyles.statusDot, { backgroundColor: item.color }]} />
+            <View style={{ flex: 1 }}>
+              <AppText weight="bold" style={{ fontSize: 13, color: '#1e293b' }}>{item.label}</AppText>
+              <AppText variant="caption" muted style={{ fontSize: 12, marginTop: 2 }}>{item.desc}</AppText>
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+export function NotaryAssignedScreen() {
+  const [activeTab, setActiveTab] = useState('ALL ORDERS');
+  
+  return (
+    <ScreenContainer scroll contentStyle={{ paddingBottom: 40 }}>
+      <View style={notaryStyles.header}>
+        <BrandLogo width={140} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <Pressable><Bell color="#334155" size={24} /></Pressable>
+          <Pressable onPress={() => router.push('/notary/settings')}>
+            <Image 
+              source={{ uri: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=256&auto=format&fit=crop' }} 
+              style={{ width: 36, height: 36, borderRadius: 18 }} 
+            />
+          </Pressable>
+        </View>
+      </View>
+
+      <View style={{ marginTop: 20 }}>
+        <AppInput 
+          placeholder="Filter by Order" 
+          leftIcon={<Search size={18} color="#94a3b8" />}
+          containerStyle={{ backgroundColor: '#f1f5f9', borderWidth: 0 }}
+        />
+      </View>
+
+      <View style={notaryStyles.tabContainer}>
+        {['ALL ORDERS', 'ASSIGNED', 'IN PROGRESS'].map((tab) => (
+          <Pressable 
+            key={tab} 
+            onPress={() => setActiveTab(tab)}
+            style={[notaryStyles.tabItem, activeTab === tab && notaryStyles.tabItemActive]}
+          >
+            <AppText 
+              weight="bold" 
+              style={[notaryStyles.tabText, activeTab === tab && notaryStyles.tabTextActive]}
+            >
+              {tab}
+            </AppText>
+          </Pressable>
+        ))}
+      </View>
+
+      <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginTop: 24, marginBottom: 16 }}>CURRENT ASSIGNMENTS</AppText>
+      
+      {notaryOrders.map((order) => (
+        <NotaryOrderCard key={order.id} order={order} />
+      ))}
+
+      <StatusReference />
     </ScreenContainer>
   );
 }
 
 export function NotaryOrderDetailsScreen() {
   return (
-    <ScreenContainer>
-      <AppHeader back title="Order Details" onProfilePress={() => router.push('/notary/settings')} />
-      <Badge label="ASSIGNED" />
-      <AppCard style={styles.formCard}><AppText weight="bold">Workflow Progress</AppText><FieldRow label="Docs Ready to Print" value="Completed Oct 23, 11:30 AM" /><FieldRow label="Docs Printed by Notary" value="Waiting for confirmation" /><FieldRow label="Scanbacks Uploaded" value="Final step" /></AppCard>
-      <AppCard style={styles.formCard}><FieldRow label="Client" value="Jonathan Aris" /><FieldRow label="Signing Schedule" value="Oct 24, 2023 at 2:00 PM" /><FieldRow label="Property Addresses" value="123 Oak St, Austin, TX 78701 · San Francisco, CA" /></AppCard>
-      <Pressable style={styles.navRow} onPress={() => router.push('/notary/assigned/schedule')}><AppText weight="bold">Schedule Closing</AppText><ChevronRight color={colors.primary} /></Pressable>
-      <AppCard><AppText weight="bold">Special Instructions</AppText><AppText muted>Please ensure all signatures are in blue ink. Scan and upload the full package once completed.</AppText></AppCard>
-      <AppCard style={styles.formCard}><AppText weight="bold">Provided Documents</AppText><FieldRow label="Closing_Instructions.pdf" value="1.2 MB" /><FieldRow label="Signature_Package.pdf" value="5.4 MB" /></AppCard>
-      <AppCard style={styles.formCard}><AppText weight="bold">Upload Scanbacks</AppText><UploadBox title="Tap to browse or drop here" subtitle="PDF, JPG up to 25MB" /><FieldRow label="Scanback_Part1.pdf" value="2.4 MB · Uploaded 2m ago" /><AppButton title="Submit Documents" /></AppCard>
+    <ScreenContainer scroll contentStyle={{ paddingBottom: 40 }}>
+      <View style={notaryStyles.detailsHeader}>
+        <Pressable onPress={() => router.back()}><ChevronLeft color="#0a49a8" size={24} /></Pressable>
+        <AppText weight="bold" style={{ fontSize: 17, color: '#0f172a' }}>Order Details</AppText>
+        <Badge label="ASSIGNED" tone="blue" style={{ paddingHorizontal: 12 }} />
+      </View>
+
+      <View style={{ marginTop: 24 }}>
+        <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 16 }}>WORKFLOW PROGRESS</AppText>
+        <AppCard style={{ padding: 20 }}>
+          {[
+            { label: 'Docs Ready to Print', sub: 'Completed Oct 23, 11:30 AM', status: 'done' },
+            { label: 'Docs Printed by Notary', sub: 'Waiting for confirmation', status: 'active' },
+            { label: 'Scanbacks Uploaded', sub: 'Final step', status: 'pending' },
+          ].map((item, i) => (
+            <View key={i} style={notaryStyles.timelineItem}>
+              <View style={notaryStyles.timelineLeft}>
+                <View style={[notaryStyles.timelineDot, item.status === 'done' && { backgroundColor: '#1d4ed8' }, item.status === 'active' && { borderColor: '#1d4ed8', borderWidth: 2, backgroundColor: '#fff' }]}>
+                  {item.status === 'done' && <CheckCircle2 color="#fff" size={14} />}
+                  {item.status === 'active' && <View style={notaryStyles.timelineActiveInner} />}
+                </View>
+                {i < 2 && <View style={notaryStyles.timelineLine} />}
+              </View>
+              <View style={{ flex: 1, paddingBottom: 24 }}>
+                <AppText weight="bold" style={{ fontSize: 14, color: item.status === 'pending' ? '#94a3b8' : '#0f172a' }}>{item.label}</AppText>
+                <AppText variant="caption" muted style={{ fontSize: 12, marginTop: 2 }}>{item.sub}</AppText>
+              </View>
+            </View>
+          ))}
+        </AppCard>
+      </View>
+
+      <View style={{ marginTop: 24, gap: 12 }}>
+        <AppCard style={notaryStyles.infoStrip}>
+          <View style={[notaryStyles.iconCircle, { backgroundColor: '#eff6ff' }]}>
+            <UserRound size={18} color="#2563eb" />
+          </View>
+          <View>
+            <AppText variant="caption" muted weight="bold">CLIENT</AppText>
+            <AppText weight="bold" style={{ fontSize: 15, color: '#0f172a' }}>Jonathan Aris</AppText>
+          </View>
+        </AppCard>
+        <AppCard style={notaryStyles.infoStrip}>
+          <View style={[notaryStyles.iconCircle, { backgroundColor: '#eff6ff' }]}>
+            <Calendar size={18} color="#2563eb" />
+          </View>
+          <View>
+            <AppText variant="caption" muted weight="bold">SIGNING SCHEDULE</AppText>
+            <AppText weight="bold" style={{ fontSize: 15, color: '#0f172a' }}>Oct 24, 2023 at 2:00 PM</AppText>
+          </View>
+        </AppCard>
+      </View>
+
+      <View style={{ marginTop: 24 }}>
+        <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 16 }}>PROPERTY ADDRESSES</AppText>
+        <AppCard style={{ padding: 16, gap: 16 }}>
+          <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+            <MapPin size={18} color="#2563eb" />
+            <AppText weight="bold" style={{ color: '#334155', fontSize: 14 }}>123 Oak St, Austin, TX 78701</AppText>
+          </View>
+          <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+            <Building size={18} color="#2563eb" />
+            <AppText weight="bold" style={{ color: '#334155', fontSize: 14 }}>San Francisco, CA</AppText>
+          </View>
+        </AppCard>
+      </View>
+
+      <Pressable 
+        style={notaryStyles.scheduleLink} 
+        onPress={() => router.push('/notary/assigned/schedule')}
+      >
+        <AppText weight="bold" style={{ fontSize: 18, color: '#1e293b' }}>Schedule Closing</AppText>
+        <ArrowRight size={20} color="#64748b" />
+      </Pressable>
+
+      <AppCard style={{ backgroundColor: '#f8fafc', padding: 20, marginTop: 16 }}>
+        <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 12 }}>SPECIAL INSTRUCTIONS</AppText>
+        <AppText style={{ fontSize: 14, color: '#475569', lineHeight: 22 }}>
+          Please ensure all signatures are in blue ink. Scan and upload the full package once completed.
+        </AppText>
+      </AppCard>
+
+      <View style={{ marginTop: 24 }}>
+        <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 16 }}>PROVIDED DOCUMENTS</AppText>
+        <AppCard style={{ padding: 0 }}>
+          {[
+            { name: 'Closing_Instructions.pdf', size: '1.2 MB' },
+            { name: 'Signature_Package.pdf', size: '5.4 MB' },
+          ].map((doc, i) => (
+            <View key={i} style={[notaryStyles.docItem, i > 0 && { borderTopWidth: 1, borderTopColor: '#f1f5f9' }]}>
+              <View style={[notaryStyles.iconCircle, { backgroundColor: '#fee2e2' }]}>
+                <FileText size={18} color="#ef4444" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <AppText weight="bold" style={{ fontSize: 14, color: '#1e293b' }}>{doc.name}</AppText>
+                <AppText variant="caption" muted>{doc.size}</AppText>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 16 }}>
+                <Pressable><Info size={20} color="#94a3b8" /></Pressable>
+                <Pressable><Download size={20} color="#94a3b8" /></Pressable>
+              </View>
+            </View>
+          ))}
+        </AppCard>
+      </View>
+
+      <View style={{ marginTop: 24 }}>
+        <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 16 }}>UPLOAD SCANBACKS</AppText>
+        <UploadBox title="Tap to browse or drop here" subtitle="PDF, JPG up to 25MB" />
+        <AppCard style={{ marginTop: 12, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12, borderColor: '#eff6ff', borderWidth: 1 }}>
+          <FileText size={20} color="#ef4444" />
+          <View style={{ flex: 1 }}>
+            <AppText weight="bold" style={{ fontSize: 13, color: '#2563eb' }}>Scanback_Part1.pdf</AppText>
+            <AppText variant="caption" muted>2.4 MB • Uploaded 2m ago</AppText>
+          </View>
+          <Pressable><X size={18} color="#ef4444" /></Pressable>
+        </AppCard>
+      </View>
+
+      <AppButton 
+        title="Submit Documents" 
+        icon={<Send color="#fff" size={18} />}
+        style={{ marginTop: 32, backgroundColor: '#0a49a8', height: 50 }}
+      />
     </ScreenContainer>
   );
 }
@@ -1392,18 +1705,79 @@ export function NotaryOrderDetailsScreen() {
 export function ScheduleClosingScreen() {
   const dates = Array.from({ length: 28 }, (_, index) => index + 1);
   const times = ['09:00 AM', '10:30 AM', '11:15 AM', '12:45 PM', '02:00 PM', '02:15 PM', '03:30 PM', '04:00 PM', '05:15 PM'];
+  const [selectedTime, setSelectedTime] = useState('02:00 PM');
+  
   return (
-    <ScreenContainer>
-      <AppHeader back title="Schedule Closing" onProfilePress={() => router.push('/notary/settings')} />
-      <SectionHeader title="Select Date" action="April 2026" />
-      <AppCard style={styles.calendar}>
-        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => <AppText key={`${day}${index}`} variant="caption" muted style={styles.dayCell}>{day}</AppText>)}
-        {dates.map((date) => <View key={date} style={[styles.dateCell, date === 24 && styles.dateSelected]}><AppText style={date === 24 && styles.dateSelectedText}>{date}</AppText></View>)}
-      </AppCard>
-      <SectionHeader title="Select Time" />
-      <View style={styles.timeGrid}>{times.map((time) => <Badge key={time} label={time} tone={time === '02:00 PM' ? 'blue' : 'gray'} />)}</View>
-      <AppCard style={styles.formCard}><AppText variant="caption" muted>PREVIEW SELECTION</AppText><FieldRow label="Closing Engagement" value="Tuesday, Apr 24 · 02:00 PM" /></AppCard>
-      <AppButton title="Confirm Schedule" />
+    <ScreenContainer scroll contentStyle={{ paddingBottom: 40 }}>
+      <View style={notaryStyles.detailsHeader}>
+        <Pressable onPress={() => router.back()}><ChevronLeft color="#0a49a8" size={24} /></Pressable>
+        <AppText weight="bold" style={{ fontSize: 17, color: '#0f172a' }}>Schedule Closing</AppText>
+        <Pressable><Info color="#64748b" size={20} /></Pressable>
+      </View>
+
+      <View style={{ marginTop: 24 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <AppText weight="bold" style={{ fontSize: 18, color: '#1e293b' }}>Select Date</AppText>
+          <Pressable style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <AppText weight="bold" style={{ color: '#2563eb', fontSize: 14 }}>April 2026</AppText>
+            <ChevronDown size={18} color="#2563eb" />
+          </Pressable>
+        </View>
+        <AppCard style={{ padding: 20 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
+            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) => (
+              <AppText key={day} variant="caption" muted weight="bold" style={{ width: 32, textAlign: 'center' }}>{day}</AppText>
+            ))}
+          </View>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 10 }}>
+            {dates.map((date) => (
+              <Pressable 
+                key={date} 
+                style={[notaryStyles.dateCell, date === 24 && notaryStyles.dateCellActive]}
+              >
+                <AppText weight="bold" style={[notaryStyles.dateText, date === 24 && { color: '#fff' }, date < 6 && { color: '#cbd5e1' }]}>
+                  {date}
+                </AppText>
+              </Pressable>
+            ))}
+          </View>
+        </AppCard>
+      </View>
+
+      <View style={{ marginTop: 32 }}>
+        <AppText weight="bold" style={{ fontSize: 18, color: '#1e293b', marginBottom: 16 }}>Select Time</AppText>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+          {times.map((time) => (
+            <Pressable 
+              key={time} 
+              onPress={() => setSelectedTime(time)}
+              style={[notaryStyles.timeButton, selectedTime === time && notaryStyles.timeButtonActive]}
+            >
+              <AppText weight="bold" style={[notaryStyles.timeButtonText, selectedTime === time && { color: '#2563eb' }]}>
+                {time}
+              </AppText>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      <View style={{ marginTop: 32 }}>
+        <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 16 }}>PREVIEW SELECTION</AppText>
+        <AppCard style={{ backgroundColor: '#f1f5f9', flexDirection: 'row', alignItems: 'center', padding: 20, gap: 16 }}>
+          <View style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' }}>
+            <Calendar size={22} color="#2563eb" />
+          </View>
+          <View>
+            <AppText variant="caption" muted weight="bold">Closing Engagement</AppText>
+            <AppText weight="bold" style={{ fontSize: 16, color: '#1e293b' }}>Tuesday, Apr 24 • 02:00 PM</AppText>
+          </View>
+        </AppCard>
+      </View>
+
+      <AppButton 
+        title="Confirm Schedule" 
+        style={{ marginTop: 32, height: 52, backgroundColor: '#1d4ed8' }}
+      />
     </ScreenContainer>
   );
 }
