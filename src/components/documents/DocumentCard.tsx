@@ -12,7 +12,7 @@ export function DocumentCard({ doc, onView }: { doc: DocumentFile; onView?: () =
     <AppCard style={styles.card}>
       <View style={styles.top}>
         <View style={styles.iconContainer}>
-          <FileText color={colors.danger} size={24} />
+          <FileText color={colors.danger} size={20} />
         </View>
         <View style={styles.nameContainer}>
           <AppText weight="bold" style={styles.fileName}>{doc.name}</AppText>
@@ -38,12 +38,12 @@ export function DocumentCard({ doc, onView }: { doc: DocumentFile; onView?: () =
           variant="secondary" 
           onPress={onView} 
           style={styles.viewBtn}
-          icon={<Eye color={colors.primary} size={18} />} 
+          icon={<Eye color={colors.primary} size={16} />} 
         />
         <AppButton 
           title="Download" 
           style={styles.downloadBtn}
-          icon={<Download color={colors.white} size={18} />} 
+          icon={<Download color={colors.white} size={16} />} 
         />
       </View>
     </AppCard>
@@ -53,21 +53,21 @@ export function DocumentCard({ doc, onView }: { doc: DocumentFile; onView?: () =
 const styles = StyleSheet.create({
   card: { 
     padding: spacing.md,
-    gap: spacing.lg,
-    borderRadius: 16,
+    gap: 12,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#f1f5f9',
   },
   top: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    gap: 14 
+    gap: 12 
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: '#fef2f2', // Soft red for PDF
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#fef2f2',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   fileName: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#1e293b',
     letterSpacing: -0.2,
   },
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
   },
   infoRow: { 
     flexDirection: 'row', 
-    gap: 40,
+    gap: 30,
     paddingLeft: 4,
   },
   infoItem: {
@@ -105,17 +105,17 @@ const styles = StyleSheet.create({
   },
   actions: { 
     flexDirection: 'row', 
-    gap: spacing.md 
+    gap: 10 
   },
   viewBtn: {
     flex: 1,
-    height: 44,
+    height: 38,
     backgroundColor: '#f1f5f9',
     borderWidth: 0,
   },
   downloadBtn: {
     flex: 1,
-    height: 44,
+    height: 38,
     backgroundColor: '#0a49a8',
   },
 });

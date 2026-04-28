@@ -45,11 +45,11 @@ export function TeamMemberCard({ member }: { member: TeamMember }) {
 
         <View style={styles.actions}>
           {isPending ? (
-            <Mail size={20} color="#64748b" style={styles.actionIcon} />
+            <Mail size={18} color="#64748b" style={styles.actionIcon} />
           ) : (
-            <Edit3 size={20} color="#64748b" style={styles.actionIcon} />
+            <Edit3 size={18} color="#64748b" style={styles.actionIcon} />
           )}
-          <Trash2 size={20} color="#ef4444" style={styles.actionIcon} />
+          <Trash2 size={18} color="#ef4444" style={styles.actionIcon} />
         </View>
       </View>
     </AppCard>
@@ -58,18 +58,18 @@ export function TeamMemberCard({ member }: { member: TeamMember }) {
 
 const styles = StyleSheet.create({
   card: { 
-    padding: 14,
-    gap: 12,
+    padding: 12,
+    gap: 10,
   },
   topRow: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    gap: 16 
+    gap: 12 
   },
   avatarContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: '#f8fafc',
   },
@@ -82,14 +82,14 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   name: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
     color: '#0f172a',
     letterSpacing: -0.2,
-    lineHeight: 20,
+    lineHeight: 18,
   },
   email: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#64748b',
   },
   roleBadge: {
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', 
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 16,
+    paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: '#f1f5f9',
   },
@@ -109,14 +109,14 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   joinedLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '800',
     color: '#94a3b8',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
   joinedDate: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
     color: '#334155',
   },
@@ -131,12 +131,12 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   statusText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '800',
   },
   actions: { 
     flexDirection: 'row', 
-    gap: 20,
+    gap: 16,
     alignItems: 'center',
   },
   actionIcon: {

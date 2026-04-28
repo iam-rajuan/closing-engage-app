@@ -130,8 +130,8 @@ segmentItem: { flex: 1, alignItems: 'center', padding: spacing.sm, borderRadius:
 segmentActive: { backgroundColor: colors.primary },
 segmentTextActive: { color: colors.white },
 homeContainer: {
-    paddingTop: spacing.xs, // Minimal top gap
-    paddingBottom: 40,
+    paddingTop: spacing.xs,
+    paddingBottom: 16,
   },
 ordersStatsGrid: {
     gap: spacing.md,
@@ -163,10 +163,10 @@ statIconBadge: {
     justifyContent: 'center',
   },
 statValueLarge: {
-    fontSize: 32,
+    fontSize: 26,
     fontWeight: '800',
     color: '#0f172a',
-    marginTop: 8,
+    marginTop: 6,
   },
 statRowSmall: {
     flexDirection: 'row',
@@ -180,7 +180,7 @@ statCardSmall: {
     borderColor: '#f1f5f9',
   },
 statValueSmall: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '800',
     color: '#0f172a',
     marginTop: 4,
@@ -188,8 +188,8 @@ statValueSmall: {
 createBtn: {
     marginTop: spacing.lg,
     backgroundColor: '#1d63d2',
-    height: 48,
-    borderRadius: 8,
+    height: 44,
+    borderRadius: 10,
   },
 filterBtn: {
     flexDirection: 'row',
@@ -253,7 +253,7 @@ sectionTitleRow: {
     marginBottom: spacing.sm,
   },
 sectionTitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#1e293b',
   },
 fieldLabel: {
@@ -408,7 +408,7 @@ detailsHeader: {
     marginBottom: 4,
   },
 detailsOrderNum: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '800',
     color: '#0a49a8',
   },
@@ -431,7 +431,7 @@ detailIcon: {
     alignItems: 'center',
   },
 detailValue: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#1e293b',
   },
 specialInstructionBox: {
@@ -461,8 +461,8 @@ engagementCard: {
     backgroundColor: '#f8fbff',
   },
 engagementIconBox: {
-    width: 44,
-    height: 44,
+    width: 38,
+    height: 38,
     borderRadius: 8,
     backgroundColor: colors.white,
     alignItems: 'center',
@@ -475,7 +475,7 @@ engagementSub: {
     fontWeight: '600',
   },
 engagementTitle: {
-    fontSize: 15,
+    fontSize: 14,
     color: '#1e293b',
   },
 detailsSection: {
@@ -483,9 +483,9 @@ detailsSection: {
     marginTop: spacing.lg,
   },
 detailsSectionTitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#1e293b',
-    marginBottom: 12,
+    marginBottom: 10,
   },
 notaryProfileCard: {
     padding: spacing.md,
@@ -499,8 +499,8 @@ notaryAvatarBox: {
     position: 'relative',
   },
 notaryAvatarLg: {
-    width: 56,
-    height: 56,
+    width: 48,
+    height: 48,
     borderRadius: 10,
   },
 onlineDot: {
@@ -515,7 +515,7 @@ onlineDot: {
     borderColor: colors.white,
   },
 notaryNameLg: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#1e293b',
   },
 ratingRow: {
@@ -600,29 +600,29 @@ logDivider: {
   },
 // Common Screen Elements
   pageHeader: {
-    marginTop: 20,
+    marginTop: 14,
     marginBottom: 4,
   },
 pageTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '800',
     color: '#0f172a',
     letterSpacing: -0.3,
-    lineHeight: 30,
+    lineHeight: 26,
   },
 pageSubtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#64748b',
-    marginTop: 4,
-    lineHeight: 20,
+    marginTop: 3,
+    lineHeight: 18,
   },
 sectionHeader: {
-    marginTop: 24,
-    marginBottom: 12,
+    marginTop: 20,
+    marginBottom: 10,
   },
 // Search & Filters
   searchContainer: {
-    marginTop: 16,
+    marginTop: 12,
     position: 'relative',
   },
 searchBox: {
@@ -633,14 +633,14 @@ searchInput: {
     backgroundColor: '#f8fafc',
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    height: 46,
-    borderRadius: 12,
-    fontSize: 14,
+    height: 42,
+    borderRadius: 10,
+    fontSize: 13,
   },
 searchIcon: {
     position: 'absolute',
     left: 14,
-    top: 14,
+    top: 12,
     zIndex: 1,
   },
 filterRow: {
@@ -651,17 +651,17 @@ filterRow: {
   },
 // Document & Team Lists
   documentList: {
-    gap: 16,
-    marginTop: 20,
+    gap: 12,
+    marginTop: 16,
   },
 listFooter: {
-    marginTop: 32,
+    marginTop: 20,
     alignItems: 'center',
-    gap: 12,
-    paddingBottom: 40,
+    gap: 10,
+    paddingBottom: 16,
   },
 resultsCount: {
-    fontSize: 13,
+    fontSize: 12,
   },
 // Card Margins
   formCard: {
@@ -669,13 +669,13 @@ resultsCount: {
   },
 loadMoreBtn: {
     backgroundColor: '#f1f5f9',
-    width: 140,
-    height: 40,
+    width: 130,
+    height: 36,
     borderRadius: 8,
   },
 loadMoreText: {
     color: '#334155',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
   },
 filterBtnActive: {
@@ -691,7 +691,7 @@ clearBtn: {
     justifyContent: 'center',
   },
 clearBtnText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
     color: '#0a49a8',
   },
@@ -765,7 +765,7 @@ infoCardHeader: {
     alignItems: 'center',
   },
 infoCardTitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#0a49a8',
   },
 fieldGrid: {
@@ -775,7 +775,7 @@ fieldGrid: {
   },
 fieldFull: { width: '100%', gap: 4 },
 fieldHalf: { width: '45%', gap: 4 },
-fieldValue: { fontSize: 15, color: '#1e293b' },
+fieldValue: { fontSize: 14, color: '#1e293b' },
 uploadedByRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -865,25 +865,25 @@ avatarDark: { width: 38, height: 38, borderRadius: radius.full, backgroundColor:
 messageInput: { marginTop: 'auto', minHeight: 48, borderRadius: radius.md, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.md, gap: spacing.md },
 // Team Screen specific
   teamAddBtn: {
-    marginTop: 20,
+    marginTop: 16,
     backgroundColor: '#1d63d2',
-    height: 50,
-    borderRadius: 12,
+    height: 44,
+    borderRadius: 10,
   },
 dropdownBtn: {
     flex: 1,
-    height: 44,
+    height: 40,
     backgroundColor: '#f1f5f9',
-    borderRadius: 10,
+    borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     borderWidth: 1,
     borderColor: '#e2e8f0',
   },
 dropdownText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#334155',
   },
@@ -903,7 +903,7 @@ formSectionLabel: {
     marginBottom: 12,
   },
 roleSelectionSection: {
-    marginTop: 32,
+    marginTop: 24,
   },
 roleRow: {
     flexDirection: 'row',
@@ -921,8 +921,8 @@ roleSelectCardActive: {
     borderWidth: 2,
   },
 roleIconBox: {
-    width: 44,
-    height: 44,
+    width: 38,
+    height: 38,
     borderRadius: 8,
     backgroundColor: '#f1f5f9',
     alignItems: 'center',
@@ -933,7 +933,7 @@ roleIconBoxActive: {
     backgroundColor: '#eff6ff',
   },
 roleCardTitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#64748b',
   },
 roleCardTitleActive: {
@@ -949,13 +949,13 @@ roleCheckCircle: {
     right: 10,
   },
 permissionsCard: {
-    marginTop: 24,
-    padding: 16,
+    marginTop: 20,
+    padding: 14,
     backgroundColor: '#f8fafc',
-    gap: 12,
+    gap: 10,
   },
 permissionsTitle: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#0a49a8',
     marginBottom: 4,
   },
@@ -974,7 +974,7 @@ checkBoxActive: {
     borderColor: '#0a49a8',
   },
 checkLabel: {
-    fontSize: 15,
+    fontSize: 14,
     color: '#1e293b',
   },
 inviteToggleCard: {
@@ -996,7 +996,7 @@ inviteIconBox: {
   },
 inviteText: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14,
     color: '#334155',
   },
 toggleSwitch: {
@@ -1014,21 +1014,21 @@ toggleKnob: {
     alignSelf: 'flex-end',
   },
 formActions: {
-    marginTop: 32,
-    gap: 16,
+    marginTop: 24,
+    gap: 12,
   },
 addMemberBtn: {
     backgroundColor: '#0a49a8',
-    height: 54,
-    borderRadius: 12,
+    height: 48,
+    borderRadius: 10,
   },
 cancelLink: {
-    height: 44,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
 cancelLinkText: {
     color: '#64748b',
-    fontSize: 15,
+    fontSize: 14,
   },
 });

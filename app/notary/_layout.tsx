@@ -20,8 +20,8 @@ export default function NotaryLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
-          height: 72,
-          paddingBottom: 12,
+          height: 64,
+          paddingBottom: 8,
           paddingTop: 8,
           backgroundColor: colors.surface,
           borderTopWidth: 1,
@@ -30,7 +30,6 @@ export default function NotaryLayout() {
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
-          letterSpacing: 0.1,
         },
       }}
     >
