@@ -1,4 +1,4 @@
-import { StyleSheet, View, ScrollView, Pressable } from 'react-native';
+import { StyleSheet, View, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { ChevronLeft, Lock, Shield, Layout, Mail, MapPin } from 'lucide-react-native';
 import { AppText } from '@/components/common/AppText';
@@ -42,7 +42,7 @@ export function TermsConditionsScreen() {
           <AppText weight="bold" style={styles.sectionTitle}>2. Description of Services</AppText>
         </View>
         <AppText style={styles.sectionDesc}>
-          Closing Engage provides a secure, cloud-based environment ("The Ethereal Vault") for managing real estate title transactions, document collaboration, and automated escrow reporting.
+          {'Closing Engage provides a secure, cloud-based environment ("The Ethereal Vault") for managing real estate title transactions, document collaboration, and automated escrow reporting.'}
         </AppText>
 
         <View style={styles.serviceRow}>

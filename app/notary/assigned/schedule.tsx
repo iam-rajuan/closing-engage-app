@@ -1,3 +1,3 @@
-import { ScheduleClosingScreen } from '@/features/screens/AppScreens';
+import { ScheduleClosingScreen } from '@/features/notary/screens';
 
 export default ScheduleClosingScreen;

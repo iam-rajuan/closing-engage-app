@@ -1,2 +1,2 @@
-import { CreateOrderScreen } from '@/features/screens/company/CreateOrderScreen';
+import { CreateOrderScreen } from '@/features/company/orders/screens/CreateOrderScreen';
 export default CreateOrderScreen;

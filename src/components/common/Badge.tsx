@@ -1,15 +1,16 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { colors, radius, spacing } from '@/theme';
 import { AppText } from './AppText';
 
 type Props = {
   label: string;
   tone?: 'blue' | 'green' | 'orange' | 'red' | 'gray';
+  style?: StyleProp<ViewStyle>;
 };
 
-export function Badge({ label, tone = 'blue' }: Props) {
+export function Badge({ label, tone = 'blue', style }: Props) {
   return (
-    <View style={[styles.badge, styles[tone]]}>
+    <View style={[styles.badge, styles[tone], style]}>
       <AppText variant="caption" weight="bold" style={styles[`${tone}Text`]}>{label}</AppText>
     </View>
   );

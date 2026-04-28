@@ -16,7 +16,7 @@ import { Badge } from '@/components/common/Badge';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { OrderStatusTimeline } from '@/components/orders/OrderStatusTimeline';
 import { orderTimeline } from '@/constants/mockData';
-import { colors, spacing } from '@/theme';
+import { colors } from '@/theme';
 
 function DetailField({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
   return (
@@ -349,5 +349,4 @@ const styles = StyleSheet.create({
     marginVertical: 16 
   },
 });
-
 

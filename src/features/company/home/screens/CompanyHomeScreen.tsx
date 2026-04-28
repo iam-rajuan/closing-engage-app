@@ -10,7 +10,6 @@ import { SectionHeader } from '@/components/common/SectionHeader';
 import { OrderCard } from '@/components/orders/OrderCard';
 import { ProgressPipeline } from '@/components/orders/ProgressPipeline';
 import { companyOrders, pipeline } from '@/constants/mockData';
-import { colors } from '@/theme';
 
 export function CompanyHomeScreen() {
   const [refreshing, setRefreshing] = useState(false);

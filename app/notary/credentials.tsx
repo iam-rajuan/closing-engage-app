@@ -1,3 +1,3 @@
-import { CredentialsScreen } from '@/features/screens/AppScreens';
+import { CredentialsScreen } from '@/features/notary/screens';
 
 export default CredentialsScreen;

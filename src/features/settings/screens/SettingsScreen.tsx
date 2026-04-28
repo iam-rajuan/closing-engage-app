@@ -4,13 +4,7 @@ import { router } from 'expo-router';
 import { 
   ChevronRight, 
   Edit2, 
-  Shield, 
-  Bell, 
   LogOut, 
-  User, 
-  Building2, 
-  Lock,
-  Info
 } from 'lucide-react-native';
 import { AppHeader } from '@/components/common/AppHeader';
 import { AppText } from '@/components/common/AppText';
@@ -20,7 +14,7 @@ import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { Badge } from '@/components/common/Badge';
 import { ToggleRow } from '@/components/settings/ToggleRow';
 import { useAuthStore } from '@/features/auth/auth.store';
-import { colors, shadows, spacing } from '@/theme';
+import { shadows } from '@/theme';
 
 function SectionHeading({ title }: { title: string }) {
   return (
@@ -45,7 +39,6 @@ function InputField({ label, value, placeholder, secureTextEntry }: any) {
 
 export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
   const logout = useAuthStore((state) => state.logout);
-  const user = useAuthStore((state) => state.user);
 
   const handleLogout = async () => {
     await logout();

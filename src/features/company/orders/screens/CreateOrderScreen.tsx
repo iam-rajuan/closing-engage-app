@@ -21,7 +21,7 @@ import { AppInput } from '@/components/common/AppInput';
 import { AppText } from '@/components/common/AppText';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { UploadBox } from '@/components/documents/UploadBox';
-import { colors, shadows, spacing } from '@/theme';
+import { colors } from '@/theme';
 import { OrderForm, orderSchema } from '@/utils/validation';
 
 export function CreateOrderScreen() {
@@ -298,5 +298,4 @@ const styles = StyleSheet.create({
     marginTop: 32 
   },
 });
-
 

@@ -20,4 +20,11 @@ export const shadows = {
     shadowOffset: { width: 0, height: 1 },
     elevation: 1,
   },
+  lg: {
+    shadowColor: '#0f172a',
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 5,
+  },
 };

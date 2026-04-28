@@ -1,2 +1,2 @@
-import { CompanyHomeScreen } from '@/features/screens/company/CompanyHomeScreen';
+import { CompanyHomeScreen } from '@/features/company/home/screens/CompanyHomeScreen';
 export default CompanyHomeScreen;

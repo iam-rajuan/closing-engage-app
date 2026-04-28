@@ -18,7 +18,7 @@ import { AppText } from '@/components/common/AppText';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { OrderCard } from '@/components/orders/OrderCard';
 import { companyOrders } from '@/constants/mockData';
-import { colors, shadows } from '@/theme';
+import { colors } from '@/theme';
 
 export function CompanyOrdersScreen() {
   const [refreshing, setRefreshing] = useState(false);

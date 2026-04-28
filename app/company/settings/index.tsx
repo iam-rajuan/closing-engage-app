@@ -1,4 +1,4 @@
-import { SettingsForm } from '@/features/screens/SettingsScreen';
+import { SettingsForm } from '@/features/settings/screens/SettingsScreen';
 export default function Settings() {
   return <SettingsForm role="company" />;
 }

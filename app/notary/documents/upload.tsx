@@ -1,3 +1,3 @@
-import { UploadDocumentsScreen } from '@/features/screens/AppScreens';
+import { UploadDocumentsScreen } from '@/features/notary/screens';
 
 export default UploadDocumentsScreen;

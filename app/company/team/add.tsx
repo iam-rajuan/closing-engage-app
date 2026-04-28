@@ -1,3 +1,3 @@
-import { AddMemberScreen } from '@/features/screens/AppScreens';
+import { AddMemberScreen } from '@/features/company/team/screens/TeamScreens';
 
 export default AddMemberScreen;

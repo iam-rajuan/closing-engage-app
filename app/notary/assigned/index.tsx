@@ -1,3 +1,3 @@
-import { NotaryAssignedScreen } from '@/features/screens/AppScreens';
+import { NotaryAssignedScreen } from '@/features/notary/screens';
 
 export default NotaryAssignedScreen;

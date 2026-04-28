@@ -1,3 +1,3 @@
-import { ChatScreen } from '@/features/screens/AppScreens';
+import { ChatScreen } from '@/features/notary/screens';
 
 export default ChatScreen;

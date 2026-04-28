@@ -1,3 +1,3 @@
-import { LoginScreen } from '@/features/screens/AppScreens';
+import { LoginScreen } from '@/features/auth/screens/AuthScreens';
 
 export default LoginScreen;

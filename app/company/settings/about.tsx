@@ -1,2 +1,2 @@
-import { AboutScreen } from '@/features/screens/AboutScreen';
+import { AboutScreen } from '@/features/settings/screens/AboutScreen';
 export default AboutScreen;

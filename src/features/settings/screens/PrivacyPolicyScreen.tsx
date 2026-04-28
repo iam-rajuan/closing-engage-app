@@ -1,10 +1,10 @@
-import { StyleSheet, View, ScrollView, Pressable } from 'react-native';
+import { StyleSheet, View, Pressable } from 'react-native';
 import { router } from 'expo-router';
-import { ChevronLeft, ShieldCheck, Mail, MapPin, Phone } from 'lucide-react-native';
+import { ChevronLeft, ShieldCheck, Mail } from 'lucide-react-native';
 import { AppText } from '@/components/common/AppText';
 import { AppCard } from '@/components/common/AppCard';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
-import { colors, spacing } from '@/theme';
+import { colors } from '@/theme';
 
 export function PrivacyPolicyScreen() {
   return (
