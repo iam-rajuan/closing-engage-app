@@ -49,7 +49,7 @@ export default function NotaryLayout() {
         }}
       />
       <Tabs.Screen
-        name="documents/index"
+        name="documents"
         options={{
           title: 'Documents',
           tabBarIcon: ({ color }) => <FileUp color={color} size={22} />,
@@ -69,7 +69,6 @@ export default function NotaryLayout() {
           tabBarIcon: ({ color }) => <Settings color={color} size={22} />,
         }}
       />
-      <Tabs.Screen name="documents/upload" options={{ href: null }} />
     </Tabs>
   );
 }

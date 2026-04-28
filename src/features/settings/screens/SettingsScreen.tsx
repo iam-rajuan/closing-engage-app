@@ -202,7 +202,7 @@ export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
         <Pressable
           style={s.linkItem}
           onPress={() =>
-            router.push(isNotary ? '/notary/settings' : '/company/settings/privacy')
+            router.push(isNotary ? '/notary/settings/privacy' : '/company/settings/privacy')
           }
         >
           <AppText weight="bold" style={s.linkText}>Privacy Policy</AppText>
@@ -212,10 +212,20 @@ export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
         <Pressable
           style={s.linkItem}
           onPress={() =>
-            router.push(isNotary ? '/notary/settings' : '/company/settings/terms')
+            router.push(isNotary ? '/notary/settings/terms' : '/company/settings/terms')
           }
         >
           <AppText weight="bold" style={s.linkText}>Terms & Conditions</AppText>
+          <ChevronRight color="#94a3b8" size={20} />
+        </Pressable>
+        <View style={s.divider} />
+        <Pressable
+          style={s.linkItem}
+          onPress={() =>
+            router.push(isNotary ? '/notary/settings/about' : '/company/settings/about')
+          }
+        >
+          <AppText weight="bold" style={s.linkText}>About</AppText>
           <ChevronRight color="#94a3b8" size={20} />
         </Pressable>
       </View>
