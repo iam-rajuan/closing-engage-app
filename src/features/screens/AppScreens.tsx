@@ -48,6 +48,8 @@ import { OrderCard } from '@/components/orders/OrderCard';
 import { OrderStatusTimeline } from '@/components/orders/OrderStatusTimeline';
 import { ProgressPipeline } from '@/components/orders/ProgressPipeline';
 import { ToggleRow } from '@/components/settings/ToggleRow';
+import { SettingsForm } from './SettingsScreen';
+
 import { TeamMemberCard } from '@/components/team/TeamMemberCard';
 import {
   companyOrders,
@@ -1084,6 +1086,37 @@ export function CompanySettingsScreen() {
   return <SettingsForm role="company" />;
 }
 
+function StatGrid({ stats }: { stats: { label: string; value: string }[] }) {
+  return (
+    <View style={notaryStyles.statGrid}>
+      {stats.map((stat, i) => (
+        <AppCard key={i} style={notaryStyles.statCard}>
+          <AppText variant="caption" muted weight="bold" style={{ fontSize: 9 }}>{stat.label.toUpperCase()}</AppText>
+          <AppText variant="subtitle" weight="bold" style={notaryStyles.statValue}>{stat.value}</AppText>
+        </AppCard>
+      ))}
+    </View>
+  );
+}
+
+const notaryStyles = StyleSheet.create({
+  statGrid: {
+    flexDirection: 'row',
+    gap: 10,
+    marginVertical: 16,
+  },
+  statCard: {
+    flex: 1,
+    padding: 12,
+    alignItems: 'center',
+    gap: 2,
+  },
+  statValue: {
+    fontSize: 18,
+    color: '#0a49a8',
+  },
+});
+
 export function NotaryHomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = () => {
@@ -1091,11 +1124,18 @@ export function NotaryHomeScreen() {
     setTimeout(() => setRefreshing(false), 1200);
   };
   return (
-    <ScreenContainer refreshing={refreshing} onRefresh={handleRefresh}>
+    <ScreenContainer refreshing={refreshing} onRefresh={handleRefresh} contentStyle={{ paddingBottom: 20 }}>
       <AppHeader name="Sarah Miller" onProfilePress={() => router.push('/notary/settings')} />
-      <AppText variant="subtitle">Assigned Workload</AppText>
-      <AppText muted>Manage your active signing appointments and document verifications from a central atrium.</AppText>
-      <AppButton title="Upload Documents" icon={<Upload color={colors.white} size={18} />} onPress={() => router.push('/notary/documents/upload')} />
+      <View style={{ marginTop: 8 }}>
+        <AppText variant="subtitle">Assigned Workload</AppText>
+        <AppText muted style={{ fontSize: 13, marginTop: 2 }}>Manage your active signing appointments from a central atrium.</AppText>
+      </View>
+      <AppButton 
+        title="Upload Documents" 
+        icon={<Upload color={colors.white} size={18} />} 
+        onPress={() => router.push('/notary/documents/upload')} 
+        style={{ marginTop: 16 }}
+      />
       <StatGrid stats={[{ label: 'Total Assigned', value: '24' }, { label: 'In Progress', value: '08' }, { label: 'Completed', value: '13' }]} />
       <SectionHeader title="Assigned Orders" action="LIVE UPDATES" />
       {notaryOrders.map((order) => <OrderCard key={order.id} order={order} href={`/notary/assigned/${order.id}` as Href} />)}
@@ -1195,52 +1235,7 @@ export function NotarySettingsScreen() {
   return <SettingsForm role="notary" />;
 }
 
-function SettingsForm({ role }: { role: 'company' | 'notary' }) {
-  const logout = useAuthStore((state) => state.logout);
-  const isCompany = role === 'company';
-  const signOut = async () => {
-    await logout();
-    router.replace('/onboarding');
-  };
 
-  return (
-    <ScreenContainer>
-      <AppHeader 
-        title={isCompany ? 'Alex Thompson' : 'Sarah Miller'} 
-        subtitle={isCompany ? 'Estate Flux Title' : 'sarah.miller@realtygroup.com'} 
-        name={isCompany ? 'Alex Thompson' : 'Sarah Miller'}
-        onProfilePress={() => {}} 
-      />
-      <AppButton title="Edit Profile" variant="secondary" />
-      <AppCard style={styles.formCard}>
-        <AppText weight="bold">Personal Information</AppText>
-        <AppInput label="Full Name" value={isCompany ? 'Alex Thompson' : 'Sarah Miller'} />
-        <AppInput label="Email Address" value={isCompany ? 'alex.t@estateflux.com' : 'sarah.miller@realtygroup.com'} />
-        <AppInput label="Phone Number" value={isCompany ? '+1 (555) 902-4412' : '(512) 555-0198'} />
-      </AppCard>
-      <AppCard style={styles.formCard}>
-        <AppText weight="bold">{isCompany ? 'Company Information' : 'Professional Details'}</AppText>
-        {isCompany ? (
-          <>
-            <AppInput label="Company Name" value="Estate Flux Title" />
-            <AppInput label="Company Email" value="ops@estateflux.com" />
-            <AppInput label="Business Address" value="782 Commerce Blvd, Austin TX" />
-          </>
-        ) : (
-          <>
-            <AppInput label="License Number" value="TX-987654321" />
-            <AppInput label="Commission Expiry" value="08/24/2026" />
-            <AppInput label="Service Area" value="Austin, TX & surrounding Travis County" />
-          </>
-        )}
-      </AppCard>
-      <AppCard style={styles.formCard}><AppText weight="bold">Security Settings</AppText><AppInput label="Current Password" value="********" secureTextEntry /><AppInput label="New Password" placeholder="Enter new password" /><AppInput label="Confirm New Password" placeholder="Confirm new password" /><AppButton title="Update Password" variant="secondary" /></AppCard>
-      <AppCard style={styles.formCard}><AppText weight="bold">Notification Preferences</AppText><ToggleRow label="Email Notifications" /><ToggleRow label="Order Updates" /><ToggleRow label="Document Updates" /></AppCard>
-      {isCompany ? <View style={styles.actionRow}><AppButton title="Cancel" variant="secondary" /><AppButton title="Save Changes" /></View> : null}
-      <AppButton title="Sign Out" variant="danger" onPress={() => void signOut()} />
-    </ScreenContainer>
-  );
-}
 
 const styles = StyleSheet.create({
   onboardingScreen: { flex: 1, backgroundColor: colors.background },
