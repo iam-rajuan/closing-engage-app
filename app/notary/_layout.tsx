@@ -16,12 +16,10 @@ export default function NotaryLayout() {
       }}
     >
       <Tabs.Screen name="home" options={{ title: 'Home', tabBarIcon: ({ color }) => <Home color={color} size={20} /> }} />
-      <Tabs.Screen name="assigned/index" options={{ title: 'Assigned', tabBarIcon: ({ color }) => <BriefcaseBusiness color={color} size={20} /> }} />
+      <Tabs.Screen name="assigned" options={{ title: 'Assigned', tabBarIcon: ({ color }) => <BriefcaseBusiness color={color} size={20} /> }} />
       <Tabs.Screen name="documents/index" options={{ title: 'Documents', tabBarIcon: ({ color }) => <FileUp color={color} size={20} /> }} />
       <Tabs.Screen name="credentials" options={{ title: 'Notary', tabBarIcon: ({ color }) => <BadgeCheck color={color} size={20} /> }} />
       <Tabs.Screen name="settings" options={{ title: 'Settings', tabBarIcon: ({ color }) => <Settings color={color} size={20} /> }} />
-      <Tabs.Screen name="assigned/[id]" options={{ href: null }} />
-      <Tabs.Screen name="assigned/schedule" options={{ href: null }} />
       <Tabs.Screen name="documents/upload" options={{ href: null }} />
       <Tabs.Screen name="chat" options={{ href: null }} />
     </Tabs>
