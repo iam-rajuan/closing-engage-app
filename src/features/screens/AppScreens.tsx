@@ -1129,17 +1129,17 @@ function NotaryOrderCard({ order }: { order: any }) {
 
       <View style={notaryStyles.orderInfoRow}>
         <View style={notaryStyles.infoItem}>
-          <MapPin size={15} color="#0a49a8" />
+          <MapPin size={16} color="#0a49a8" />
           <View>
-            <AppText variant="caption" muted weight="bold" style={{ fontSize: 9 }}>LOCATION</AppText>
-            <AppText weight="bold" style={{ color: '#0f172a', fontSize: 13 }}>Denver, CO</AppText>
+            <AppText variant="caption" muted weight="bold" style={{ fontSize: 10 }}>LOCATION</AppText>
+            <AppText weight="bold" style={{ color: '#0f172a', fontSize: 14 }}>Denver, CO</AppText>
           </View>
         </View>
         <View style={notaryStyles.infoItem}>
-          <Calendar size={15} color="#0a49a8" />
+          <Calendar size={16} color="#0a49a8" />
           <View>
-            <AppText variant="caption" muted weight="bold" style={{ fontSize: 9 }}>DATE & TIME</AppText>
-            <AppText weight="bold" style={{ color: '#0f172a', fontSize: 13 }}>{order.signingDate}</AppText>
+            <AppText variant="caption" muted weight="bold" style={{ fontSize: 10 }}>DATE & TIME</AppText>
+            <AppText weight="bold" style={{ color: '#0f172a', fontSize: 14 }}>{order.signingDate}</AppText>
           </View>
         </View>
       </View>
@@ -1152,7 +1152,7 @@ function NotaryOrderCard({ order }: { order: any }) {
               <AppText variant="caption" weight="bold" style={{ color: '#ef4444' }}>Action Required</AppText>
             </View>
           ) : order.status === 'Assigned' ? (
-            <AppText weight="bold" style={{ color: '#64748b', fontSize: 11 }}>Pending initial signature</AppText>
+            <AppText weight="bold" style={{ color: '#64748b', fontSize: 12 }}>Pending initial signature</AppText>
           ) : (
             <View style={notaryStyles.avatarGroup}>
               <Image source={{ uri: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=64&auto=format&fit=crop' }} style={notaryStyles.miniAvatar} />

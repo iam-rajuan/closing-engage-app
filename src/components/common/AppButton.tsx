@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View, ViewStyle, TextStyle } from 'react-native';
 import { colors, radius, shadows, spacing, typography } from '@/theme';
 import { AppText } from './AppText';
 
@@ -10,9 +10,11 @@ type Props = {
   disabled?: boolean;
   loading?: boolean;
   icon?: ReactNode;
+  style?: ViewStyle | ViewStyle[];
+  textStyle?: TextStyle;
 };
 
-export function AppButton({ title, onPress, variant = 'primary', disabled, loading, icon }: Props) {
+export function AppButton({ title, onPress, variant = 'primary', disabled, loading, icon, style, textStyle }: Props) {
   return (
     <Pressable
       accessibilityRole="button"
@@ -22,6 +24,7 @@ export function AppButton({ title, onPress, variant = 'primary', disabled, loadi
         styles.button,
         styles[variant],
         (pressed || disabled) && styles.pressed,
+        style,
       ]}
     >
       {loading ? (
@@ -29,7 +32,7 @@ export function AppButton({ title, onPress, variant = 'primary', disabled, loadi
       ) : (
         <View style={styles.content}>
           {icon}
-          <AppText style={[styles.text, variant !== 'primary' && styles.secondaryText]}>{title}</AppText>
+          <AppText style={[styles.text, variant !== 'primary' && styles.secondaryText, textStyle]}>{title}</AppText>
         </View>
       )}
     </Pressable>
