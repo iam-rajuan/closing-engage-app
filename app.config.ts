@@ -28,7 +28,7 @@ const config: ExpoConfig = {
     edgeToEdgeEnabled: true,
     predictiveBackGestureEnabled: false,
   },
-  plugins: ['expo-router', 'expo-secure-store', 'expo-document-picker', 'expo-image-picker'],
+  plugins: ['expo-router', 'expo-secure-store', 'expo-document-picker', 'expo-image-picker', 'expo-font'],
   extra: {
     apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'https://api.closingengage.example',
     environment: process.env.EXPO_PUBLIC_ENV ?? 'development',

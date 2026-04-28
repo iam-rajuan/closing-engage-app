@@ -5,25 +5,64 @@ import { useAuthStore } from '@/features/auth/auth.store';
 
 export default function CompanyLayout() {
   const user = useAuthStore((state) => state.user);
+  
   if (!user || user.role !== 'company') return <Redirect href="/auth/login" />;
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: { height: 64, paddingBottom: 8, paddingTop: 8, backgroundColor: colors.surface },
+        tabBarStyle: { 
+          height: 64, 
+          paddingBottom: 8, 
+          paddingTop: 8, 
+          backgroundColor: colors.surface,
+          borderTopWidth: 1,
+          borderTopColor: '#f1f5f9',
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+        },
       }}
     >
-      <Tabs.Screen name="home" options={{ title: 'Home', tabBarIcon: ({ color }) => <Home color={color} size={20} /> }} />
-      <Tabs.Screen name="orders/index" options={{ title: 'Orders', tabBarIcon: ({ color }) => <BriefcaseBusiness color={color} size={20} /> }} />
-      <Tabs.Screen name="documents/index" options={{ title: 'Documents', tabBarIcon: ({ color }) => <FileText color={color} size={20} /> }} />
-      <Tabs.Screen name="team/index" options={{ title: 'Team', tabBarIcon: ({ color }) => <Users color={color} size={20} /> }} />
-      <Tabs.Screen name="settings" options={{ title: 'Settings', tabBarIcon: ({ color }) => <Settings color={color} size={20} /> }} />
-      <Tabs.Screen name="orders/create" options={{ href: null }} />
-      <Tabs.Screen name="orders/[id]" options={{ href: null }} />
-      <Tabs.Screen name="documents/[id]" options={{ href: null }} />
-      <Tabs.Screen name="team/add" options={{ href: null }} />
+      <Tabs.Screen 
+        name="home" 
+        options={{ 
+          title: 'Home', 
+          tabBarIcon: ({ color }) => <Home color={color} size={22} /> 
+        }} 
+      />
+      <Tabs.Screen 
+        name="orders" 
+        options={{ 
+          title: 'Orders', 
+          tabBarIcon: ({ color }) => <BriefcaseBusiness color={color} size={22} /> 
+        }} 
+      />
+      <Tabs.Screen 
+        name="documents" 
+        options={{ 
+          title: 'Documents', 
+          tabBarIcon: ({ color }) => <FileText color={color} size={22} /> 
+        }} 
+      />
+      <Tabs.Screen 
+        name="team" 
+        options={{ 
+          title: 'Team', 
+          tabBarIcon: ({ color }) => <Users color={color} size={22} /> 
+        }} 
+      />
+      <Tabs.Screen 
+        name="settings" 
+        options={{ 
+          title: 'Settings', 
+          tabBarIcon: ({ color }) => <Settings color={color} size={22} /> 
+        }} 
+      />
     </Tabs>
   );
 }

@@ -1,6 +1,6 @@
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { Bell, ChevronLeft } from 'lucide-react-native';
-import { router } from 'expo-router';
+import { router, useNavigation } from 'expo-router';
 import { colors, spacing } from '@/theme';
 import { BrandLogo } from './BrandLogo';
 import { AppText } from './AppText';
@@ -12,21 +12,35 @@ type Props = {
   avatar?: string;
   name?: string;
   onProfilePress?: () => void;
+  centerTitle?: boolean;
 };
 
-export function AppHeader({ title, subtitle, back, avatar, name = "Alex Thompson", onProfilePress }: Props) {
+export function AppHeader({ title, subtitle, back, avatar, name = "Alex Thompson", onProfilePress, centerTitle }: Props) {
+  const navigation = useNavigation();
+  
   const initials = name
     .split(' ')
     .map((n) => n[0])
     .join('')
     .toUpperCase();
 
-  const handlePress = () => {
+  const handleProfilePress = () => {
     if (onProfilePress) {
       onProfilePress();
     } else {
-      // Default navigation to profile/settings
       router.push('/company/settings');
+    }
+  };
+
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      router.back();
+    } else {
+      if (title?.toLowerCase().includes('order')) {
+        router.replace('/company/orders');
+      } else {
+        router.replace('/company/home');
+      }
     }
   };
 
@@ -34,35 +48,48 @@ export function AppHeader({ title, subtitle, back, avatar, name = "Alex Thompson
 
   return (
     <View style={styles.header}>
+      {/* Centered Title Layer */}
+      {centerTitle && title ? (
+        <View style={styles.centerTitleContainer}>
+          <AppText weight="bold" style={styles.centeredTitleText}>{title}</AppText>
+          {subtitle ? <AppText variant="caption" muted numberOfLines={1}>{subtitle}</AppText> : null}
+        </View>
+      ) : null}
+
       <View style={styles.left}>
         {back ? (
-          <Pressable onPress={() => router.back()} style={styles.iconButton}>
-            <ChevronLeft color={colors.primary} size={20} />
+          <Pressable onPress={handleBack} style={styles.iconButton}>
+            <ChevronLeft color={colors.primary} size={24} strokeWidth={2.5} />
           </Pressable>
         ) : (
           <BrandLogo width={124} />
         )}
-        <View>
-          {title ? <AppText variant="subtitle" style={styles.headerTitle}>{title}</AppText> : null}
-          {subtitle ? <AppText variant="caption" muted>{subtitle}</AppText> : null}
-        </View>
-      </View>
-      <View style={styles.right}>
-        <Bell color={colors.textMuted} size={22} />
-        <Pressable onPress={handlePress} style={styles.avatarWrapper}>
-          <View style={styles.avatarContainer}>
-            {avatar || defaultAvatar ? (
-              <Image 
-                source={{ uri: avatar || defaultAvatar }} 
-                style={styles.avatar} 
-              />
-            ) : (
-              <View style={styles.initialsContainer}>
-                <AppText weight="bold" style={styles.initialsText}>{initials}</AppText>
-              </View>
-            )}
+        {!centerTitle && (
+          <View style={styles.titleGroup}>
+            {title ? <AppText variant="subtitle" style={styles.headerTitle} numberOfLines={1}>{title}</AppText> : null}
+            {subtitle ? <AppText variant="caption" muted numberOfLines={1}>{subtitle}</AppText> : null}
           </View>
-        </Pressable>
+        )}
+      </View>
+
+      <View style={styles.right}>
+        {!back && <Bell color={colors.textMuted} size={22} />}
+        {!centerTitle && (
+          <Pressable onPress={handleProfilePress} style={styles.avatarWrapper}>
+            <View style={styles.avatarContainer}>
+              {avatar || defaultAvatar ? (
+                <Image 
+                  source={{ uri: avatar || defaultAvatar }} 
+                  style={styles.avatar} 
+                />
+              ) : (
+                <View style={styles.initialsContainer}>
+                  <AppText weight="bold" style={styles.initialsText}>{initials}</AppText>
+                </View>
+              )}
+            </View>
+          </Pressable>
+        )}
       </View>
     </View>
   );
@@ -74,29 +101,57 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 0,
-    height: 48,
+    height: 56, // Increased height for premium feel
+    backgroundColor: 'transparent',
+    position: 'relative',
   },
   left: {
+    flex: 1,
     alignItems: 'center',
     flexDirection: 'row',
-    gap: spacing.sm,
+    gap: spacing.xs,
+    zIndex: 2,
+  },
+  centerTitleContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  centeredTitleText: {
+    fontSize: 17,
+    color: '#0a49a8',
+    letterSpacing: -0.3,
+  },
+  titleGroup: {
+    flex: 1,
+    justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
+    color: '#0f172a',
   },
   right: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: spacing.md,
+    paddingLeft: spacing.sm,
+    zIndex: 2,
+    minWidth: 40,
+    justifyContent: 'flex-end',
   },
   avatarWrapper: {
     padding: 2,
   },
   avatarContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16, // Circle for modern look
+    width: 34,
+    height: 34,
+    borderRadius: 10, // More squared/modern look
     overflow: 'hidden',
     backgroundColor: '#eff6ff',
     alignItems: 'center',
@@ -120,9 +175,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   iconButton: {
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
+    marginLeft: -4,
   },
 });
+

@@ -1,3 +1,2 @@
-import { CreateOrderScreen } from '@/features/screens/AppScreens';
-
+import { CreateOrderScreen } from '@/features/screens/company/CreateOrderScreen';
 export default CreateOrderScreen;

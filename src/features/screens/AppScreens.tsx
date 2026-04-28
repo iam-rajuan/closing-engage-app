@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router, type Href } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
-import { BackHandler, Image, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { BackHandler, Image, Pressable, StyleSheet, useWindowDimensions, View, ScrollView } from 'react-native';
 import {
   Briefcase,
   CheckCircle2,
@@ -18,6 +18,18 @@ import {
   Upload,
   UserPlus,
   Zap,
+  Search,
+  SlidersHorizontal,
+  Calendar,
+  ChevronLeft,
+  Info,
+  Building,
+  Clock,
+  ArrowRight,
+  ChevronDown,
+  X,
+  Star,
+  MapPin,
 } from 'lucide-react-native';
 import { AppButton } from '@/components/common/AppButton';
 import { BrandLogo } from '@/components/common/BrandLogo';
@@ -51,41 +63,15 @@ import { useAuthStore } from '@/features/auth/auth.store';
 import { colors, radius, shadows, spacing } from '@/theme';
 import { LoginForm, MemberForm, OrderForm, loginSchema, memberSchema, orderSchema } from '@/utils/validation';
 
-function LogoMark() {
-  return <BrandLogo width={156} />;
-}
-
-function FieldRow({ label, value }: { label: string; value: string }) {
+// Helper for detail field in details page
+function DetailField({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
   return (
-    <View style={styles.fieldRow}>
-      <AppText variant="caption" muted>{label}</AppText>
-      <AppText weight="semibold">{value}</AppText>
-    </View>
-  );
-}
-
-function StatGrid({ stats }: { stats: { label: string; value: string }[] }) {
-  const getIcon = (label: string) => {
-    switch (label.toUpperCase()) {
-      case 'TOTAL ORDERS': return <FileText color="#3b82f6" size={18} />;
-      case 'ACTIVE ORDERS': return <Briefcase color="#3b82f6" size={18} />;
-      case 'PENDING REVIEW': return <Hourglass color="#f59e0b" size={18} />;
-      case 'COMPLETED': return <CheckCircle2 color="#10b981" size={18} />;
-      default: return <FileText color="#3b82f6" size={18} />;
-    }
-  };
-
-  return (
-    <View style={styles.statGrid}>
-      {stats.map((stat) => (
-        <AppCard key={stat.label} style={styles.statCard}>
-          <View style={styles.statIconContainer}>
-            {getIcon(stat.label)}
-          </View>
-          <AppText variant="caption" muted style={styles.statLabel}>{stat.label.toUpperCase()}</AppText>
-          <AppText style={styles.statValue}>{stat.value}</AppText>
-        </AppCard>
-      ))}
+    <View style={styles.detailField}>
+      <AppText variant="caption" muted style={styles.detailLabel}>{label}</AppText>
+      <View style={styles.detailValueRow}>
+        {icon && <View style={styles.detailIcon}>{icon}</View>}
+        <AppText weight="bold" style={styles.detailValue}>{value}</AppText>
+      </View>
     </View>
   );
 }
@@ -269,7 +255,7 @@ export function LoginScreen() {
   return (
     <ScreenContainer contentStyle={styles.authScreen}>
       <View style={styles.centerBlock}>
-        <LogoMark />
+        <BrandLogo width={156} />
         <AppText style={styles.loginTitle}>Welcome back</AppText>
         <AppText muted>Your soft space is waiting for you.</AppText>
       </View>
@@ -319,7 +305,29 @@ export function CompanyHomeScreen() {
         <AppText variant="caption" muted style={styles.overviewLabel}>Overview</AppText>
         <AppText variant="subtitle" style={styles.greetingText}>Good morning, Alex.</AppText>
       </View>
-      <StatGrid stats={companyStats} />
+      
+      <View style={styles.ordersStatsGrid}>
+        <AppCard style={styles.statCardLarge}>
+          <View style={styles.statHeader}>
+            <AppText variant="caption" muted style={styles.statTitle}>Total Orders</AppText>
+            <View style={styles.statIconBadge}>
+              <FileText color={colors.primary} size={18} />
+            </View>
+          </View>
+          <AppText style={styles.statValueLarge}>1,248</AppText>
+        </AppCard>
+        <View style={styles.statRowSmall}>
+          <AppCard style={styles.statCardSmall}>
+            <AppText variant="caption" muted style={styles.statTitle}>PENDING REVIEW</AppText>
+            <AppText style={styles.statValueSmall}>56</AppText>
+          </AppCard>
+          <AppCard style={styles.statCardSmall}>
+            <AppText variant="caption" muted style={styles.statTitle}>COMPLETED TODAY</AppText>
+            <AppText style={styles.statValueSmall}>850</AppText>
+          </AppCard>
+        </View>
+      </View>
+
       <ProgressPipeline items={pipeline} />
       <SectionHeader title="Recent Orders" action="View All" style={styles.homeSection} />
       <View style={styles.orderList}>
@@ -338,57 +346,224 @@ export function CompanyOrdersScreen() {
 
   return (
     <ScreenContainer refreshing={refreshing} onRefresh={handleRefresh}>
-      <AppHeader title="Orders" subtitle="Manage and track all your closing orders" onProfilePress={() => router.push('/company/settings')} />
-      <AppButton title="Create New Order" icon={<Plus color={colors.white} size={18} />} onPress={() => router.push('/company/orders/create')} />
-      <StatGrid stats={[{ label: 'Total Orders', value: '1,248' }, { label: 'Pending Review', value: '56' }, { label: 'Completed Today', value: '850' }]} />
-      <AppInput placeholder="Search orders..." />
-      <View style={styles.filterRow}><Badge label="Status" tone="gray" /><Badge label="Date Range" tone="gray" /><Badge label="Newest" tone="gray" /></View>
-      {companyOrders.map((order) => <OrderCard key={order.id} order={order} href={`/company/orders/${order.id}` as Href} />)}
-      <View style={styles.pagination}><Badge label="1" /><Badge label="2" tone="gray" /><Badge label="3" tone="gray" /></View>
+      <AppHeader onProfilePress={() => router.push('/company/settings')} />
+      <View style={styles.pageHeader}>
+        <AppText style={styles.pageTitle}>Orders</AppText>
+        <AppText muted style={styles.pageSubtitle}>Manage and track all your closing orders</AppText>
+      </View>
+
+      <AppButton 
+        title="Create New Order" 
+        icon={<Plus color={colors.white} size={18} />} 
+        onPress={() => router.push('/company/orders/create')} 
+        style={styles.createBtn}
+      />
+
+      <View style={styles.ordersStatsGrid}>
+        <AppCard style={styles.statCardLarge}>
+          <View style={styles.statHeader}>
+            <AppText variant="caption" muted style={styles.statTitle}>Total Orders</AppText>
+            <View style={styles.statIconBadge}>
+              <FileText color={colors.primary} size={18} />
+            </View>
+          </View>
+          <AppText style={styles.statValueLarge}>1,248</AppText>
+        </AppCard>
+        <View style={styles.statRowSmall}>
+          <AppCard style={styles.statCardSmall}>
+            <AppText variant="caption" muted style={styles.statTitle}>PENDING REVIEW</AppText>
+            <AppText style={styles.statValueSmall}>56</AppText>
+          </AppCard>
+          <AppCard style={styles.statCardSmall}>
+            <AppText variant="caption" muted style={styles.statTitle}>COMPLETED TODAY</AppText>
+            <AppText style={styles.statValueSmall}>850</AppText>
+          </AppCard>
+        </View>
+      </View>
+
+      <View style={styles.searchContainer}>
+        <Search color="#94a3b8" size={18} style={styles.searchIcon} />
+        <AppInput 
+          placeholder="Search orders..." 
+          style={styles.searchInput} 
+          containerStyle={styles.searchBox} 
+        />
+      </View>
+
+      <View style={styles.filterRow}>
+        <Pressable style={styles.filterBtn}>
+          <SlidersHorizontal color="#64748b" size={14} />
+          <AppText style={styles.filterBtnText}>Status</AppText>
+        </Pressable>
+        <Pressable style={styles.filterBtn}>
+          <Calendar color="#64748b" size={14} />
+          <AppText style={styles.filterBtnText}>Date Range</AppText>
+        </Pressable>
+        <Pressable style={styles.filterBtn}>
+          <SlidersHorizontal color="#64748b" size={14} />
+          <AppText style={styles.filterBtnText}>Newest</AppText>
+        </Pressable>
+      </View>
+
+      <View style={styles.orderList}>
+        {companyOrders.map((order) => <OrderCard key={order.id} order={order} href={`/company/orders/${order.id}` as Href} />)}
+      </View>
+
+      <View style={styles.paginationContainer}>
+        <Pressable style={styles.pageArrow}><ChevronLeft color="#64748b" size={18} /></Pressable>
+        <View style={styles.pageNumbers}>
+          <View style={[styles.pageNumber, styles.pageActive]}><AppText style={styles.pageTextActive}>1</AppText></View>
+          <View style={styles.pageNumber}><AppText style={styles.pageText}>2</AppText></View>
+          <View style={styles.pageNumber}><AppText style={styles.pageText}>3</AppText></View>
+        </View>
+        <Pressable style={styles.pageArrow}><ArrowRight color="#64748b" size={18} /></Pressable>
+      </View>
     </ScreenContainer>
   );
 }
 
 export function CreateOrderScreen() {
+  const [refreshing, setRefreshing] = useState(false);
+  const [priority, setPriority] = useState<'normal' | 'urgent'>('normal');
+  const [scanBacks, setScanBacks] = useState<'yes' | 'no'>('no');
+
   const { control, handleSubmit, formState: { errors } } = useForm<OrderForm>({
     resolver: zodResolver(orderSchema),
     defaultValues: { title: '', clientName: '', propertyAddress: '', city: '', state: 'TX', zip: '', signingDate: '', loanType: 'Refinance', requirements: '', preferredNotary: '', instructions: '' },
   });
+
   const submit = handleSubmit(() => router.replace('/company/orders'));
+
   const input = (name: keyof OrderForm, label: string, placeholder?: string) => (
     <Controller control={control} name={name} render={({ field }) => <AppInput label={label} value={String(field.value ?? '')} onChangeText={field.onChange} placeholder={placeholder} error={errors[name]?.message} />} />
   );
+
   return (
-    <ScreenContainer>
+    <ScreenContainer refreshing={refreshing} onRefresh={() => {}}>
       <AppHeader back title="Create New Order" onProfilePress={() => router.push('/company/settings')} />
+      
+      {/* Section 1: Order Information */}
       <AppCard style={styles.formCard}>
-        <AppText weight="bold">Order Information</AppText>
-        {input('title', 'Order Title', 'e.g. Smith Refinance')}
-        {input('clientName', 'Client Name', 'Full legal name')}
-        {input('propertyAddress', 'Property Address', 'Street address')}
-        <View style={styles.threeCols}>{input('city', 'City')}{input('state', 'State')}{input('zip', 'Zip')}</View>
-        {input('signingDate', 'Signing Date', 'mm/dd/yyyy')}
+        <View style={styles.sectionTitleRow}>
+          <Info color={colors.primary} size={18} />
+          <AppText weight="bold" style={styles.sectionTitle}>Order Information</AppText>
+        </View>
+        
+        {input('title', 'ORDER TITLE', 'e.g. Smith Refinance')}
+        {input('clientName', 'CLIENT NAME', 'Full legal name')}
+        {input('propertyAddress', 'PROPERTY ADDRESS', 'Street address')}
+        <View style={styles.threeCols}>
+          <View style={{ flex: 2 }}>{input('city', 'CITY')}</View>
+          <View style={{ flex: 1 }}>{input('state', 'STATE')}</View>
+          <View style={{ flex: 1 }}>{input('zip', 'ZIP')}</View>
+        </View>
+        
+        <View>
+          <AppText variant="caption" muted style={styles.fieldLabel}>SIGNING DATE</AppText>
+          <Pressable style={styles.datePicker}>
+            <AppText style={styles.dateText}>mm/dd/yyyy</AppText>
+            <Calendar color="#64748b" size={16} />
+          </Pressable>
+        </View>
       </AppCard>
+
+      {/* Section 2: Loan Details */}
       <AppCard style={styles.formCard}>
-        <AppText weight="bold">Loan Details</AppText>
-        {input('loanType', 'Loan Type')}
-        {input('requirements', 'Requirements')}
-        <AppText variant="caption" muted>Scan Backs Required</AppText>
-        <View style={styles.filterRow}><Badge label="Yes, required" /><Badge label="No" tone="gray" /></View>
+        <View style={styles.sectionTitleRow}>
+          <Building color={colors.primary} size={18} />
+          <AppText weight="bold" style={styles.sectionTitle}>Loan Details</AppText>
+        </View>
+        
+        <View>
+          <AppText variant="caption" muted style={styles.fieldLabel}>LOAN TYPE</AppText>
+          <View style={styles.picker}>
+            <AppText>Refinance</AppText>
+            <ChevronDown color="#64748b" size={18} />
+          </View>
+        </View>
+
+        <View style={styles.subSection}>
+          <AppText weight="bold">Requirements</AppText>
+          <AppText variant="caption" muted style={styles.requirementLabel}>SCAN BACKS REQUIRED</AppText>
+          <View style={styles.radioRow}>
+            <Pressable style={styles.radioItem} onPress={() => setScanBacks('yes')}>
+              <View style={[styles.radioCircle, scanBacks === 'yes' && styles.radioActive]} />
+              <AppText>Yes, required</AppText>
+            </Pressable>
+            <Pressable style={styles.radioItem} onPress={() => setScanBacks('no')}>
+              <View style={[styles.radioCircle, scanBacks === 'no' && styles.radioActive]} />
+              <AppText>No</AppText>
+            </Pressable>
+          </View>
+        </View>
       </AppCard>
+
+      {/* Section 3: Instructions */}
       <AppCard style={styles.formCard}>
-        <AppText weight="bold">Instructions</AppText>
-        {input('preferredNotary', 'Preferred Notary', 'Select Notary (Optional)')}
-        {input('instructions', 'Special Instructions', 'Additional notes for the notary...')}
-        <AppText variant="caption" muted>Order Priority</AppText>
-        <View style={styles.filterRow}><Badge label="Normal" /><Badge label="Urgent" tone="red" /></View>
+        <View style={styles.sectionTitleRow}>
+          <FileText color={colors.primary} size={18} />
+          <AppText weight="bold" style={styles.sectionTitle}>Instructions</AppText>
+        </View>
+        
+        <View>
+          <AppText variant="caption" muted style={styles.fieldLabel}>PREFERRED NOTARY</AppText>
+          <View style={styles.picker}>
+            <AppText style={{ color: '#94a3b8' }}>Select Notary (Optional)</AppText>
+            <ChevronDown color="#64748b" size={18} />
+          </View>
+        </View>
+
+        {input('instructions', 'SPECIAL INSTRUCTIONS', 'Additional notes for the notary...')}
       </AppCard>
+
+      {/* Order Priority */}
+      <View style={styles.priorityContainer}>
+        <AppText weight="bold">Order Priority</AppText>
+        <View style={styles.priorityRow}>
+          <Pressable 
+            style={[styles.priorityBtn, priority === 'normal' && styles.priorityNormalActive]} 
+            onPress={() => setPriority('normal')}
+          >
+            <Clock color={priority === 'normal' ? colors.primary : '#64748b'} size={20} />
+            <AppText weight="bold" style={[styles.priorityBtnText, priority === 'normal' && { color: colors.primary }]}>NORMAL</AppText>
+          </Pressable>
+          <Pressable 
+            style={[styles.priorityBtn, priority === 'urgent' && styles.priorityUrgentActive]} 
+            onPress={() => setPriority('urgent')}
+          >
+            <Zap color={priority === 'urgent' ? '#dc2626' : '#64748b'} size={20} />
+            <AppText weight="bold" style={[styles.priorityBtnText, priority === 'urgent' && { color: '#dc2626' }]}>URGENT</AppText>
+          </Pressable>
+        </View>
+      </View>
+
+      {/* Section 4: Supporting Documents */}
       <AppCard style={styles.formCard}>
-        <AppText weight="bold">Supporting Documents</AppText>
-        <UploadBox />
-        <FieldRow label="Closing_Statement_V1.pdf" value="1.2 MB" />
+        <View style={styles.sectionTitleRow}>
+          <Plus color={colors.primary} size={18} />
+          <AppText weight="bold" style={styles.sectionTitle}>Supporting Documents</AppText>
+        </View>
+        
+        <View style={styles.figmaUploadBox}>
+          <View style={styles.uploadCircle}><Plus color={colors.primary} size={24} /></View>
+          <AppText weight="bold" style={styles.uploadMainText}>Tap to upload files</AppText>
+          <AppText variant="caption" muted>PDF, JPG, or PNG (Max 25MB)</AppText>
+        </View>
+
+        <View style={styles.fileItem}>
+          <View style={styles.fileIcon}><FileText color="#dc2626" size={18} /></View>
+          <View style={{ flex: 1 }}>
+            <AppText weight="bold" style={styles.fileName}>Closing_Statement_V1.pdf</AppText>
+            <AppText variant="caption" muted>1.2 MB</AppText>
+          </View>
+          <X color="#64748b" size={18} />
+        </View>
       </AppCard>
-      <View style={styles.actionRow}><AppButton title="Cancel" variant="secondary" onPress={() => router.back()} /><AppButton title="Submit Order" onPress={submit} /></View>
+
+      <View style={styles.actionRow}>
+        <AppButton title="Cancel" variant="secondary" style={{ flex: 1 }} onPress={() => router.back()} />
+        <AppButton title="Submit Order" style={{ flex: 2, backgroundColor: '#0a49a8' }} onPress={submit} />
+      </View>
     </ScreenContainer>
   );
 }
@@ -397,17 +572,120 @@ export function CompanyOrderDetailsScreen() {
   return (
     <ScreenContainer>
       <AppHeader back title="Order Details" onProfilePress={() => router.push('/company/settings')} />
-      <AppCard style={styles.formCard}>
-        <View style={styles.topRow}><AppText variant="subtitle">Order #CE-9421</AppText><Badge label="APPROVED" tone="green" /></View>
-        <FieldRow label="Client" value="Mila Waters" />
-        <FieldRow label="Signing Date & Time" value="Mar 18, 2026, 2:45 PM" />
-        <FieldRow label="Property Address" value="442 Prospect St, Dallas TX 75201" />
+      
+      <AppCard style={styles.detailsMainCard}>
+        <View style={styles.detailsHeader}>
+          <AppText style={styles.detailsOrderNum}>Order #CE-9421</AppText>
+          <Badge label="APPROVED" tone="green" />
+        </View>
+        
+        <DetailField label="CLIENT" value="Mila Waters" />
+        <DetailField 
+          label="SIGNING DATE & TIME" 
+          value="Mar 18, 2026, 2:45 PM" 
+          icon={<Calendar color={colors.primary} size={14} />} 
+        />
+        <DetailField 
+          label="PROPERTY ADDRESS" 
+          value="442 Prospect St, Dallas TX 75201" 
+          icon={<MapPin color={colors.primary} size={14} />} 
+        />
       </AppCard>
-      <AppCard><AppText weight="bold">Special Instructions</AppText><AppText muted>Client requested a bilingual notary if possible. Please ensure all documents are signed with blue ink as per lender requirements. Park in the visitor section near building B.</AppText></AppCard>
-      <AppCard style={styles.formCard}><AppText weight="bold">Assigned Notary</AppText><FieldRow label="Sarah Jenkins" value="4.9 · Available" /><AppButton title="View Full Profile" variant="secondary" /></AppCard>
-      <AppCard style={styles.formCard}><AppText weight="bold">Documents</AppText><FieldRow label="closing_statement.pdf" value="2.4 MB · 1 File" /></AppCard>
-      <OrderStatusTimeline steps={orderTimeline} />
-      <AppCard style={styles.formCard}><AppText weight="bold">Activity Log</AppText><FieldRow label="Documents Verified" value="1h ago" /><AppText variant="caption" muted>System automatically verified the uploaded PDF for integrity and signature fields.</AppText><FieldRow label="Notary Re-assigned" value="3h ago" /></AppCard>
+
+      <View style={styles.specialInstructionBox}>
+        <Info color={colors.primary} size={18} />
+        <View style={{ flex: 1 }}>
+          <AppText weight="bold" style={colors.primary}>Special Instructions</AppText>
+          <AppText style={styles.instructionText}>
+            Client requested a bilingual notary if possible. Please ensure all documents are signed with blue ink as per lender requirements. Park in the visitor section near building B.
+          </AppText>
+        </View>
+      </View>
+
+      <AppCard style={styles.engagementCard}>
+        <View style={styles.engagementIconBox}>
+          <Calendar color={colors.primary} size={24} />
+        </View>
+        <View>
+          <AppText variant="caption" muted style={styles.engagementSub}>Closing Engagement</AppText>
+          <AppText weight="bold" style={styles.engagementTitle}>Tuesday, Apr 24 • 02:00 PM</AppText>
+        </View>
+      </AppCard>
+
+      <View style={styles.detailsSection}>
+        <AppText weight="bold" style={styles.detailsSectionTitle}>Assigned Notary</AppText>
+        <AppCard style={styles.notaryProfileCard}>
+          <View style={styles.notaryInfoLarge}>
+            <View style={styles.notaryAvatarBox}>
+              <Image 
+                source={{ uri: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=128&auto=format&fit=crop' }} 
+                style={styles.notaryAvatarLg} 
+              />
+              <View style={styles.onlineDot} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <AppText weight="bold" style={styles.notaryNameLg}>Sarah Jenkins</AppText>
+              <View style={styles.ratingRow}>
+                <Star color="#eab308" fill="#eab308" size={14} />
+                <AppText style={styles.ratingText}>4.9</AppText>
+                <Badge label="Available" tone="green" />
+              </View>
+            </View>
+          </View>
+          <Pressable style={styles.viewProfileBtn}>
+            <AppText weight="bold" style={styles.viewProfileText}>View Full Profile</AppText>
+          </Pressable>
+        </AppCard>
+      </View>
+
+      <View style={styles.detailsSection}>
+        <View style={styles.sectionHeaderWithCount}>
+          <AppText weight="bold" style={styles.detailsSectionTitle}>Documents</AppText>
+          <AppText variant="caption" muted weight="bold">1 File</AppText>
+        </View>
+        <AppCard style={styles.fileCardDetails}>
+          <View style={styles.fileIconBox}><FileText color="#dc2626" size={20} /></View>
+          <View style={{ flex: 1 }}>
+            <AppText weight="bold">closing_statement.pdf</AppText>
+            <AppText variant="caption" muted>2.4 MB</AppText>
+          </View>
+          <Pressable style={styles.downloadBtn}><Download color="#64748b" size={18} /></Pressable>
+        </AppCard>
+      </View>
+
+      <View style={styles.detailsSection}>
+        <AppText weight="bold" style={styles.detailsSectionTitle}>Order Status</AppText>
+        <AppCard style={styles.statusCard}>
+          <OrderStatusTimeline steps={orderTimeline} />
+        </AppCard>
+      </View>
+
+      <View style={styles.detailsSection}>
+        <AppText weight="bold" style={styles.detailsSectionTitle}>Activity Log</AppText>
+        <AppCard style={styles.logCard}>
+          <View style={styles.logItem}>
+            <View style={styles.logIconBox}><FileText color={colors.primary} size={16} /></View>
+            <View style={{ flex: 1 }}>
+              <View style={styles.logHeader}>
+                <AppText weight="bold">Documents Verified</AppText>
+                <AppText variant="caption" muted>1h ago</AppText>
+              </View>
+              <AppText variant="caption" muted>System automatically verified the uploaded PDF for integrity and signature fields.</AppText>
+            </View>
+          </View>
+          <View style={styles.logDivider} />
+          <View style={styles.logItem}>
+            <View style={styles.logIconBox}><UserPlus color={colors.primary} size={16} /></View>
+            <View style={{ flex: 1 }}>
+              <View style={styles.logHeader}>
+                <AppText weight="bold">Notary Re-assigned</AppText>
+                <AppText variant="caption" muted>3h ago</AppText>
+              </View>
+              <AppText variant="caption" muted>Sarah Jenkins accepted the updated order time for the Prospect St location.</AppText>
+            </View>
+          </View>
+        </AppCard>
+      </View>
     </ScreenContainer>
   );
 }
@@ -420,28 +698,198 @@ export function DocumentsScreen() {
   };
   return (
     <ScreenContainer refreshing={refreshing} onRefresh={handleRefresh}>
-      <AppHeader title="Documents" subtitle="Access and download your approved files" onProfilePress={() => router.push('/company/settings')} />
-      <AppInput placeholder="Filter by Order" />
-      <View style={styles.filterRow}><Badge label="PDF Only" /><Badge label="Filter by Date" tone="gray" /><Badge label="Clear" tone="gray" /></View>
-      {documents.map((doc) => <DocumentCard key={doc.id} doc={doc} onView={() => router.push(`/company/documents/${doc.id}`)} />)}
-      <AppText style={styles.center} muted>Showing 3 of 12 documents</AppText>
-      <AppButton title="Load More" variant="secondary" />
+      <AppHeader onProfilePress={() => router.push('/company/settings')} />
+      
+      <View style={styles.pageHeader}>
+        <AppText style={styles.pageTitle}>Documents</AppText>
+        <AppText muted style={styles.pageSubtitle}>Access and download your approved files</AppText>
+      </View>
+
+      <View style={styles.searchContainer}>
+        <Search color="#94a3b8" size={18} style={styles.searchIcon} />
+        <AppInput 
+          placeholder="Filter by Order" 
+          style={styles.searchInput} 
+          containerStyle={styles.searchBox} 
+        />
+      </View>
+
+      <View style={styles.filterRow}>
+        <Pressable style={[styles.filterBtn, styles.filterBtnActive]}>
+          <FileText color={colors.white} size={14} />
+          <AppText style={[styles.filterBtnText, styles.filterBtnTextActive]}>PDF Only</AppText>
+        </Pressable>
+        <Pressable style={styles.filterBtn}>
+          <Calendar color="#64748b" size={14} />
+          <AppText style={styles.filterBtnText}>Filter by Date</AppText>
+        </Pressable>
+        <Pressable style={styles.clearBtn}>
+          <AppText style={styles.clearBtnText}>Clear</AppText>
+        </Pressable>
+      </View>
+
+      <View style={styles.documentList}>
+        {documents.map((doc) => (
+          <DocumentCard 
+            key={doc.id} 
+            doc={doc} 
+            onView={() => router.push(`/company/documents/${doc.id}`)} 
+          />
+        ))}
+      </View>
+
+      <View style={styles.listFooter}>
+        <AppText style={styles.resultsCount} muted>Showing 3 of 12 documents</AppText>
+        <AppButton 
+          title="Load More" 
+          variant="secondary" 
+          style={styles.loadMoreBtn}
+          textStyle={styles.loadMoreText}
+        />
+      </View>
     </ScreenContainer>
   );
 }
 
+
 export function DocumentViewScreen() {
   return (
     <ScreenContainer>
-      <AppHeader back title="Document View" onProfilePress={() => router.push('/company/settings')} />
-      <View style={styles.preview}><FileText color={colors.border} size={120} /><View style={styles.zoomBar}><AppText variant="caption" style={{ color: colors.white }}>85%   ·   1/12</AppText></View></View>
-      <View style={styles.actionRow}><AppButton title="Download" icon={<Download color={colors.white} size={16} />} /><AppButton title="Print" variant="secondary" icon={<Printer color={colors.primary} size={16} />} /></View>
-      <AppCard style={styles.formCard}><View style={styles.topRow}><AppText weight="bold">File Details</AppText><Badge label="Approved" tone="green" /></View><FieldRow label="Name" value="Closing_Disclosure_Final.pdf" /><FieldRow label="Size" value="2.4 MB" /><FieldRow label="Date" value="Apr 15, 2026" /><FieldRow label="Uploaded By" value="Janet Doe (Notary)" /></AppCard>
-      <AppCard style={styles.formCard}><AppText weight="bold">Order Information</AppText><FieldRow label="Client Name" value="Robert & Sarah Montgomery" /><FieldRow label="Property Address" value="8421 Whispering Pines Dr, Austin, TX 78729" /></AppCard>
-      <AppCard style={styles.formCard}><AppText weight="bold">Recent Activity</AppText><FieldRow label="Approved by Admin" value="Today, 2:45 PM" /><FieldRow label="Uploaded by Notary" value="Apr 14, 11:20 AM" /></AppCard>
+      <AppHeader 
+        back 
+        centerTitle 
+        title="Document View" 
+        onProfilePress={() => router.push('/company/settings')} 
+      />
+      
+      <View style={styles.previewContainer}>
+        <View style={styles.previewContent}>
+          <FileText color="#cbd5e1" size={140} strokeWidth={1} />
+          {/* Mock document representation */}
+          <View style={styles.mockDocLayer}>
+            <View style={styles.mockDocTitle} />
+            <View style={styles.mockDocLine} />
+            <View style={styles.mockDocLine} />
+            <View style={styles.mockDocGrid}>
+              <View style={styles.mockDocBox} />
+              <View style={styles.mockDocBox} />
+            </View>
+          </View>
+        </View>
+        <View style={styles.previewControls}>
+          <View style={styles.zoomPill}>
+            <Pressable><AppText style={styles.zoomBtn}>−</AppText></Pressable>
+            <AppText style={styles.zoomText}>85%</AppText>
+            <Pressable><AppText style={styles.zoomBtn}>+</AppText></Pressable>
+            <View style={styles.zoomDivider} />
+            <Pressable><ChevronLeft color="#fff" size={16} /></Pressable>
+            <AppText style={styles.zoomText}>1/12</AppText>
+            <Pressable><ChevronRight color="#fff" size={16} /></Pressable>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.viewActionRow}>
+        <AppButton 
+          title="Download" 
+          icon={<Download color={colors.white} size={18} />} 
+          style={styles.viewDownloadBtn}
+        />
+        <AppButton 
+          title="Print" 
+          variant="secondary" 
+          icon={<Printer color={colors.primary} size={18} />} 
+          style={styles.viewPrintBtn}
+        />
+      </View>
+
+      <AppCard style={styles.infoCard}>
+        <View style={styles.infoCardHeader}>
+          <AppText weight="bold" style={styles.infoCardTitle}>File Details</AppText>
+          <Badge label="APPROVED" tone="green" />
+        </View>
+        
+        <View style={styles.fieldGrid}>
+          <View style={styles.fieldFull}>
+            <AppText variant="caption" muted style={styles.fieldLabel}>NAME</AppText>
+            <AppText weight="bold" style={styles.fieldValue}>Closing_Disclosure_Final.pdf</AppText>
+          </View>
+          <View style={styles.fieldHalf}>
+            <AppText variant="caption" muted style={styles.fieldLabel}>SIZE</AppText>
+            <AppText weight="bold" style={styles.fieldValue}>2.4 MB</AppText>
+          </View>
+          <View style={styles.fieldHalf}>
+            <AppText variant="caption" muted style={styles.fieldLabel}>DATE</AppText>
+            <AppText weight="bold" style={styles.fieldValue}>Apr 15, 2026</AppText>
+          </View>
+          <View style={styles.fieldFull}>
+            <AppText variant="caption" muted style={styles.fieldLabel}>UPLOADED BY</AppText>
+            <View style={styles.uploadedByRow}>
+              <View style={styles.userAvatarSm}>
+                <AppText style={styles.userAvatarText}>JD</AppText>
+              </View>
+              <AppText weight="bold" style={styles.fieldValue}>Janet Doe (Notary)</AppText>
+            </View>
+          </View>
+        </View>
+      </AppCard>
+
+      <AppCard style={styles.infoCard}>
+        <AppText weight="bold" style={styles.infoCardTitle}>Order Information</AppText>
+        <View style={styles.fieldGrid}>
+          <View style={styles.fieldFull}>
+            <AppText variant="caption" muted style={styles.fieldLabel}>CLIENT NAME</AppText>
+            <AppText weight="bold" style={styles.fieldValue}>Robert & Sarah Montgomery</AppText>
+          </View>
+          <View style={styles.fieldFull}>
+            <AppText variant="caption" muted style={styles.fieldLabel}>PROPERTY ADDRESS</AppText>
+            <AppText weight="bold" style={styles.fieldValue}>8421 Whispering Pines Dr, Austin, TX 78729</AppText>
+          </View>
+        </View>
+      </AppCard>
+
+      <AppCard style={styles.infoCard}>
+        <AppText weight="bold" style={styles.infoCardTitle}>Recent Activity</AppText>
+        
+        <View style={styles.activityTimeline}>
+          <View style={styles.activityItem}>
+            <View style={styles.activityLeft}>
+              <View style={[styles.activityIcon, { backgroundColor: '#0a49a8' }]}>
+                <CheckCircle2 color="#fff" size={12} />
+              </View>
+              <View style={styles.activityLine} />
+            </View>
+            <View style={styles.activityRight}>
+              <View style={styles.activityHeader}>
+                <AppText weight="bold" style={styles.activityTitle}>Approved by Admin</AppText>
+              </View>
+              <AppText variant="caption" muted style={styles.activitySub}>Final review completed by Michael S.</AppText>
+              <AppText variant="caption" muted style={styles.activityTime}>TODAY, 2:45 PM</AppText>
+            </View>
+          </View>
+
+          <View style={styles.activityItem}>
+            <View style={styles.activityLeft}>
+              <View style={[styles.activityIcon, { backgroundColor: '#eff6ff' }]}>
+                <FileText color="#0a49a8" size={12} />
+              </View>
+            </View>
+            <View style={styles.activityRight}>
+              <View style={styles.activityHeader}>
+                <AppText weight="bold" style={styles.activityTitle}>Uploaded by Notary</AppText>
+              </View>
+              <AppText variant="caption" muted style={styles.activitySub}>Signed disclosure docs attached.</AppText>
+              <AppText variant="caption" muted style={styles.activityTime}>APR 14, 11:20 AM</AppText>
+            </View>
+          </View>
+        </View>
+      </AppCard>
+      
+      <View style={{ height: 40 }} />
     </ScreenContainer>
   );
 }
+
 
 export function TeamScreen() {
   const [refreshing, setRefreshing] = useState(false);
@@ -607,7 +1055,12 @@ function SettingsForm({ role }: { role: 'company' | 'notary' }) {
 
   return (
     <ScreenContainer>
-      <AppHeader title={isCompany ? 'Alex Thompson' : 'Sarah Miller'} subtitle={isCompany ? 'Estate Flux Title' : 'sarah.miller@realtygroup.com'} avatar={isCompany ? 'AT' : 'SM'} onProfilePress={() => {}} />
+      <AppHeader 
+        title={isCompany ? 'Alex Thompson' : 'Sarah Miller'} 
+        subtitle={isCompany ? 'Estate Flux Title' : 'sarah.miller@realtygroup.com'} 
+        name={isCompany ? 'Alex Thompson' : 'Sarah Miller'}
+        onProfilePress={() => {}} 
+      />
       <AppButton title="Edit Profile" variant="secondary" />
       <AppCard style={styles.formCard}>
         <AppText weight="bold">Personal Information</AppText>
@@ -772,36 +1225,493 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xs, // Minimal top gap
     paddingBottom: 40,
   },
-  statGrid: { 
-    flexDirection: 'row', 
-    flexWrap: 'wrap', 
+  ordersStatsGrid: {
     gap: spacing.md,
-    marginTop: spacing.xs,
+    marginTop: spacing.md,
   },
-  statCard: { 
-    width: '47.5%', 
-    padding: spacing.sm,
-    gap: 4,
+  statCardLarge: {
+    padding: spacing.md,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
   },
-  statIconContainer: {
-    width: 28,
-    height: 28,
-    borderRadius: 6,
+  statHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  statTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748b',
+    textTransform: 'none',
+  },
+  statIconBadge: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
     backgroundColor: '#eff6ff',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 2,
   },
-  statLabel: {
+  statValueLarge: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#0f172a',
+    marginTop: 8,
+  },
+  statRowSmall: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  statCardSmall: {
+    flex: 1,
+    padding: spacing.md,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  statValueSmall: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#0f172a',
+    marginTop: 4,
+  },
+  pageHeader: {
+    marginTop: spacing.md,
+  },
+  pageTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#0a49a8', // Figma deep blue
+  },
+  pageSubtitle: {
+    fontSize: 14,
+    marginTop: 2,
+  },
+  createBtn: {
+    marginTop: spacing.lg,
+    backgroundColor: '#1d63d2',
+    height: 48,
+    borderRadius: 8,
+  },
+  searchContainer: {
+    marginTop: spacing.lg,
+    position: 'relative',
+  },
+  searchBox: {
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+    height: 44,
+  },
+  searchInput: {
+    paddingLeft: 38,
+  },
+  searchIcon: {
+    position: 'absolute',
+    left: 14,
+    top: 13,
+    zIndex: 1,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  filterBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 8,
+  },
+  filterBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  paginationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: spacing.lg,
+    marginTop: spacing.xl,
+    marginBottom: spacing.xxl,
+  },
+  pageArrow: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pageNumbers: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  pageNumber: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pageActive: {
+    backgroundColor: '#0a49a8',
+  },
+  pageText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#64748b',
+  },
+  pageTextActive: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.white,
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: spacing.sm,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    color: '#1e293b',
+  },
+  fieldLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#64748b',
+    marginBottom: 6,
+    letterSpacing: 0.5,
+  },
+  datePicker: {
+    height: 44,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+  },
+  picker: {
+    height: 44,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+  },
+  subSection: {
+    marginTop: spacing.md,
+  },
+  requirementLabel: {
+    marginTop: 12,
+    marginBottom: 10,
+  },
+  radioRow: {
+    flexDirection: 'row',
+    gap: 20,
+  },
+  radioItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  radioCircle: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 2,
+    borderColor: '#cbd5e1',
+  },
+  radioActive: {
+    borderColor: '#0a49a8',
+    borderWidth: 5,
+  },
+  priorityContainer: {
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.md,
+  },
+  priorityRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginTop: 12,
+  },
+  priorityBtn: {
+    flex: 1,
+    height: 80,
+    borderRadius: 12,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  priorityNormalActive: {
+    backgroundColor: '#eff6ff',
+    borderColor: '#3b82f6',
+  },
+  priorityUrgentActive: {
+    backgroundColor: '#fef2f2',
+    borderColor: '#ef4444',
+  },
+  priorityBtnText: {
+    fontSize: 12,
+    color: '#64748b',
+  },
+  figmaUploadBox: {
+    height: 140,
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#f8fafc',
+  },
+  uploadCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#eff6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  uploadMainText: {
+    color: '#0a49a8',
+    fontSize: 15,
+  },
+  fileItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 10,
+    marginTop: spacing.sm,
+  },
+  fileIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    backgroundColor: '#fef2f2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fileName: {
+    fontSize: 13,
+    color: '#1e293b',
+  },
+  detailsMainCard: {
+    padding: spacing.md,
+    gap: spacing.md,
+  },
+  detailsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  detailsOrderNum: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#0a49a8',
+  },
+  detailField: {
+    gap: 4,
+  },
+  detailLabel: {
     fontSize: 10,
     fontWeight: '700',
     color: '#64748b',
     letterSpacing: 0.5,
   },
-  statValue: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#0f172a',
+  detailValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  detailIcon: {
+    width: 20,
+    alignItems: 'center',
+  },
+  detailValue: {
+    fontSize: 16,
+    color: '#1e293b',
+  },
+  specialInstructionBox: {
+    flexDirection: 'row',
+    gap: 12,
+    padding: 14,
+    backgroundColor: '#eff6ff',
+    borderRadius: 12,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.md,
+    borderWidth: 1,
+    borderColor: '#dbeafe',
+  },
+  instructionText: {
+    fontSize: 13,
+    color: '#1e3a8a',
+    marginTop: 4,
+    lineHeight: 18,
+  },
+  engagementCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    padding: 14,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.md,
+    backgroundColor: '#f8fbff',
+  },
+  engagementIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  engagementSub: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  engagementTitle: {
+    fontSize: 15,
+    color: '#1e293b',
+  },
+  detailsSection: {
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.lg,
+  },
+  detailsSectionTitle: {
+    fontSize: 16,
+    color: '#1e293b',
+    marginBottom: 12,
+  },
+  notaryProfileCard: {
+    padding: spacing.md,
+  },
+  notaryInfoLarge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  notaryAvatarBox: {
+    position: 'relative',
+  },
+  notaryAvatarLg: {
+    width: 56,
+    height: 56,
+    borderRadius: 10,
+  },
+  onlineDot: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: colors.success,
+    borderWidth: 2,
+    borderColor: colors.white,
+  },
+  notaryNameLg: {
+    fontSize: 16,
+    color: '#1e293b',
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
+  },
+  ratingText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#eab308',
+  },
+  viewProfileBtn: {
+    marginTop: 14,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewProfileText: {
+    fontSize: 13,
+    color: '#0a49a8',
+  },
+  sectionHeaderWithCount: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  fileCardDetails: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+  },
+  fileIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: '#fef2f2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  downloadBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statusCard: {
+    padding: spacing.md,
+  },
+  logCard: {
+    padding: spacing.md,
+  },
+  logItem: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  logIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    backgroundColor: '#eff6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  logDivider: {
+    height: 1,
+    backgroundColor: '#f1f5f9',
+    marginVertical: 14,
   },
   homeGreeting: {
     marginTop: spacing.sm,
@@ -823,24 +1733,213 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginTop: spacing.xs,
   },
-  orderDate: {
-    fontSize: 11,
-  },
-  filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  pagination: { flexDirection: 'row', justifyContent: 'center', gap: spacing.sm },
   threeCols: { flexDirection: 'row', gap: spacing.sm },
-  actionRow: { flexDirection: 'row', gap: spacing.md },
-  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
-  fieldRow: { gap: spacing.xs },
-  card: { padding: spacing.md, gap: spacing.xs },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  orderNumber: { fontWeight: '700' },
-  clientName: { fontSize: 16, fontWeight: '700', marginTop: spacing.xs },
-  metaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.xs },
-  notaryInfo: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  notaryText: { color: colors.textMuted },
-  detailsButton: { marginTop: spacing.sm, paddingVertical: spacing.xs, alignItems: 'center', backgroundColor: colors.surface, borderRadius: radius.sm },
-  buttonText: { color: colors.primary },
+  actionRow: { flexDirection: 'row', gap: spacing.md, paddingHorizontal: spacing.md, paddingBottom: 40, marginTop: spacing.lg },
+  
+  // Documents Screen specific
+  documentList: {
+    gap: spacing.md,
+    marginTop: spacing.md,
+  },
+  listFooter: {
+    marginTop: spacing.xl,
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingBottom: 40,
+  },
+  resultsCount: {
+    fontSize: 13,
+    color: '#94a3b8',
+  },
+  loadMoreBtn: {
+    backgroundColor: '#f1f5f9',
+    width: 140,
+    height: 40,
+    borderRadius: 8,
+  },
+  loadMoreText: {
+    color: '#334155',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  filterBtnActive: {
+    backgroundColor: '#0a49a8',
+    borderColor: '#0a49a8',
+  },
+  filterBtnTextActive: {
+    color: colors.white,
+  },
+  clearBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    justifyContent: 'center',
+  },
+  clearBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0a49a8',
+  },
+
+  // Document View specific
+  previewContainer: {
+    height: 320,
+    backgroundColor: '#f8fafc',
+    marginHorizontal: -spacing.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  previewContent: {
+    width: 200,
+    height: 260,
+    backgroundColor: colors.white,
+    borderRadius: 4,
+    ...shadows.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    position: 'relative',
+  },
+  mockDocLayer: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    right: 20,
+    bottom: 20,
+    gap: 8,
+  },
+  mockDocTitle: { height: 12, width: '40%', backgroundColor: '#f1f5f9', borderRadius: 2 },
+  mockDocLine: { height: 6, width: '90%', backgroundColor: '#f8fafc', borderRadius: 2 },
+  mockDocGrid: { flexDirection: 'row', gap: 10, marginTop: 10 },
+  mockDocBox: { flex: 1, height: 40, backgroundColor: '#f8fafc', borderRadius: 2 },
+  
+  previewControls: {
+    position: 'absolute',
+    bottom: 20,
+    width: '100%',
+    alignItems: 'center',
+  },
+  zoomPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(30, 41, 59, 0.9)', // Dark slate translucent
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 12,
+  },
+  zoomBtn: { color: '#fff', fontSize: 20, fontWeight: '300' },
+  zoomText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  zoomDivider: { width: 1, height: 16, backgroundColor: 'rgba(255,255,255,0.2)' },
+  
+  viewActionRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.lg,
+  },
+  viewDownloadBtn: { flex: 1, backgroundColor: '#0a49a8' },
+  viewPrintBtn: { flex: 1, backgroundColor: colors.white, borderColor: '#e2e8f0' },
+
+  infoCard: {
+    marginHorizontal: spacing.md,
+    marginTop: spacing.md,
+    padding: spacing.md,
+    gap: spacing.md,
+  },
+  infoCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  infoCardTitle: {
+    fontSize: 16,
+    color: '#0a49a8',
+  },
+  fieldGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.md,
+  },
+  fieldFull: { width: '100%', gap: 4 },
+  fieldHalf: { width: '45%', gap: 4 },
+  fieldValue: { fontSize: 15, color: '#1e293b' },
+  
+  uploadedByRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 2,
+  },
+  userAvatarSm: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#eff6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#dbeafe',
+  },
+  userAvatarText: { fontSize: 10, fontWeight: '700', color: '#0a49a8' },
+  
+  activityTimeline: {
+    gap: 0,
+    marginTop: 4,
+  },
+  activityItem: {
+    flexDirection: 'row',
+    minHeight: 80,
+  },
+  activityLeft: {
+    width: 30,
+    alignItems: 'center',
+  },
+  activityIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  activityLine: {
+    position: 'absolute',
+    top: 24,
+    bottom: 0,
+    width: 2,
+    backgroundColor: '#f1f5f9',
+    zIndex: 1,
+  },
+  activityRight: {
+    flex: 1,
+    paddingLeft: 10,
+    paddingBottom: 20,
+  },
+  activityHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  activityTitle: {
+    fontSize: 14,
+    color: '#1e293b',
+  },
+  activitySub: {
+    fontSize: 12,
+    color: '#64748b',
+    marginTop: 2,
+  },
+  activityTime: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#94a3b8',
+    marginTop: 6,
+    textTransform: 'uppercase',
+  },
+
   preview: { minHeight: 260, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   zoomBar: { position: 'absolute', bottom: spacing.lg, backgroundColor: colors.text, borderRadius: radius.full, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
   roleCards: { flexDirection: 'row', gap: spacing.md },
@@ -858,3 +1957,4 @@ const styles = StyleSheet.create({
   avatarDark: { width: 38, height: 38, borderRadius: radius.full, backgroundColor: colors.text, alignItems: 'center', justifyContent: 'center' },
   messageInput: { marginTop: 'auto', minHeight: 48, borderRadius: radius.md, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.md, gap: spacing.md },
 });
+
