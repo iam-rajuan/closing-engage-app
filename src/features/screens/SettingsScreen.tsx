@@ -91,7 +91,7 @@ import { Badge } from '@/components/common/Badge';
 const styles = StyleSheet.create({
   profileSection: {
     alignItems: 'center',
-    paddingVertical: 32,
+    paddingVertical: 24,
   },
   profileAvatarLarge: {
     width: 90,

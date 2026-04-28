@@ -241,7 +241,15 @@ const styles = StyleSheet.create({
     marginTop: 16 
   },
   priorityBtn: {
-    gap: 10,
+    flex: 1,
+    height: 80,
+    borderRadius: 14,
+    backgroundColor: colors.white,
+    borderWidth: 1.5,
+    borderColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   priorityNormalActive: { 
     backgroundColor: '#eff6ff', 

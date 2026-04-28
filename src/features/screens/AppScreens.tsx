@@ -2033,10 +2033,9 @@ const styles = StyleSheet.create({
   viewPrintBtn: { flex: 1, backgroundColor: colors.white, borderColor: '#e2e8f0' },
 
   infoCard: {
-    marginHorizontal: 20,
     marginTop: 16,
-    padding: 16,
-    gap: 16,
+    padding: 14,
+    gap: 12,
   },
   infoCardHeader: {
     flexDirection: 'row',
@@ -2173,7 +2172,6 @@ const styles = StyleSheet.create({
   memberList: {
     gap: spacing.md,
     marginTop: spacing.md,
-    paddingHorizontal: spacing.md,
   },
 
   // Add Member specific
@@ -2196,14 +2194,9 @@ const styles = StyleSheet.create({
   },
   roleSelectCard: {
     flex: 1,
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
+    padding: 14,
     gap: 8,
     position: 'relative',
-    ...shadows.card,
   },
   roleSelectCardActive: {
     borderColor: '#0a49a8',
@@ -2240,11 +2233,9 @@ const styles = StyleSheet.create({
   },
   permissionsCard: {
     marginTop: 24,
-    padding: 20,
+    padding: 16,
     backgroundColor: '#f8fafc',
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-    gap: 16,
+    gap: 12,
   },
   permissionsTitle: {
     fontSize: 13,
