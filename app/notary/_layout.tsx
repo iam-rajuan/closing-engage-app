@@ -37,6 +37,7 @@ export default function NotaryLayout() {
         name="home"
         options={{
           title: 'Home',
+          href: '/notary/home',
           tabBarIcon: ({ color }) => <LayoutGrid color={color} size={22} />,
         }}
       />
@@ -44,6 +45,7 @@ export default function NotaryLayout() {
         name="assigned"
         options={{
           title: 'Assigned',
+          href: '/notary/assigned',
           tabBarIcon: ({ color }) => <BriefcaseBusiness color={color} size={22} />,
         }}
       />
@@ -51,6 +53,7 @@ export default function NotaryLayout() {
         name="documents"
         options={{
           title: 'Documents',
+          href: '/notary/documents',
           tabBarIcon: ({ color }) => <FileUp color={color} size={22} />,
         }}
       />
@@ -58,6 +61,7 @@ export default function NotaryLayout() {
         name="credentials"
         options={{
           title: 'Notary',
+          href: '/notary/credentials',
           tabBarIcon: ({ color }) => <BadgeCheck color={color} size={22} />,
         }}
       />
@@ -65,6 +69,7 @@ export default function NotaryLayout() {
         name="settings"
         options={{
           title: 'Settings',
+          href: '/notary/settings',
           tabBarIcon: ({ color }) => <Settings color={color} size={22} />,
         }}
       />

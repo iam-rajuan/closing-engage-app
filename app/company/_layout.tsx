@@ -31,35 +31,40 @@ export default function CompanyLayout() {
       <Tabs.Screen 
         name="home" 
         options={{ 
-          title: 'Home', 
+          title: 'Home',
+          href: '/company/home', 
           tabBarIcon: ({ color }) => <Home color={color} size={22} /> 
         }} 
       />
       <Tabs.Screen 
         name="orders" 
         options={{ 
-          title: 'Orders', 
+          title: 'Orders',
+          href: '/company/orders', 
           tabBarIcon: ({ color }) => <BriefcaseBusiness color={color} size={22} /> 
         }} 
       />
       <Tabs.Screen 
         name="documents" 
         options={{ 
-          title: 'Documents', 
+          title: 'Documents',
+          href: '/company/documents', 
           tabBarIcon: ({ color }) => <FileText color={color} size={22} /> 
         }} 
       />
       <Tabs.Screen 
         name="team" 
         options={{ 
-          title: 'Team', 
+          title: 'Team',
+          href: '/company/team', 
           tabBarIcon: ({ color }) => <Users color={color} size={22} /> 
         }} 
       />
       <Tabs.Screen 
         name="settings" 
         options={{ 
-          title: 'Settings', 
+          title: 'Settings',
+          href: '/company/settings', 
           tabBarIcon: ({ color }) => <Settings color={color} size={22} /> 
         }} 
       />

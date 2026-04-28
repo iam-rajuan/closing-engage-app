@@ -2,9 +2,9 @@ import { Stack } from 'expo-router';
 
 export default function DocumentsLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="upload" />
+    <Stack screenOptions={{ headerShown: false, animation: 'none' }}>
+      <Stack.Screen name="index" options={{ animation: 'none' }} />
+      <Stack.Screen name="upload" options={{ animation: 'none' }} />
     </Stack>
   );
 }
