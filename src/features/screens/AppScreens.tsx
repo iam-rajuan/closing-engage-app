@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router, type Href } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
-import { DevSettings, BackHandler, Image, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { BackHandler, Image, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import {
   Briefcase,
   CheckCircle2,
@@ -304,11 +304,8 @@ export function CompanyHomeScreen() {
 
   const handleRefresh = () => {
     setRefreshing(true);
-    if (__DEV__) {
-      DevSettings.reload();
-    } else {
-      setTimeout(() => setRefreshing(false), 1500);
-    }
+    // Smooth data refresh simulation (Industry standard)
+    setTimeout(() => setRefreshing(false), 1500);
   };
 
   return (
@@ -337,11 +334,7 @@ export function CompanyOrdersScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = () => {
     setRefreshing(true);
-    if (__DEV__) {
-      DevSettings.reload();
-    } else {
-      setTimeout(() => setRefreshing(false), 1500);
-    }
+    setTimeout(() => setRefreshing(false), 1200);
   };
 
   return (
@@ -424,11 +417,7 @@ export function DocumentsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = () => {
     setRefreshing(true);
-    if (__DEV__) {
-      DevSettings.reload();
-    } else {
-      setTimeout(() => setRefreshing(false), 1500);
-    }
+    setTimeout(() => setRefreshing(false), 1200);
   };
   return (
     <ScreenContainer refreshing={refreshing} onRefresh={handleRefresh}>
@@ -459,11 +448,7 @@ export function TeamScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = () => {
     setRefreshing(true);
-    if (__DEV__) {
-      DevSettings.reload();
-    } else {
-      setTimeout(() => setRefreshing(false), 1500);
-    }
+    setTimeout(() => setRefreshing(false), 1200);
   };
   return (
     <ScreenContainer refreshing={refreshing} onRefresh={handleRefresh}>
@@ -506,11 +491,7 @@ export function NotaryHomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = () => {
     setRefreshing(true);
-    if (__DEV__) {
-      DevSettings.reload();
-    } else {
-      setTimeout(() => setRefreshing(false), 1500);
-    }
+    setTimeout(() => setRefreshing(false), 1200);
   };
   return (
     <ScreenContainer refreshing={refreshing} onRefresh={handleRefresh}>
