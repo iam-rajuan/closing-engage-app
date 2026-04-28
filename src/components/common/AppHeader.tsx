@@ -100,9 +100,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 0,
-    height: 56, // Increased height for premium feel
+    height: 60, // Slightly taller for better touch targets and premium feel
     backgroundColor: 'transparent',
+
+
+
     position: 'relative',
   },
   left: {

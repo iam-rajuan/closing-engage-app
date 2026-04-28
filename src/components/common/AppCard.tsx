@@ -1,6 +1,6 @@
 import { PropsWithChildren } from 'react';
 import { StyleSheet, View, ViewProps } from 'react-native';
-import { colors, radius, shadows, spacing } from '@/theme';
+import { colors, shadows } from '@/theme';
 
 export function AppCard({ children, style, ...props }: PropsWithChildren<ViewProps>) {
   return (
@@ -12,11 +12,11 @@ export function AppCard({ children, style, ...props }: PropsWithChildren<ViewPro
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    ...shadows.card,
+    backgroundColor: colors.white,
+    borderColor: '#e8edf2',
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 16,
+    ...shadows.sm,
   },
 });

@@ -153,84 +153,201 @@ export function CompanyOrderDetailsScreen() {
 }
 
 const styles = StyleSheet.create({
-  detailsMainCard: { padding: spacing.md, gap: spacing.md },
-  detailsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  detailsOrderNum: { fontSize: 22, fontWeight: '800', color: '#0a49a8' },
-  detailField: { gap: 4 },
-  detailLabel: { fontSize: 10, fontWeight: '700', color: '#64748b', letterSpacing: 0.5 },
-  detailValueRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  detailIcon: { width: 20, alignItems: 'center' },
-  detailValue: { fontSize: 16, color: '#1e293b' },
+  detailsMainCard: { 
+    marginTop: 16,
+    padding: 16, 
+    gap: 12 
+  },
+  detailsHeader: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginBottom: 8 
+  },
+  detailsOrderNum: { 
+    fontSize: 18, 
+    fontWeight: '800', 
+    color: '#0a49a8',
+    lineHeight: 24,
+  },
+  detailField: { gap: 6 },
+  detailLabel: { 
+    fontSize: 11, 
+    fontWeight: '700', 
+    color: '#64748b', 
+    letterSpacing: 0.5 
+  },
+  detailValueRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 10 
+  },
+  detailIcon: { width: 24, alignItems: 'center' },
+  detailValue: { 
+    fontSize: 14, 
+    color: '#1e293b',
+    lineHeight: 20,
+    flex: 1,
+  },
   specialInstructionBox: {
     flexDirection: 'row',
-    gap: 12,
-    padding: 14,
+    gap: 14,
+    padding: 18,
     backgroundColor: '#eff6ff',
-    borderRadius: 12,
-    marginHorizontal: spacing.md,
-    marginTop: spacing.md,
+    borderRadius: 14,
+    marginTop: 16,
     borderWidth: 1,
     borderColor: '#dbeafe',
   },
-  instructionText: { fontSize: 13, color: '#1e3a8a', marginTop: 4, lineHeight: 18 },
+  instructionText: { 
+    fontSize: 14, 
+    color: '#1e3a8a', 
+    marginTop: 6, 
+    lineHeight: 20 
+  },
   engagementCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    padding: 14,
-    marginHorizontal: spacing.md,
-    marginTop: spacing.md,
+    gap: 16,
+    padding: 16,
+    marginTop: 16,
     backgroundColor: '#f8fbff',
   },
   engagementIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 8,
+    width: 48,
+    height: 48,
+    borderRadius: 10,
     backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#f1f5f9',
   },
-  engagementSub: { fontSize: 12, fontWeight: '600' },
-  engagementTitle: { fontSize: 15, color: '#1e293b' },
-  detailsSection: { paddingHorizontal: spacing.md, marginTop: spacing.lg },
-  detailsSectionTitle: { fontSize: 16, color: '#1e293b', marginBottom: 12 },
-  notaryProfileCard: { padding: spacing.md },
-  notaryInfoLarge: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  engagementSub: { 
+    fontSize: 12, 
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  engagementTitle: { 
+    fontSize: 14, 
+    fontWeight: '700',
+    color: '#1e293b',
+    lineHeight: 20,
+  },
+  detailsSection: { 
+    marginTop: 24 
+  },
+  detailsSectionTitle: { 
+    fontSize: 15, 
+    fontWeight: '700',
+    color: '#0f172a', 
+    marginBottom: 14,
+    lineHeight: 20,
+  },
+  notaryProfileCard: { 
+    padding: 16 
+  },
+  notaryInfoLarge: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 16 
+  },
   notaryAvatarBox: { position: 'relative' },
-  notaryAvatarLg: { width: 56, height: 56, borderRadius: 10 },
+  notaryAvatarLg: { 
+    width: 60, 
+    height: 60, 
+    borderRadius: 12 
+  },
   onlineDot: {
     position: 'absolute',
     bottom: -2,
     right: -2,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     backgroundColor: colors.success,
-    borderWidth: 2,
+    borderWidth: 2.5,
     borderColor: colors.white,
   },
-  notaryNameLg: { fontSize: 16, color: '#1e293b' },
-  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
-  ratingText: { fontSize: 13, fontWeight: '700', color: '#eab308' },
+  notaryNameLg: { 
+    fontSize: 15, 
+    fontWeight: '700',
+    color: '#0f172a',
+    lineHeight: 20,
+  },
+  ratingRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 8, 
+    marginTop: 6 
+  },
+  ratingText: { 
+    fontSize: 14, 
+    fontWeight: '700', 
+    color: '#eab308' 
+  },
   viewProfileBtn: {
-    marginTop: 14,
-    height: 40,
-    borderRadius: 8,
+    marginTop: 16,
+    height: 44,
+    borderRadius: 10,
     backgroundColor: '#f1f5f9',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  viewProfileText: { fontSize: 13, color: '#0a49a8' },
-  sectionHeaderWithCount: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  fileCardDetails: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 },
-  fileIconBox: { width: 40, height: 40, borderRadius: 8, backgroundColor: '#fef2f2', alignItems: 'center', justifyContent: 'center' },
-  downloadBtn: { width: 36, height: 36, borderRadius: 8, backgroundColor: '#f1f5f9', alignItems: 'center', justifyContent: 'center' },
-  statusCard: { padding: spacing.md },
-  logCard: { padding: spacing.md },
-  logItem: { flexDirection: 'row', gap: 12 },
-  logIconBox: { width: 32, height: 32, borderRadius: 6, backgroundColor: '#eff6ff', alignItems: 'center', justifyContent: 'center' },
-  logHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  logDivider: { height: 1, backgroundColor: '#f1f5f9', marginVertical: 14 },
+  viewProfileText: { 
+    fontSize: 14, 
+    color: '#0a49a8' 
+  },
+  sectionHeaderWithCount: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginBottom: 16 
+  },
+  fileCardDetails: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 16, 
+    padding: 16 
+  },
+  fileIconBox: { 
+    width: 44, 
+    height: 44, 
+    borderRadius: 10, 
+    backgroundColor: '#fef2f2', 
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+  downloadBtn: { 
+    width: 40, 
+    height: 40, 
+    borderRadius: 10, 
+    backgroundColor: '#f1f5f9', 
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+  statusCard: { padding: 16 },
+  logCard: { padding: 16 },
+  logItem: { flexDirection: 'row', gap: 16 },
+  logIconBox: { 
+    width: 36, 
+    height: 36, 
+    borderRadius: 8, 
+    backgroundColor: '#eff6ff', 
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+  logHeader: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginBottom: 6 
+  },
+  logDivider: { 
+    height: 1, 
+    backgroundColor: '#f1f5f9', 
+    marginVertical: 16 
+  },
 });
+
+

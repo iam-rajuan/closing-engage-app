@@ -1,10 +1,10 @@
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { router, type Href } from 'expo-router';
-import { MapPin, UserRound } from 'lucide-react-native';
+import { ChevronRight, MapPin, UserRound } from 'lucide-react-native';
 import { AppCard } from '@/components/common/AppCard';
 import { AppText } from '@/components/common/AppText';
 import { Badge } from '@/components/common/Badge';
-import { colors, radius, spacing } from '@/theme';
+import { colors, shadows } from '@/theme';
 import { Order, OrderStatus } from '@/types/order';
 
 function tone(status: OrderStatus) {
@@ -13,159 +13,181 @@ function tone(status: OrderStatus) {
   return 'blue';
 }
 
+// Figma notary avatars
+const NOTARY_AVATARS: Record<string, string> = {
+  'Elena Rodriguez': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=128&auto=format&fit=crop',
+  'Sarah Jenkins': 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=128&auto=format&fit=crop',
+};
+
 export function OrderCard({ order, href }: { order: Order; href: Href }) {
-  // Mock notary avatar for better visuals as per Figma
-  const notaryAvatar = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=128&auto=format&fit=crop';
+  const notaryAvatar = order.notaryName ? NOTARY_AVATARS[order.notaryName] : undefined;
+  const displayAddress = order.address || '742 Evergreen Terrace, Springfield';
 
   return (
     <AppCard style={styles.card}>
-      <View style={styles.header}>
-        <View style={styles.orderIdBadge}>
-          <AppText style={styles.orderIdText}>#{order.orderNumber.toUpperCase()}</AppText>
-        </View>
-        <Badge label={order.status.toUpperCase()} tone={tone(order.status)} />
-      </View>
-      
-      <AppText style={styles.clientName}>{order.clientName}</AppText>
-      
-      <View style={styles.locationRow}>
-        <MapPin size={14} color={colors.textMuted} />
-        <AppText variant="caption" muted style={styles.locationText}>
-          742 Evergreen Terrace, Springfield
-        </AppText>
+      {/* Row 1: Order # + Status badge */}
+      <View style={styles.topRow}>
+        <AppText style={styles.orderNum}>#{order.orderNumber.replace('#', '')}</AppText>
+        <Badge label={order.status} tone={tone(order.status)} />
       </View>
 
+      {/* Row 2: Client Name */}
+      <AppText style={styles.clientName}>{order.clientName}</AppText>
+
+      {/* Row 3: Location */}
+      <View style={styles.locationRow}>
+        <MapPin size={13} color="#94a3b8" />
+        <AppText style={styles.locationText} numberOfLines={1}>{displayAddress}</AppText>
+      </View>
+
+      {/* Divider */}
       <View style={styles.divider} />
 
+      {/* Row 4: Notary + Schedule */}
       <View style={styles.infoRow}>
         <View style={styles.notaryCol}>
-          <View style={styles.notaryProfile}>
-            <View style={styles.avatarPlaceholder}>
-              <Image source={{ uri: notaryAvatar }} style={styles.avatar} />
+          {notaryAvatar ? (
+            <View style={styles.notaryAvatar}>
+              <Image source={{ uri: notaryAvatar }} style={styles.avatarImg} />
             </View>
-            <View>
-              <AppText variant="caption" muted style={styles.roleLabel}>NOTARY</AppText>
-              <AppText weight="bold" style={styles.notaryName}>{order.notaryName || 'Elena Rodriguez'}</AppText>
+          ) : (
+            <View style={[styles.notaryAvatar, styles.notaryAvatarPlaceholder]}>
+              <UserRound size={14} color="#94a3b8" />
             </View>
+          )}
+          <View style={styles.notaryInfo}>
+            <AppText style={styles.notaryLabel}>NOTARY</AppText>
+            <AppText style={styles.notaryName}>
+              {order.notaryName || 'Not Assigned'}
+            </AppText>
           </View>
         </View>
-
         <View style={styles.scheduleCol}>
-          <AppText variant="caption" muted style={styles.roleLabel}>SCHEDULED</AppText>
-          <AppText weight="bold" style={styles.scheduleDate}>{order.signingDate}</AppText>
+          <AppText style={styles.scheduleLabel}>SCHEDULED</AppText>
+          <AppText style={styles.scheduleDate}>{order.signingDate}</AppText>
         </View>
       </View>
 
-      <Pressable 
-        style={styles.detailsButton} 
-        onPress={() => router.push(href)}
-      >
-        <AppText variant="caption" weight="bold" style={styles.buttonText}>
-          View Details  ›
-        </AppText>
+      {/* View Details Button */}
+      <Pressable style={styles.detailsBtn} onPress={() => router.push(href)}>
+        <AppText style={styles.detailsBtnText}>View Details</AppText>
+        <ChevronRight size={15} color="#334155" />
       </Pressable>
     </AppCard>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { 
-    padding: spacing.md, 
-    gap: spacing.sm,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
+  card: {
+    padding: 14,
+    gap: 10,
   },
-  header: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
   },
-  orderIdBadge: {
-    backgroundColor: '#eff6ff',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  orderIdText: {
-    fontSize: 10,
-    fontWeight: '800',
+  orderNum: {
+    fontSize: 11,
+    fontWeight: '700',
     color: colors.primary,
+    letterSpacing: 0.3,
   },
-  clientName: { 
-    fontSize: 18, 
-    fontWeight: '800', 
-    color: '#1e293b',
-    marginBottom: 2,
+  clientName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0f172a',
+    lineHeight: 22,
+    marginTop: -2,
   },
-  locationRow: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 6,
+    marginTop: -2,
   },
-  locationText: { 
+  locationText: {
     fontSize: 13,
     color: '#64748b',
+    flex: 1,
+    lineHeight: 18,
   },
   divider: {
     height: 1,
     backgroundColor: '#f1f5f9',
-    marginVertical: 4,
+    marginVertical: 2,
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 2,
   },
   notaryCol: {
-    flex: 1,
-  },
-  notaryProfile: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    flex: 1,
   },
-  avatarPlaceholder: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: '#f1f5f9',
+  notaryAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     overflow: 'hidden',
   },
-  avatar: {
+  notaryAvatarPlaceholder: {
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarImg: {
     width: '100%',
     height: '100%',
   },
-  roleLabel: {
+  notaryInfo: {
+    gap: 2,
+  },
+  notaryLabel: {
     fontSize: 9,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#94a3b8',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
   },
   notaryName: {
     fontSize: 13,
+    fontWeight: '600',
     color: '#334155',
+    lineHeight: 17,
   },
   scheduleCol: {
     alignItems: 'flex-end',
+    gap: 2,
+  },
+  scheduleLabel: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#94a3b8',
+    letterSpacing: 0.6,
   },
   scheduleDate: {
     fontSize: 13,
+    fontWeight: '600',
     color: '#334155',
+    lineHeight: 17,
   },
-  detailsButton: {
-    backgroundColor: '#0a49a8', // Deep blue from Figma
-    height: 42,
-    borderRadius: 8,
+  // Ghost button — matches Figma exactly
+  detailsBtn: {
+    backgroundColor: '#f1f5f9',
+    height: 40,
+    borderRadius: 10,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: spacing.xs,
+    gap: 4,
+    marginTop: 2,
   },
-  buttonText: { 
-    color: colors.white, 
-    fontWeight: '700', 
-    fontSize: 14,
+  detailsBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#334155',
   },
 });

@@ -7,7 +7,7 @@ import { AppCard } from '@/components/common/AppCard';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { ToggleRow } from '@/components/settings/ToggleRow';
 import { useAuthStore } from '@/features/auth/auth.store';
-import { colors, spacing } from '@/theme';
+import { colors, shadows, spacing } from '@/theme';
 
 function SettingsItem({ icon: Icon, label, value, onPress, color = '#64748b' }: any) {
   return (
@@ -91,68 +91,75 @@ import { Badge } from '@/components/common/Badge';
 const styles = StyleSheet.create({
   profileSection: {
     alignItems: 'center',
-    paddingVertical: spacing.lg,
+    paddingVertical: 32,
   },
   profileAvatarLarge: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 90,
+    height: 90,
+    borderRadius: 24, // Modern squared look
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.md,
+    marginBottom: 16,
+    ...shadows.card,
   },
   avatarText: {
     color: colors.white,
-    fontSize: 32,
+    fontSize: 28,
+    fontWeight: '700',
+    lineHeight: 34,
   },
   profileName: {
     fontSize: 20,
-    fontWeight: '800',
+    fontWeight: '700',
     color: '#0f172a',
+    marginTop: 4,
+    lineHeight: 26,
   },
   roleBadge: {
-    marginTop: spacing.sm,
+    marginTop: 10,
   },
   settingsSection: {
-    paddingHorizontal: spacing.md,
-    marginTop: spacing.lg,
+    marginTop: 24,
   },
   sectionLabel: {
-    marginBottom: 8,
+    marginBottom: 10,
     marginLeft: 4,
-    letterSpacing: 1,
+    letterSpacing: 0.8,
+    fontSize: 11,
   },
   settingsCard: {
     padding: 0,
     overflow: 'hidden',
+    borderRadius: 14,
   },
   settingsItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
+    padding: 18,
   },
   settingsItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 14,
   },
   settingsIconBox: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   settingsLabel: {
     fontSize: 15,
+    fontWeight: '600',
     color: '#1e293b',
   },
   settingsItemRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
   settingsValue: {
     fontSize: 14,
@@ -160,11 +167,14 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: '#f1f5f9',
-    marginHorizontal: 16,
+    marginHorizontal: 18,
   },
   versionText: {
     textAlign: 'center',
-    marginTop: spacing.xl,
-    marginBottom: 40,
+    marginTop: 40,
+    marginBottom: 60,
+    fontSize: 12,
   },
 });
+
+

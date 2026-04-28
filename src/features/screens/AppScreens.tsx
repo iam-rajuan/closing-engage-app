@@ -30,6 +30,7 @@ import {
   X,
   Star,
   MapPin,
+  Mail,
 } from 'lucide-react-native';
 import { AppButton } from '@/components/common/AppButton';
 import { BrandLogo } from '@/components/common/BrandLogo';
@@ -899,36 +900,185 @@ export function TeamScreen() {
   };
   return (
     <ScreenContainer refreshing={refreshing} onRefresh={handleRefresh}>
-      <AppHeader title="Team Management" subtitle="Manage your company team members and roles" onProfilePress={() => router.push('/company/settings')} />
-      <AppButton title="Add Member" icon={<UserPlus color={colors.white} size={18} />} onPress={() => router.push('/company/team/add')} />
-      <AppInput placeholder="Search members..." />
-      <View style={styles.filterRow}><Badge label="Role: All" tone="gray" /><Badge label="Status: Active" tone="gray" /></View>
-      {teamMembers.map((member) => <TeamMemberCard key={member.id} member={member} />)}
+      <AppHeader onProfilePress={() => router.push('/company/settings')} />
+      
+      <View style={styles.pageHeader}>
+        <AppText style={styles.pageTitle}>Team Management</AppText>
+        <AppText muted style={styles.pageSubtitle}>Manage your company team members and roles</AppText>
+      </View>
+
+      <AppButton 
+        title="Add Member" 
+        icon={<UserPlus color={colors.white} size={18} />} 
+        onPress={() => router.push('/company/team/add')} 
+        style={styles.teamAddBtn}
+      />
+
+      <View style={styles.searchContainer}>
+        <Search color="#94a3b8" size={18} style={styles.searchIcon} />
+        <AppInput 
+          placeholder="Search members..." 
+          style={styles.searchInput} 
+          containerStyle={styles.searchBox} 
+        />
+      </View>
+
+      <View style={styles.filterRow}>
+        <Pressable style={styles.dropdownBtn}>
+          <AppText style={styles.dropdownText}>Role: All</AppText>
+          <ChevronDown color="#64748b" size={16} />
+        </Pressable>
+        <Pressable style={styles.dropdownBtn}>
+          <AppText style={styles.dropdownText}>Status: Active</AppText>
+          <ChevronDown color="#64748b" size={16} />
+        </Pressable>
+      </View>
+
+      <View style={styles.memberList}>
+        {teamMembers.map((member) => <TeamMemberCard key={member.id} member={member} />)}
+      </View>
+      <View style={{ height: 40 }} />
     </ScreenContainer>
   );
 }
 
 export function AddMemberScreen() {
-  const { control, handleSubmit, formState: { errors } } = useForm<MemberForm>({ resolver: zodResolver(memberSchema), defaultValues: { fullName: '', phone: '', email: '' } });
+  const [role, setRole] = useState<'Admin' | 'Member'>('Member');
+  const [permissions, setPermissions] = useState({
+    create: true,
+    view: true,
+    download: false
+  });
+
+  const { control, handleSubmit, formState: { errors } } = useForm<MemberForm>({ 
+    resolver: zodResolver(memberSchema), 
+    defaultValues: { fullName: '', phone: '', email: '' } 
+  });
+  
   const submit = handleSubmit(() => router.replace('/company/team'));
+
   return (
     <ScreenContainer>
-      <AppHeader back title="Add New Member" onProfilePress={() => router.push('/company/settings')} />
-      <AppCard style={styles.formCard}>
-        <Controller control={control} name="fullName" render={({ field }) => <AppInput label="FULL NAME" placeholder="e.g. Alexander Pierce" value={field.value} onChangeText={field.onChange} error={errors.fullName?.message} />} />
-        <Controller control={control} name="phone" render={({ field }) => <AppInput label="PHONE" placeholder="+1 (555) 000-0000" value={field.value} onChangeText={field.onChange} />} />
-        <Controller control={control} name="email" render={({ field }) => <AppInput label="EMAIL ADDRESS" placeholder="alexander@company.com" value={field.value} onChangeText={field.onChange} error={errors.email?.message} />} />
-        <AppText variant="label" muted>SELECT ROLE</AppText>
-        <View style={styles.roleCards}><AppCard style={styles.roleCard}><Badge label="Admin" /><AppText variant="caption" muted>Full system access and member management</AppText></AppCard><AppCard style={styles.roleCard}><Badge label="Member" /><AppText variant="caption" muted>Limited access to projects and files</AppText></AppCard></View>
-        <AppText variant="label" muted>MEMBER PERMISSIONS</AppText>
-        {['Create Orders', 'View Orders', 'Download Documents'].map((item) => <View key={item} style={styles.checkRow}><CheckCircle2 color={colors.primary} size={18} /><AppText>{item}</AppText></View>)}
-        <ToggleRow label="Send invitation email" />
-        <AppButton title="Add Member" onPress={submit} />
-        <AppButton title="Cancel" variant="ghost" onPress={() => router.back()} />
+      <AppHeader 
+        back 
+        centerTitle 
+        title="Add New Member" 
+        onProfilePress={() => router.push('/company/settings')} 
+      />
+      
+      <View style={styles.formSection}>
+        <Controller 
+          control={control} 
+          name="fullName" 
+          render={({ field }) => (
+            <AppInput 
+              label="FULL NAME" 
+              placeholder="e.g. Alexander Pierce" 
+              value={field.value} 
+              onChangeText={field.onChange} 
+              error={errors.fullName?.message} 
+            />
+          )} 
+        />
+        <Controller 
+          control={control} 
+          name="phone" 
+          render={({ field }) => (
+            <AppInput 
+              label="PHONE" 
+              placeholder="+1 (555) 000-0000" 
+              value={field.value} 
+              onChangeText={field.onChange} 
+              rightElement={<AppText variant="caption" muted style={{ fontSize: 10 }}>OPTIONAL</AppText>}
+            />
+          )} 
+        />
+        <Controller 
+          control={control} 
+          name="email" 
+          render={({ field }) => (
+            <AppInput 
+              label="EMAIL ADDRESS" 
+              placeholder="alexander@company.com" 
+              value={field.value} 
+              onChangeText={field.onChange} 
+              error={errors.email?.message} 
+            />
+          )} 
+        />
+      </View>
+
+      <View style={styles.roleSelectionSection}>
+        <AppText variant="label" muted style={styles.formSectionLabel}>SELECT ROLE</AppText>
+        <View style={styles.roleRow}>
+          <Pressable 
+            style={[styles.roleSelectCard, role === 'Admin' && styles.roleSelectCardActive]} 
+            onPress={() => setRole('Admin')}
+          >
+            <View style={[styles.roleIconBox, role === 'Admin' && styles.roleIconBoxActive]}>
+              <ShieldCheck color={role === 'Admin' ? '#0a49a8' : '#94a3b8'} size={24} />
+            </View>
+            <AppText weight="bold" style={[styles.roleCardTitle, role === 'Admin' && styles.roleCardTitleActive]}>Admin</AppText>
+            <AppText variant="caption" muted style={styles.roleCardDesc}>Full system access and member management</AppText>
+            {role === 'Admin' && <View style={styles.roleCheckCircle}><CheckCircle2 color="#0a49a8" size={16} /></View>}
+          </Pressable>
+
+          <Pressable 
+            style={[styles.roleSelectCard, role === 'Member' && styles.roleSelectCardActive]} 
+            onPress={() => setRole('Member')}
+          >
+            <View style={[styles.roleIconBox, role === 'Member' && styles.roleIconBoxActive]}>
+              <Briefcase color={role === 'Member' ? '#0a49a8' : '#94a3b8'} size={24} />
+            </View>
+            <AppText weight="bold" style={[styles.roleCardTitle, role === 'Member' && styles.roleCardTitleActive]}>Member</AppText>
+            <AppText variant="caption" muted style={styles.roleCardDesc}>Limited access to specific projects and files</AppText>
+            {role === 'Member' && <View style={styles.roleCheckCircle}><CheckCircle2 color="#0a49a8" size={16} /></View>}
+          </Pressable>
+        </View>
+      </View>
+
+      <AppCard style={styles.permissionsCard}>
+        <AppText weight="bold" style={styles.permissionsTitle}>MEMBER PERMISSIONS</AppText>
+        <Pressable style={styles.checkRow} onPress={() => setPermissions(p => ({ ...p, create: !p.create }))}>
+          <View style={[styles.checkBox, permissions.create && styles.checkBoxActive]}>
+            {permissions.create && <CheckCircle2 color="#fff" size={14} />}
+          </View>
+          <AppText weight="bold" style={styles.checkLabel}>Create Orders</AppText>
+        </Pressable>
+        <Pressable style={styles.checkRow} onPress={() => setPermissions(p => ({ ...p, view: !p.view }))}>
+          <View style={[styles.checkBox, permissions.view && styles.checkBoxActive]}>
+            {permissions.view && <CheckCircle2 color="#fff" size={14} />}
+          </View>
+          <AppText weight="bold" style={styles.checkLabel}>View Orders</AppText>
+        </Pressable>
+        <Pressable style={styles.checkRow} onPress={() => setPermissions(p => ({ ...p, download: !p.download }))}>
+          <View style={[styles.checkBox, permissions.download && styles.checkBoxActive]}>
+            {permissions.download && <CheckCircle2 color="#fff" size={14} />}
+          </View>
+          <AppText weight="bold" style={styles.checkLabel}>Download Documents</AppText>
+        </Pressable>
       </AppCard>
+
+      <AppCard style={styles.inviteToggleCard}>
+        <View style={styles.inviteToggleRow}>
+          <View style={styles.inviteIconBox}><Mail color="#64748b" size={18} /></View>
+          <AppText weight="bold" style={styles.inviteText}>Send invitation email</AppText>
+          <View style={styles.toggleSwitch}><View style={styles.toggleKnob} /></View>
+        </View>
+      </AppCard>
+
+      <View style={styles.formActions}>
+        <AppButton title="Add Member" style={styles.addMemberBtn} onPress={submit} />
+        <Pressable onPress={() => router.back()} style={styles.cancelLink}>
+          <AppText weight="bold" style={styles.cancelLinkText}>Cancel</AppText>
+        </Pressable>
+      </View>
+      
+      <View style={{ height: 40 }} />
     </ScreenContainer>
   );
 }
+
 
 export function CompanySettingsScreen() {
   return <SettingsForm role="company" />;
@@ -1713,43 +1863,83 @@ const styles = StyleSheet.create({
     backgroundColor: '#f1f5f9',
     marginVertical: 14,
   },
-  homeGreeting: {
-    marginTop: spacing.sm,
-    gap: 0,
+  // Common Screen Elements
+  pageHeader: {
+    marginTop: 20,
+    marginBottom: 4,
   },
-  overviewLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  greetingText: {
-    fontSize: 22,
+  pageTitle: {
+    fontSize: 24,
     fontWeight: '800',
     color: '#0f172a',
+    letterSpacing: -0.3,
+    lineHeight: 30,
   },
-  homeSection: {
-    marginTop: spacing.md,
+  pageSubtitle: {
+    fontSize: 14,
+    color: '#64748b',
+    marginTop: 4,
+    lineHeight: 20,
   },
-  orderList: {
-    gap: spacing.sm,
-    marginTop: spacing.xs,
+  sectionHeader: {
+    marginTop: 24,
+    marginBottom: 12,
   },
-  threeCols: { flexDirection: 'row', gap: spacing.sm },
-  actionRow: { flexDirection: 'row', gap: spacing.md, paddingHorizontal: spacing.md, paddingBottom: 40, marginTop: spacing.lg },
-  
-  // Documents Screen specific
+
+  // Search & Filters
+  searchContainer: {
+    marginTop: 16,
+    position: 'relative',
+  },
+  searchBox: {
+    marginBottom: 0,
+  },
+  searchInput: {
+    paddingLeft: 42,
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    height: 46,
+    borderRadius: 12,
+    fontSize: 14,
+  },
+  searchIcon: {
+    position: 'absolute',
+    left: 14,
+    top: 14,
+    zIndex: 1,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    marginTop: 14,
+    gap: 10,
+    alignItems: 'center',
+  },
+
+  // Document & Team Lists
   documentList: {
-    gap: spacing.md,
-    marginTop: spacing.md,
+    gap: 16,
+    marginTop: 20,
+  },
+  memberList: {
+    gap: 16,
+    marginTop: 20,
   },
   listFooter: {
-    marginTop: spacing.xl,
+    marginTop: 32,
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: 12,
     paddingBottom: 40,
   },
-  resultsCount: {
-    fontSize: 13,
-    color: '#94a3b8',
+
+  // Card Margins
+  formCard: {
+    marginTop: 24,
+  },
+  infoCard: {
+    marginTop: 16,
+    padding: 16,
+    gap: 16,
   },
   loadMoreBtn: {
     backgroundColor: '#f1f5f9',
@@ -1784,7 +1974,7 @@ const styles = StyleSheet.create({
   previewContainer: {
     height: 320,
     backgroundColor: '#f8fafc',
-    marginHorizontal: -spacing.md,
+    width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -1836,18 +2026,17 @@ const styles = StyleSheet.create({
   
   viewActionRow: {
     flexDirection: 'row',
-    gap: spacing.md,
-    paddingHorizontal: spacing.md,
-    marginTop: spacing.lg,
+    gap: 16,
+    marginTop: 20,
   },
   viewDownloadBtn: { flex: 1, backgroundColor: '#0a49a8' },
   viewPrintBtn: { flex: 1, backgroundColor: colors.white, borderColor: '#e2e8f0' },
 
   infoCard: {
-    marginHorizontal: spacing.md,
-    marginTop: spacing.md,
-    padding: spacing.md,
-    gap: spacing.md,
+    marginHorizontal: 20,
+    marginTop: 16,
+    padding: 16,
+    gap: 16,
   },
   infoCardHeader: {
     flexDirection: 'row',
@@ -1956,5 +2145,184 @@ const styles = StyleSheet.create({
   chatHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderBottomWidth: 1, borderColor: colors.border, paddingBottom: spacing.md },
   avatarDark: { width: 38, height: 38, borderRadius: radius.full, backgroundColor: colors.text, alignItems: 'center', justifyContent: 'center' },
   messageInput: { marginTop: 'auto', minHeight: 48, borderRadius: radius.md, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.md, gap: spacing.md },
+
+  // Team Screen specific
+  teamAddBtn: {
+    marginTop: 20,
+    backgroundColor: '#1d63d2',
+    height: 50,
+    borderRadius: 12,
+  },
+  dropdownBtn: {
+    flex: 1,
+    height: 44,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  dropdownText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#334155',
+  },
+  memberList: {
+    gap: spacing.md,
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.md,
+  },
+
+  // Add Member specific
+  formSection: {
+    marginTop: 20,
+    gap: 12,
+  },
+  formSectionLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    marginBottom: 12,
+  },
+  roleSelectionSection: {
+    marginTop: 32,
+  },
+  roleRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  roleSelectCard: {
+    flex: 1,
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+    gap: 8,
+    position: 'relative',
+    ...shadows.card,
+  },
+  roleSelectCardActive: {
+    borderColor: '#0a49a8',
+    backgroundColor: '#fff',
+    borderWidth: 2,
+  },
+  roleIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  roleIconBoxActive: {
+    backgroundColor: '#eff6ff',
+  },
+  roleCardTitle: {
+    fontSize: 16,
+    color: '#64748b',
+  },
+  roleCardTitleActive: {
+    color: '#0a49a8',
+  },
+  roleCardDesc: {
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  roleCheckCircle: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+  },
+  permissionsCard: {
+    marginTop: 24,
+    padding: 20,
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+    gap: 16,
+  },
+  permissionsTitle: {
+    fontSize: 13,
+    color: '#0a49a8',
+    marginBottom: 4,
+  },
+  checkBox: {
+    width: 22,
+    height: 22,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#cbd5e1',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.white,
+  },
+  checkBoxActive: {
+    backgroundColor: '#0a49a8',
+    borderColor: '#0a49a8',
+  },
+  checkLabel: {
+    fontSize: 15,
+    color: '#1e293b',
+  },
+  inviteToggleCard: {
+    marginTop: 16,
+    padding: 14,
+  },
+  inviteToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  inviteIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inviteText: {
+    flex: 1,
+    fontSize: 15,
+    color: '#334155',
+  },
+  toggleSwitch: {
+    width: 46,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#0a49a8',
+    padding: 2,
+  },
+  toggleKnob: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.white,
+    alignSelf: 'flex-end',
+  },
+  formActions: {
+    marginTop: 32,
+    gap: 16,
+  },
+  addMemberBtn: {
+    backgroundColor: '#0a49a8',
+    height: 54,
+    borderRadius: 12,
+  },
+  cancelLink: {
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelLinkText: {
+    color: '#64748b',
+    fontSize: 15,
+  },
 });
+
 

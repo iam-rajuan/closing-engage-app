@@ -44,8 +44,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: spacing.lg,
-    paddingBottom: 80, // Reduced from 112
-    gap: spacing.lg,
+    paddingHorizontal: 16,
+    paddingBottom: 80,
   },
 });
+

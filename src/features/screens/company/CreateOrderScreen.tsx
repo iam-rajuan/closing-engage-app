@@ -21,7 +21,7 @@ import { AppInput } from '@/components/common/AppInput';
 import { AppText } from '@/components/common/AppText';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { UploadBox } from '@/components/documents/UploadBox';
-import { colors, spacing } from '@/theme';
+import { colors, shadows, spacing } from '@/theme';
 import { OrderForm, orderSchema } from '@/utils/validation';
 
 export function CreateOrderScreen() {
@@ -166,74 +166,129 @@ export function CreateOrderScreen() {
 }
 
 const styles = StyleSheet.create({
-  formCard: { gap: spacing.md, marginBottom: spacing.md },
+  formCard: { 
+    marginTop: 16,
+    padding: 16,
+    gap: 12 
+  },
   sectionTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: spacing.sm,
+    gap: 10,
+    marginBottom: 8,
   },
-  sectionTitle: { fontSize: 16, color: '#1e293b' },
-  fieldLabel: { fontSize: 11, fontWeight: '700', color: '#64748b', marginBottom: 6, letterSpacing: 0.5 },
+  sectionTitle: { 
+    fontSize: 15, 
+    color: '#0a49a8',
+    fontWeight: '700',
+    lineHeight: 20,
+  },
+  fieldLabel: { 
+    fontSize: 11, 
+    fontWeight: '700', 
+    color: '#64748b', 
+    marginBottom: 8, 
+    letterSpacing: 0.5 
+  },
   datePicker: {
-    height: 44,
+    height: 48,
     backgroundColor: '#f1f5f9',
-    borderRadius: 8,
+    borderRadius: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
   },
-  dateText: { color: '#64748b' },
+  dateText: { color: '#334155', fontSize: 14 },
   picker: {
-    height: 44,
+    height: 48,
     backgroundColor: '#f1f5f9',
-    borderRadius: 8,
+    borderRadius: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
   },
-  subSection: { marginTop: spacing.md },
-  requirementLabel: { marginTop: 12, marginBottom: 10 },
-  radioRow: { flexDirection: 'row', gap: 20 },
-  radioItem: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  radioCircle: { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: '#cbd5e1' },
-  radioActive: { borderColor: '#0a49a8', borderWidth: 5 },
-  priorityContainer: { paddingHorizontal: spacing.md, marginTop: spacing.md, marginBottom: spacing.xl },
-  priorityRow: { flexDirection: 'row', gap: spacing.md, marginTop: 12 },
+  subSection: { marginTop: 20 },
+  requirementLabel: { 
+    marginTop: 16, 
+    marginBottom: 12,
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#94a3b8'
+  },
+  radioRow: { flexDirection: 'row', gap: 24 },
+  radioItem: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  radioCircle: { 
+    width: 20, 
+    height: 20, 
+    borderRadius: 10, 
+    borderWidth: 2, 
+    borderColor: '#cbd5e1',
+    backgroundColor: '#fff'
+  },
+  radioActive: { 
+    borderColor: '#0a49a8', 
+    borderWidth: 6 
+  },
+  priorityContainer: { 
+    marginTop: 24, 
+    marginBottom: 32 
+  },
+  priorityRow: { 
+    flexDirection: 'row', 
+    gap: 16, 
+    marginTop: 16 
+  },
   priorityBtn: {
-    flex: 1,
-    height: 80,
-    borderRadius: 12,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+    gap: 10,
   },
-  priorityNormalActive: { backgroundColor: '#eff6ff', borderColor: '#3b82f6' },
-  priorityUrgentActive: { backgroundColor: '#fef2f2', borderColor: '#ef4444' },
-  priorityBtnText: { fontSize: 12, color: '#64748b' },
+  priorityNormalActive: { 
+    backgroundColor: '#eff6ff', 
+    borderColor: '#3b82f6' 
+  },
+  priorityUrgentActive: { 
+    backgroundColor: '#fef2f2', 
+    borderColor: '#ef4444' 
+  },
+  priorityBtnText: { 
+    fontSize: 13, 
+    color: '#64748b',
+    fontWeight: '700'
+  },
   fileItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    padding: 12,
-    backgroundColor: '#f1f5f9',
-    borderRadius: 10,
-    marginTop: spacing.sm,
+    gap: 14,
+    padding: 14,
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
   },
   fileIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 6,
+    width: 36,
+    height: 36,
+    borderRadius: 8,
     backgroundColor: '#fef2f2',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  fileName: { fontSize: 13, color: '#1e293b' },
-  threeCols: { flexDirection: 'row', gap: spacing.sm },
-  actionRow: { flexDirection: 'row', gap: spacing.md, paddingHorizontal: spacing.md, paddingBottom: 40, marginTop: spacing.lg },
+  fileName: { 
+    fontSize: 14, 
+    color: '#1e293b' 
+  },
+  threeCols: { 
+    flexDirection: 'row', 
+    gap: 12 
+  },
+  actionRow: { 
+    flexDirection: 'row', 
+    gap: 16, 
+    paddingBottom: 40, 
+    marginTop: 32 
+  },
 });
+
+
