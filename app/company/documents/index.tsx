@@ -1,3 +1,3 @@
-import { CompanyDocumentsScreen } from '@/features/screens/AppScreens';
+import { DocumentsScreen } from '@/features/screens/AppScreens';
 
-export default CompanyDocumentsScreen;
+export default DocumentsScreen;

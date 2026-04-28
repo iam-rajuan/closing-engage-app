@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router, type Href } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
-import { BackHandler, Image, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { DevSettings, BackHandler, Image, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import {
+  Briefcase,
   CheckCircle2,
   ChevronRight,
   Download,
   FileText,
+  Hourglass,
   Phone,
   Plus,
   Printer,
@@ -63,12 +65,25 @@ function FieldRow({ label, value }: { label: string; value: string }) {
 }
 
 function StatGrid({ stats }: { stats: { label: string; value: string }[] }) {
+  const getIcon = (label: string) => {
+    switch (label.toUpperCase()) {
+      case 'TOTAL ORDERS': return <FileText color="#3b82f6" size={18} />;
+      case 'ACTIVE ORDERS': return <Briefcase color="#3b82f6" size={18} />;
+      case 'PENDING REVIEW': return <Hourglass color="#f59e0b" size={18} />;
+      case 'COMPLETED': return <CheckCircle2 color="#10b981" size={18} />;
+      default: return <FileText color="#3b82f6" size={18} />;
+    }
+  };
+
   return (
     <View style={styles.statGrid}>
       {stats.map((stat) => (
         <AppCard key={stat.label} style={styles.statCard}>
-          <AppText variant="caption" muted>{stat.label}</AppText>
-          <AppText variant="subtitle">{stat.value}</AppText>
+          <View style={styles.statIconContainer}>
+            {getIcon(stat.label)}
+          </View>
+          <AppText variant="caption" muted style={styles.statLabel}>{stat.label.toUpperCase()}</AppText>
+          <AppText style={styles.statValue}>{stat.value}</AppText>
         </AppCard>
       ))}
     </View>
@@ -143,7 +158,7 @@ export function OnboardingScreen() {
     <ScreenContainer scroll={false}>
         <View style={styles.onboardingScreen}>
           <View style={styles.onboardingHeader}>
-          <BrandLogo width={isCompact ? 112 : 118} />
+          <BrandLogo width={isCompact ? 132 : 140} />
           {activeIndex < slides.length - 1 ? (
             <Pressable hitSlop={12} onPress={finish}>
               <AppText style={styles.skipText}>Skip</AppText>
@@ -285,24 +300,52 @@ export function ForgotPasswordScreen() {
 }
 
 export function CompanyHomeScreen() {
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    if (__DEV__) {
+      DevSettings.reload();
+    } else {
+      setTimeout(() => setRefreshing(false), 1500);
+    }
+  };
+
   return (
-    <ScreenContainer>
+    <ScreenContainer 
+      scroll 
+      contentStyle={styles.homeContainer}
+      refreshing={refreshing}
+      onRefresh={handleRefresh}
+    >
       <AppHeader />
-      <View>
-        <AppText variant="caption" muted>Overview</AppText>
-        <AppText variant="subtitle">Good morning, Alex.</AppText>
+      <View style={styles.homeGreeting}>
+        <AppText variant="caption" muted style={styles.overviewLabel}>Overview</AppText>
+        <AppText variant="subtitle" style={styles.greetingText}>Good morning, Alex.</AppText>
       </View>
       <StatGrid stats={companyStats} />
       <ProgressPipeline items={pipeline} />
-      <SectionHeader title="Recent Orders" action="View All" />
-      {companyOrders.map((order) => <OrderCard key={order.id} order={order} href={`/company/orders/${order.id}` as Href} />)}
+      <SectionHeader title="Recent Orders" action="View All" style={styles.homeSection} />
+      <View style={styles.orderList}>
+        {companyOrders.map((order) => <OrderCard key={order.id} order={order} href={`/company/orders/${order.id}` as Href} />)}
+      </View>
     </ScreenContainer>
   );
 }
 
 export function CompanyOrdersScreen() {
+  const [refreshing, setRefreshing] = useState(false);
+  const handleRefresh = () => {
+    setRefreshing(true);
+    if (__DEV__) {
+      DevSettings.reload();
+    } else {
+      setTimeout(() => setRefreshing(false), 1500);
+    }
+  };
+
   return (
-    <ScreenContainer>
+    <ScreenContainer refreshing={refreshing} onRefresh={handleRefresh}>
       <AppHeader title="Orders" subtitle="Manage and track all your closing orders" />
       <AppButton title="Create New Order" icon={<Plus color={colors.white} size={18} />} onPress={() => router.push('/company/orders/create')} />
       <StatGrid stats={[{ label: 'Total Orders', value: '1,248' }, { label: 'Pending Review', value: '56' }, { label: 'Completed Today', value: '850' }]} />
@@ -377,9 +420,18 @@ export function CompanyOrderDetailsScreen() {
   );
 }
 
-export function CompanyDocumentsScreen() {
+export function DocumentsScreen() {
+  const [refreshing, setRefreshing] = useState(false);
+  const handleRefresh = () => {
+    setRefreshing(true);
+    if (__DEV__) {
+      DevSettings.reload();
+    } else {
+      setTimeout(() => setRefreshing(false), 1500);
+    }
+  };
   return (
-    <ScreenContainer>
+    <ScreenContainer refreshing={refreshing} onRefresh={handleRefresh}>
       <AppHeader title="Documents" subtitle="Access and download your approved files" />
       <AppInput placeholder="Filter by Order" />
       <View style={styles.filterRow}><Badge label="PDF Only" /><Badge label="Filter by Date" tone="gray" /><Badge label="Clear" tone="gray" /></View>
@@ -404,8 +456,17 @@ export function DocumentViewScreen() {
 }
 
 export function TeamScreen() {
+  const [refreshing, setRefreshing] = useState(false);
+  const handleRefresh = () => {
+    setRefreshing(true);
+    if (__DEV__) {
+      DevSettings.reload();
+    } else {
+      setTimeout(() => setRefreshing(false), 1500);
+    }
+  };
   return (
-    <ScreenContainer>
+    <ScreenContainer refreshing={refreshing} onRefresh={handleRefresh}>
       <AppHeader title="Team Management" subtitle="Manage your company team members and roles" />
       <AppButton title="Add Member" icon={<UserPlus color={colors.white} size={18} />} onPress={() => router.push('/company/team/add')} />
       <AppInput placeholder="Search members..." />
@@ -442,8 +503,17 @@ export function CompanySettingsScreen() {
 }
 
 export function NotaryHomeScreen() {
+  const [refreshing, setRefreshing] = useState(false);
+  const handleRefresh = () => {
+    setRefreshing(true);
+    if (__DEV__) {
+      DevSettings.reload();
+    } else {
+      setTimeout(() => setRefreshing(false), 1500);
+    }
+  };
   return (
-    <ScreenContainer>
+    <ScreenContainer refreshing={refreshing} onRefresh={handleRefresh}>
       <AppHeader avatar="SM" />
       <AppText variant="subtitle">Assigned Workload</AppText>
       <AppText muted>Manage your active signing appointments and document verifications from a central atrium.</AppText>
@@ -697,7 +767,7 @@ const styles = StyleSheet.create({
   onboardingDot: { width: 7, height: 7, borderRadius: radius.full, backgroundColor: '#bfc8d8' },
   onboardingDotActive: { width: 22, backgroundColor: colors.primary },
   onboardingButton: {
-    height: 52,
+    height: 48,
     borderRadius: 8,
     backgroundColor: colors.primary,
     alignItems: 'center',
@@ -706,7 +776,7 @@ const styles = StyleSheet.create({
     gap: 8,
     ...shadows.button,
   },
-  onboardingButtonText: { color: colors.white, fontSize: 17, fontWeight: '700' },
+  onboardingButtonText: { color: colors.white, fontSize: 16, fontWeight: '700' },
   center: { textAlign: 'center' },
   authScreen: { justifyContent: 'center', minHeight: '100%' },
   centerBlock: { alignItems: 'center', gap: spacing.sm },
@@ -717,14 +787,79 @@ const styles = StyleSheet.create({
   segmentItem: { flex: 1, alignItems: 'center', padding: spacing.sm, borderRadius: radius.sm },
   segmentActive: { backgroundColor: colors.primary },
   segmentTextActive: { color: colors.white },
-  statGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
-  statCard: { width: '47%', gap: spacing.xs },
+  homeContainer: {
+    paddingTop: spacing.xs, // Minimal top gap
+    paddingBottom: 40,
+  },
+  statGrid: { 
+    flexDirection: 'row', 
+    flexWrap: 'wrap', 
+    gap: spacing.md,
+    marginTop: spacing.xs,
+  },
+  statCard: { 
+    width: '47.5%', 
+    padding: spacing.sm,
+    gap: 4,
+  },
+  statIconContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    backgroundColor: '#eff6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
+  },
+  statLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#64748b',
+    letterSpacing: 0.5,
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  homeGreeting: {
+    marginTop: spacing.sm,
+    gap: 0,
+  },
+  overviewLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  greetingText: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  homeSection: {
+    marginTop: spacing.md,
+  },
+  orderList: {
+    gap: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  orderDate: {
+    fontSize: 11,
+  },
   filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   pagination: { flexDirection: 'row', justifyContent: 'center', gap: spacing.sm },
   threeCols: { flexDirection: 'row', gap: spacing.sm },
   actionRow: { flexDirection: 'row', gap: spacing.md },
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
   fieldRow: { gap: spacing.xs },
+  card: { padding: spacing.md, gap: spacing.xs },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  orderNumber: { fontWeight: '700' },
+  clientName: { fontSize: 16, fontWeight: '700', marginTop: spacing.xs },
+  metaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.xs },
+  notaryInfo: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  notaryText: { color: colors.textMuted },
+  detailsButton: { marginTop: spacing.sm, paddingVertical: spacing.xs, alignItems: 'center', backgroundColor: colors.surface, borderRadius: radius.sm },
+  buttonText: { color: colors.primary },
   preview: { minHeight: 260, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   zoomBar: { position: 'absolute', bottom: spacing.lg, backgroundColor: colors.text, borderRadius: radius.full, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
   roleCards: { flexDirection: 'row', gap: spacing.md },

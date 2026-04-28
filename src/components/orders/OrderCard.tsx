@@ -4,7 +4,7 @@ import { CalendarDays, MapPin, UserRound } from 'lucide-react-native';
 import { AppCard } from '@/components/common/AppCard';
 import { AppText } from '@/components/common/AppText';
 import { Badge } from '@/components/common/Badge';
-import { colors, spacing } from '@/theme';
+import { colors, radius, spacing } from '@/theme';
 import { Order, OrderStatus } from '@/types/order';
 
 function tone(status: OrderStatus) {
@@ -16,40 +16,53 @@ function tone(status: OrderStatus) {
 export function OrderCard({ order, href }: { order: Order; href: Href }) {
   return (
     <AppCard style={styles.card}>
-      <View style={styles.top}>
-        <View>
-          <AppText weight="bold">{order.orderNumber}</AppText>
-          <AppText variant="subtitle">{order.clientName}</AppText>
-        </View>
+      <View style={styles.header}>
+        <AppText variant="caption" muted style={styles.orderNumber}>
+          ORDER {order.orderNumber.toUpperCase()}
+        </AppText>
         <Badge label={order.status.toUpperCase()} tone={tone(order.status)} />
       </View>
-      <View style={styles.meta}>
-        <MapPin size={15} color={colors.textMuted} />
-        <AppText variant="caption" muted>{order.address}</AppText>
-      </View>
-      {order.notaryName ? (
-        <View style={styles.meta}>
-          <UserRound size={15} color={colors.textMuted} />
-          <AppText variant="caption" muted>Notary: {order.notaryName}</AppText>
+      
+      <AppText style={styles.clientName}>{order.clientName}</AppText>
+      
+      <View style={styles.metaRow}>
+        <View style={styles.notaryInfo}>
+          <UserRound size={13} color={colors.textMuted} />
+          <AppText variant="caption" muted style={styles.notaryText}>
+            Notary: {order.notaryName || 'Pending'}
+          </AppText>
         </View>
-      ) : null}
-      <View style={styles.bottom}>
-        <View style={styles.meta}>
-          <CalendarDays size={15} color={colors.textMuted} />
-          <AppText variant="caption" muted>{order.signingDate}</AppText>
-        </View>
-        <Pressable onPress={() => router.push(href)}>
-          <AppText variant="caption" weight="bold" style={styles.link}>VIEW DETAILS</AppText>
-        </Pressable>
+        <AppText variant="caption" muted style={styles.dateText}>{order.signingDate}</AppText>
       </View>
+
+      <Pressable 
+        style={styles.detailsButton} 
+        onPress={() => router.push(href)}
+      >
+        <AppText variant="caption" weight="bold" style={styles.buttonText}>
+          VIEW DETAILS
+        </AppText>
+      </Pressable>
     </AppCard>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { gap: spacing.md },
-  top: { alignItems: 'flex-start', flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md },
-  meta: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs, flexShrink: 1 },
-  bottom: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md },
-  link: { color: colors.primary },
+  card: { padding: spacing.md, gap: spacing.sm },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  orderNumber: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
+  clientName: { fontSize: 17, fontWeight: '700', color: colors.text, marginTop: -2 },
+  metaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 },
+  notaryInfo: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  notaryText: { fontSize: 12.5 },
+  dateText: { fontSize: 12.5 },
+  detailsButton: {
+    backgroundColor: '#f1f5f9',
+    height: 40,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.xs,
+  },
+  buttonText: { color: colors.primary, fontWeight: '700', letterSpacing: 0.5 },
 });

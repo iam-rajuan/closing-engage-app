@@ -1,16 +1,26 @@
 import { PropsWithChildren } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, ViewStyle } from 'react-native';
+import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, StyleSheet, ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing } from '@/theme';
 
 type Props = PropsWithChildren<{
   scroll?: boolean;
   contentStyle?: ViewStyle;
+  refreshing?: boolean;
+  onRefresh?: () => void;
 }>;
 
-export function ScreenContainer({ children, scroll = true, contentStyle }: Props) {
+export function ScreenContainer({ children, scroll = true, contentStyle, refreshing = false, onRefresh }: Props) {
   const content = scroll ? (
-    <ScrollView contentContainerStyle={[styles.content, contentStyle]} showsVerticalScrollIndicator={false}>
+    <ScrollView 
+      contentContainerStyle={[styles.content, contentStyle]} 
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        onRefresh ? (
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} tintColor={colors.primary} />
+        ) : undefined
+      }
+    >
       {children}
     </ScrollView>
   ) : (
@@ -35,7 +45,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.lg,
-    paddingBottom: 112,
+    paddingBottom: 80, // Reduced from 112
     gap: spacing.lg,
   },
 });
