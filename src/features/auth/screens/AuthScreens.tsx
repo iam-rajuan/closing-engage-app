@@ -200,7 +200,7 @@ export function LoginScreen() {
                   active={role === 'company'}
                   onPress={() => setValue('role', 'company')}
                   icon={<Building2 color={role === 'company' ? '#0a49a8' : '#94a3b8'} size={18} />}
-                  title="Signing Company"
+                  title="Title Company"
                   subtitle="Manage orders & team"
                 />
                 <RoleCard
