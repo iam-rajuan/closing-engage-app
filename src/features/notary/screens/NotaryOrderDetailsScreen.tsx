@@ -1,5 +1,7 @@
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 import { ArrowRight, Building, Calendar, CheckCircle2, ChevronLeft, FileText, Info, MapPin, MessageCircle, Send, UserRound } from 'lucide-react-native';
 import { AppButton } from '@/components/common/AppButton';
 import { AppCard } from '@/components/common/AppCard';
@@ -12,11 +14,18 @@ import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { notaryStyles } from '@/features/notary/styles';
 import { useAsyncResource } from '@/hooks/useAsyncResource';
 import { confirmPrintedDocuments, getOrderById } from '@/services/orders.service';
+import { colors } from '@/theme';
 
 export function NotaryOrderDetailsScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
   const orderId = params.id ?? '';
-  const { data: order, loading, error, setData } = useAsyncResource(() => getOrderById(orderId), [orderId]);
+  const { data: order, loading, error, setData, reload } = useAsyncResource(() => getOrderById(orderId), [orderId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void reload();
+    }, [reload]),
+  );
 
   const markPrinted = async () => {
     const updated = await confirmPrintedDocuments(orderId);
@@ -94,15 +103,36 @@ export function NotaryOrderDetailsScreen() {
               </AppCard>
             </View>
 
-            <Pressable
-              style={notaryStyles.scheduleLink}
-              onPress={() => router.push(`/notary/assigned/schedule?orderId=${encodeURIComponent(order.id)}`)}
-            >
-              <AppText weight="bold" style={{ fontSize: 18, color: '#1e293b' }}>
-                {order.meeting ? 'Reschedule Closing' : 'Schedule Closing'}
+            <AppCard style={styles.meetingCard}>
+              <View style={styles.meetingHeader}>
+                <View>
+                  <AppText variant="caption" muted weight="bold" style={styles.meetingEyebrow}>CLOSING MEETING</AppText>
+                  <AppText weight="bold" style={styles.meetingTitle}>
+                    {order.meeting ? (order.meeting.status === 'confirmed' ? 'Meeting Confirmed' : 'Awaiting Company Confirmation') : 'Schedule a meeting'}
+                  </AppText>
+                </View>
+                {order.meeting ? (
+                  <Badge
+                    label={order.meeting.status === 'confirmed' ? 'CONFIRMED' : 'PENDING'}
+                    tone={order.meeting.status === 'confirmed' ? 'green' : 'blue'}
+                  />
+                ) : null}
+              </View>
+              <AppText style={styles.meetingBody}>
+                {order.meeting
+                  ? `${order.meeting.date} at ${order.meeting.time}`
+                  : 'Choose a closing date and time so the company user can confirm this meeting.'}
               </AppText>
-              <ArrowRight size={20} color="#64748b" />
-            </Pressable>
+              <Pressable
+                style={styles.meetingAction}
+                onPress={() => router.push(`/notary/assigned/schedule?orderId=${encodeURIComponent(order.id)}`)}
+              >
+                <AppText weight="bold" style={styles.meetingActionText}>
+                  {order.meeting ? 'Reschedule Closing' : 'Schedule Closing'}
+                </AppText>
+                <ArrowRight size={18} color={colors.primary} />
+              </Pressable>
+            </AppCard>
 
             {order.instructions ? (
               <AppCard style={{ backgroundColor: '#f8fafc', padding: 16, marginTop: 12 }}>
@@ -155,3 +185,47 @@ export function NotaryOrderDetailsScreen() {
     </ScreenContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  meetingCard: {
+    marginTop: 18,
+    padding: 16,
+    backgroundColor: '#f8fbff',
+    borderWidth: 1,
+    borderColor: '#dbeafe',
+    gap: 10,
+  },
+  meetingHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  meetingEyebrow: {
+    letterSpacing: 1,
+    fontSize: 11,
+  },
+  meetingTitle: {
+    fontSize: 15,
+    color: '#0f172a',
+    marginTop: 4,
+  },
+  meetingBody: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#475569',
+  },
+  meetingAction: {
+    marginTop: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    paddingTop: 12,
+  },
+  meetingActionText: {
+    fontSize: 14,
+    color: colors.primary,
+  },
+});

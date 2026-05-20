@@ -1,5 +1,7 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useState } from 'react';
 import { Calendar, FileText, Info, MapPin } from 'lucide-react-native';
 import { AppCard } from '@/components/common/AppCard';
 import { AppHeader } from '@/components/common/AppHeader';
@@ -32,11 +34,26 @@ export function CompanyOrderDetailsScreen() {
     () => getOrderById(orderId),
     [orderId],
   );
+  const [isConfirmingMeeting, setIsConfirmingMeeting] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      void reload();
+    }, [reload]),
+  );
 
   const confirmMeeting = async () => {
     if (!orderId) return;
-    const updated = await confirmOrderMeeting(orderId);
-    setData(updated);
+    setIsConfirmingMeeting(true);
+    try {
+      const updated = await confirmOrderMeeting(orderId);
+      setData(updated);
+      Alert.alert('Meeting confirmed', 'The notary has been notified that this closing is now confirmed.');
+    } catch (caught) {
+      Alert.alert('Unable to confirm meeting', caught instanceof Error ? caught.message : 'Please try again.');
+    } finally {
+      setIsConfirmingMeeting(false);
+    }
   };
 
   return (
@@ -80,21 +97,27 @@ export function CompanyOrderDetailsScreen() {
 
           {order.meeting ? (
             <AppCard style={styles.engagementCard}>
-              <View style={styles.engagementIconBox}>
-                <Calendar color={colors.primary} size={24} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <AppText variant="caption" muted style={styles.engagementSub}>Closing Meeting</AppText>
-                <AppText weight="bold" style={styles.engagementTitle}>
-                  {order.meeting.date} • {order.meeting.time}
-                </AppText>
-                <AppText variant="caption" muted>
-                  Status: {order.meeting.status === 'confirmed' ? 'Confirmed' : 'Awaiting confirmation'}
-                </AppText>
+              <View style={styles.engagementTopRow}>
+                <View style={styles.engagementIconBox}>
+                  <Calendar color={colors.primary} size={24} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <AppText variant="caption" muted style={styles.engagementSub}>Closing Meeting</AppText>
+                  <AppText weight="bold" style={styles.engagementTitle}>
+                    {order.meeting.date} • {order.meeting.time}
+                  </AppText>
+                  <AppText variant="caption" muted>
+                    {order.meeting.status === 'confirmed' ? 'Confirmed and shared with the notary.' : 'The notary scheduled this meeting. Confirm it to notify them instantly.'}
+                  </AppText>
+                </View>
+                <Badge
+                  label={order.meeting.status === 'confirmed' ? 'CONFIRMED' : 'PENDING'}
+                  tone={order.meeting.status === 'confirmed' ? 'green' : 'blue'}
+                />
               </View>
               {order.meeting.status === 'scheduled' ? (
-                <Pressable style={styles.confirmButton} onPress={() => void confirmMeeting()}>
-                  <AppText weight="bold" style={styles.confirmButtonText}>Confirm</AppText>
+                <Pressable style={styles.confirmButton} onPress={() => void confirmMeeting()} disabled={isConfirmingMeeting}>
+                  <AppText weight="bold" style={styles.confirmButtonText}>{isConfirmingMeeting ? 'Confirming...' : 'Confirm Meeting'}</AppText>
                 </Pressable>
               ) : null}
             </AppCard>
@@ -205,12 +228,17 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   engagementCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
     padding: 16,
     marginTop: 16,
     backgroundColor: '#f8fbff',
+    gap: 14,
+    borderWidth: 1,
+    borderColor: '#dbeafe',
+  },
+  engagementTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
   },
   engagementIconBox: {
     width: 48,
@@ -234,9 +262,10 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   confirmButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+    borderRadius: 12,
     backgroundColor: colors.primary,
   },
   confirmButtonText: {
