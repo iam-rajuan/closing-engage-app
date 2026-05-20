@@ -9,6 +9,19 @@ type BackendMessage = {
   createdAt: string;
 };
 
+type BackendThread = {
+  id: string;
+  orderNumber: string;
+  companyId: string;
+  notaryId: string;
+  lastMessage: string;
+  lastMessageAt: string;
+  lastSenderRole: string;
+  unreadCount: number;
+  adminName?: string;
+  adminAvatarUrl?: string;
+};
+
 const timeLabel = (iso: string) =>
   new Date(iso).toLocaleTimeString('en-US', {
     hour: 'numeric',
@@ -24,11 +37,14 @@ const normalizeMessage = (message: BackendMessage, currentRole: 'company' | 'not
 });
 
 export async function getOrderMessages(orderNumber: string, currentRole: 'company' | 'notary') {
-  const result = await unwrap<{ messages: BackendMessage[] }>(
+  const result = await unwrap<{ thread: BackendThread; messages: BackendMessage[] }>(
     api.get(`/api/v1/communications/orders/${encodeURIComponent(orderNumber)}/messages`),
   );
 
-  return result.messages.map((message) => normalizeMessage(message, currentRole));
+  return {
+    thread: result.thread,
+    messages: result.messages.map((message) => normalizeMessage(message, currentRole)),
+  };
 }
 
 export async function sendOrderMessage(orderNumber: string, body: string, currentRole: 'company' | 'notary') {

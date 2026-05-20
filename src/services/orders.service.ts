@@ -14,9 +14,12 @@ type BackendMeeting = {
 type BackendOrderListItem = {
   id: string;
   clientName: string;
+  companyName?: string;
+  companyAvatarUrl?: string;
   propertyAddress: string;
   location: string;
   notary: string;
+  notaryAvatarUrl?: string;
   status: Order['status'];
   date: string;
   time: string;
@@ -31,6 +34,8 @@ type BackendOrderDetail = {
   id: string;
   title?: string;
   clientName: string;
+  companyName?: string;
+  companyAvatarUrl?: string;
   signerName?: string;
   signerPhone?: string;
   propertyAddress: string;
@@ -47,6 +52,7 @@ type BackendOrderDetail = {
   notaryPrintedConfirmed?: boolean;
   assignedNotaryName?: string;
   assignedNotaryId?: string;
+  notaryAvatarUrl?: string;
   meeting?: BackendMeeting;
   documents: OrderDocumentSummary[];
   timeline: Array<{ title: string; date: string; tone: string }>;
@@ -99,7 +105,10 @@ export const normalizeOrderListItem = (item: BackendOrderListItem): Order => ({
   id: item.id,
   orderNumber: normalizeOrderNumber(item.id),
   clientName: item.clientName,
+  companyName: item.companyName,
+  companyAvatarUrl: item.companyAvatarUrl,
   notaryName: item.notary && item.notary !== '--' ? item.notary : undefined,
+  notaryAvatarUrl: item.notaryAvatarUrl,
   address: item.propertyAddress,
   location: item.location,
   signingDate: item.date,
@@ -116,7 +125,10 @@ export const normalizeOrderDetail = (detail: BackendOrderDetail): Order & { time
   id: detail.id,
   orderNumber: normalizeOrderNumber(detail.id),
   clientName: detail.clientName,
+  companyName: detail.companyName,
+  companyAvatarUrl: detail.companyAvatarUrl,
   notaryName: detail.assignedNotaryName && detail.assignedNotaryName !== '--' ? detail.assignedNotaryName : undefined,
+  notaryAvatarUrl: detail.notaryAvatarUrl,
   address: detail.propertyAddress,
   location: detail.location,
   signingDate: detail.signingDate || detail.date,

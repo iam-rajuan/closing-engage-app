@@ -26,18 +26,34 @@ const getStatusTone = (status: string) => {
   }
 };
 
-const buildAvatarUrl = (name: string, background: string, color: string) =>
-  `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${background}&color=${color}&bold=true`;
+const initialsFrom = (value: string) =>
+  value
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase() || value.trim().slice(0, 2).toUpperCase();
 
 export function NotaryOrderCard({ order }: { order: Order }) {
   const user = useAuthStore((state) => state.user);
-  const clientAvatar = buildAvatarUrl(order.clientName, 'dbeafe', '1d4ed8');
-  const notaryAvatar = user?.avatarUrl || buildAvatarUrl(user?.name || user?.fullName || 'Notary User', 'e2e8f0', '0f172a');
+  const companyAvatar = order.companyAvatarUrl;
+  const notaryAvatar = order.notaryAvatarUrl || user?.avatarUrl;
+  const companyInitials = initialsFrom(order.companyName || order.clientName || 'Company');
+  const notaryInitials = initialsFrom(order.notaryName || user?.name || user?.fullName || 'Notary');
   
   return (
     <AppCard style={notaryStyles.orderCard}>
       <View style={notaryStyles.orderTop}>
-        <Image source={{ uri: clientAvatar }} style={notaryStyles.profileAvatar} />
+        {companyAvatar ? (
+          <Image source={{ uri: companyAvatar }} style={notaryStyles.profileAvatar} />
+        ) : (
+          <View style={notaryStyles.profileAvatarFallback}>
+            <AppText weight="bold" style={{ color: '#fff', fontSize: 12 }}>
+              {companyInitials}
+            </AppText>
+          </View>
+        )}
         <View style={{ flex: 1 }}>
           <AppText weight="bold" style={notaryStyles.orderClientName}>{order.clientName}</AppText>
           <AppText variant="caption" muted weight="semibold" style={{ fontSize: 11, marginTop: 1 }}>#{order.orderNumber.replace('#', '')}</AppText>
@@ -76,8 +92,20 @@ export function NotaryOrderCard({ order }: { order: Order }) {
             </View>
           ) : (
             <View style={notaryStyles.avatarGroup}>
-              <Image source={{ uri: clientAvatar }} style={notaryStyles.miniAvatar} />
-              <Image source={{ uri: notaryAvatar }} style={[notaryStyles.miniAvatar, { marginLeft: -10 }]} />
+              {companyAvatar ? (
+                <Image source={{ uri: companyAvatar }} style={notaryStyles.miniAvatar} />
+              ) : (
+                <View style={[notaryStyles.miniAvatar, notaryStyles.miniAvatarFallback]}>
+                  <AppText weight="bold" style={notaryStyles.miniAvatarText}>{companyInitials}</AppText>
+                </View>
+              )}
+              {notaryAvatar ? (
+                <Image source={{ uri: notaryAvatar }} style={[notaryStyles.miniAvatar, { marginLeft: -10 }]} />
+              ) : (
+                <View style={[notaryStyles.miniAvatar, notaryStyles.miniAvatarFallback, { marginLeft: -10 }]}>
+                  <AppText weight="bold" style={notaryStyles.miniAvatarText}>{notaryInitials}</AppText>
+                </View>
+              )}
             </View>
           )}
         </View>

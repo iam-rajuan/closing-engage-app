@@ -15,6 +15,8 @@ export function ScreenContainer({ children, scroll = true, contentStyle, refresh
     <ScrollView 
       contentContainerStyle={[styles.content, contentStyle]} 
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="interactive"
       refreshControl={
         onRefresh ? (
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} tintColor={colors.primary} />

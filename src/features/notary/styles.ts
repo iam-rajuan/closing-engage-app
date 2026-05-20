@@ -173,6 +173,15 @@ miniAvatar: {
     borderWidth: 1.5,
     borderColor: '#fff',
   },
+miniAvatarFallback: {
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+miniAvatarText: {
+    color: '#fff',
+    fontSize: 8,
+  },
 viewDetailsBtn: {
     flexDirection: 'row',
     alignItems: 'center',

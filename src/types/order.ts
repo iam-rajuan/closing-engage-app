@@ -30,7 +30,10 @@ export type Order = {
   id: string;
   orderNumber: string;
   clientName: string;
+  companyName?: string;
+  companyAvatarUrl?: string;
   notaryName?: string;
+  notaryAvatarUrl?: string;
   address: string;
   location: string;
   signingDate: string;
