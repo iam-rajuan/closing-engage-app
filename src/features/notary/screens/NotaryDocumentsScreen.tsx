@@ -1,97 +1,127 @@
-import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
-import {
-  CheckCircle2,
-  ChevronDown,
-  CloudUpload,
-  FileText,
-  Send,
-  Trash2,
-} from 'lucide-react-native';
+import { CheckCircle2, ChevronDown, CloudUpload, FileText, Send, Trash2 } from 'lucide-react-native';
 import { AppHeader } from '@/components/common/AppHeader';
 import { AppText } from '@/components/common/AppText';
 import { AppCard } from '@/components/common/AppCard';
+import { EmptyState } from '@/components/common/EmptyState';
+import { ErrorState } from '@/components/common/ErrorState';
+import { LoadingState } from '@/components/common/LoadingState';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
+import { useAsyncResource } from '@/hooks/useAsyncResource';
+import { getNotaryOrders } from '@/services/orders.service';
+import { uploadDocumentBinary } from '@/services/documents.service';
 import { colors, shadows } from '@/theme';
 import { pickDocument } from '@/utils/fileUpload';
 
 const GUIDE_ITEMS = [
   'Legibility (No blur or glare)',
   'Order of Pages (Per instructions)',
-  'Full Stack (Include all 48 pages)',
+  'Full Stack (Include all pages)',
 ];
 
 export function UploadDocumentsScreen() {
   const [refreshing, setRefreshing] = useState(false);
-  const handleRefresh = () => {
+  const [selectedFile, setSelectedFile] = useState<{ uri: string; name: string; mimeType?: string; size?: number } | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const { data: orders, loading, error, reload } = useAsyncResource(() => getNotaryOrders(), []);
+
+  const selectedOrder = useMemo(() => orders?.[0] ?? null, [orders]);
+
+  const handleRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1200);
+    await reload();
+    setRefreshing(false);
+  };
+
+  const browseFiles = async () => {
+    const picked = await pickDocument();
+    if (picked) {
+      setSelectedFile({ uri: picked.uri, name: picked.name, size: picked.size, mimeType: picked.mimeType });
+    }
+  };
+
+  const submitUpload = async () => {
+    if (!selectedFile || !selectedOrder) {
+      Alert.alert('Select a file', 'Pick a document and order before submitting.');
+      return;
+    }
+    setUploading(true);
+    try {
+      await uploadDocumentBinary({
+        orderNumber: selectedOrder.orderNumber,
+        file: selectedFile,
+      });
+      Alert.alert('Upload complete', 'Your document was uploaded to the live backend successfully.');
+      setSelectedFile(null);
+    } catch (error) {
+      Alert.alert('Upload failed', error instanceof Error ? error.message : 'Please try again.');
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
-    <ScreenContainer
-      scroll
-      contentStyle={s.container}
-      refreshing={refreshing}
-      onRefresh={handleRefresh}
-    >
+    <ScreenContainer scroll contentStyle={s.container} refreshing={refreshing} onRefresh={() => void handleRefresh()}>
       <AppHeader onProfilePress={() => router.push('/notary/settings')} />
-
-      {/* Page Title */}
       <AppText weight="bold" style={s.pageTitle}>Upload Documents</AppText>
 
-      {/* ── SELECTED ORDER ── */}
+      {loading && !orders ? <LoadingState /> : null}
+      {error ? <ErrorState message={error} /> : null}
+
       <AppCard style={s.orderCard}>
         <AppText variant="label" muted style={s.orderLabel}>SELECTED ORDER</AppText>
         <Pressable style={s.orderDropdown}>
-          <AppText weight="bold" style={s.orderValue}>#CE-90210 - Jonathan Harker</AppText>
+          <AppText weight="bold" style={s.orderValue}>
+            {selectedOrder ? `${selectedOrder.orderNumber} - ${selectedOrder.clientName}` : 'No assigned orders'}
+          </AppText>
           <ChevronDown color="#334155" size={20} />
         </Pressable>
       </AppCard>
 
-      {/* ── UPLOAD AREA ── */}
       <AppCard style={s.uploadCard}>
-        <Pressable style={s.dropZone} onPress={() => void pickDocument()}>
+        <Pressable style={s.dropZone} onPress={() => void browseFiles()}>
           <View style={s.cloudIconCircle}>
             <CloudUpload color="#0a49a8" size={28} />
           </View>
-          <AppText weight="bold" style={s.dropTitle}>Drag & Drop Scanbacks</AppText>
-          <AppText muted style={s.dropSubtitle}>Upload high-resolution PDF scans only</AppText>
+          <AppText weight="bold" style={s.dropTitle}>Select Scanbacks</AppText>
+          <AppText muted style={s.dropSubtitle}>Choose a PDF, JPG, or PNG from your device</AppText>
         </Pressable>
 
-        <Pressable style={s.browseBtn} onPress={() => void pickDocument()}>
+        <Pressable style={s.browseBtn} onPress={() => void browseFiles()}>
           <AppText weight="bold" style={s.browseBtnText}>Browse Files</AppText>
         </Pressable>
       </AppCard>
 
-      {/* ── UPLOADED FILES ── */}
-      <AppText weight="bold" style={s.sectionLabel}>UPLOADED FILES (1)</AppText>
-      <AppCard style={s.fileCard}>
-        <View style={s.fileRow}>
-          <View style={s.fileIconBox}>
-            <FileText color="#dc2626" size={20} />
+      <AppText weight="bold" style={s.sectionLabel}>UPLOADED FILES</AppText>
+      {selectedFile ? (
+        <AppCard style={s.fileCard}>
+          <View style={s.fileRow}>
+            <View style={s.fileIconBox}>
+              <FileText color="#dc2626" size={20} />
+            </View>
+            <View style={s.fileInfo}>
+              <AppText weight="bold" style={s.fileName}>{selectedFile.name}</AppText>
+              <AppText muted style={s.fileSize}>{selectedFile.size ? `${(selectedFile.size / 1024 / 1024).toFixed(1)} MB` : 'Unknown size'}</AppText>
+            </View>
+            <Pressable style={s.deleteBtn} onPress={() => setSelectedFile(null)}>
+              <Trash2 color="#94a3b8" size={20} />
+            </Pressable>
           </View>
-          <View style={s.fileInfo}>
-            <AppText weight="bold" style={s.fileName}>scanback_signed_final.pdf</AppText>
-            <AppText muted style={s.fileSize}>4.2 MB</AppText>
+
+          <View style={s.verificationRow}>
+            <AppText weight="bold" style={s.verificationLabel}>READY TO SUBMIT</AppText>
+            <AppText weight="bold" style={s.verificationPercent}>100%</AppText>
           </View>
-          <Pressable style={s.deleteBtn}>
-            <Trash2 color="#94a3b8" size={20} />
-          </Pressable>
-        </View>
+          <View style={s.progressTrack}>
+            <View style={s.progressFill} />
+          </View>
+        </AppCard>
+      ) : (
+        <EmptyState title="No files selected yet" />
+      )}
 
-        {/* Verification Status */}
-        <View style={s.verificationRow}>
-          <AppText weight="bold" style={s.verificationLabel}>VERIFICATION COMPLETE</AppText>
-          <AppText weight="bold" style={s.verificationPercent}>100%</AppText>
-        </View>
-        <View style={s.progressTrack}>
-          <View style={s.progressFill} />
-        </View>
-      </AppCard>
-
-      {/* ── SUBMISSION GUIDE ── */}
       <AppCard style={s.guideCard}>
         <View style={s.guideTitleRow}>
           <CheckCircle2 color="#0a49a8" size={20} />
@@ -105,9 +135,8 @@ export function UploadDocumentsScreen() {
         ))}
       </AppCard>
 
-      {/* ── SUBMIT BUTTON ── */}
-      <Pressable style={s.submitBtn}>
-        <AppText weight="bold" style={s.submitBtnText}>Upload & Submit</AppText>
+      <Pressable style={s.submitBtn} onPress={() => void submitUpload()}>
+        <AppText weight="bold" style={s.submitBtnText}>{uploading ? 'Uploading...' : 'Upload & Submit'}</AppText>
         <Send color="#fff" size={18} />
       </Pressable>
     </ScreenContainer>
@@ -118,35 +147,11 @@ export function NotaryDocumentsScreen() {
   return <UploadDocumentsScreen />;
 }
 
-/* ─── STYLES ─── */
 const s = StyleSheet.create({
-  container: {
-    paddingBottom: 16,
-  },
-
-  /* Page Title */
-  pageTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#0a49a8',
-    marginTop: 8,
-    marginBottom: 16,
-    lineHeight: 26,
-  },
-
-  /* Order Selector */
-  orderCard: {
-    padding: 14,
-    borderRadius: 12,
-    gap: 8,
-    marginBottom: 12,
-  },
-  orderLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.6,
-    color: '#94a3b8',
-  },
+  container: { paddingBottom: 16 },
+  pageTitle: { fontSize: 20, fontWeight: '800', color: '#0a49a8', marginTop: 8, marginBottom: 16, lineHeight: 26 },
+  orderCard: { padding: 14, borderRadius: 12, gap: 8, marginBottom: 12 },
+  orderLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 0.6, color: '#94a3b8' },
   orderDropdown: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -158,19 +163,8 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e2e8f0',
   },
-  orderValue: {
-    fontSize: 15,
-    color: '#0f172a',
-  },
-
-  /* Upload Area */
-  uploadCard: {
-    padding: 16,
-    borderRadius: 14,
-    gap: 16,
-    marginBottom: 20,
-    alignItems: 'center',
-  },
+  orderValue: { fontSize: 15, color: '#0f172a' },
+  uploadCard: { padding: 16, borderRadius: 14, gap: 16, marginBottom: 20, alignItems: 'center' },
   dropZone: {
     width: '100%',
     minHeight: 130,
@@ -193,15 +187,8 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 2,
   },
-  dropTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#0f172a',
-  },
-  dropSubtitle: {
-    fontSize: 13,
-    color: '#94a3b8',
-  },
+  dropTitle: { fontSize: 15, fontWeight: '800', color: '#0f172a' },
+  dropSubtitle: { fontSize: 13, color: '#94a3b8' },
   browseBtn: {
     width: '100%',
     height: 44,
@@ -211,30 +198,10 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     ...shadows.button,
   },
-  browseBtnText: {
-    color: '#fff',
-    fontSize: 14,
-  },
-
-  /* Uploaded Files */
-  sectionLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#64748b',
-    letterSpacing: 0.5,
-    marginBottom: 12,
-  },
-  fileCard: {
-    padding: 14,
-    borderRadius: 12,
-    gap: 12,
-    marginBottom: 16,
-  },
-  fileRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
+  browseBtnText: { color: '#fff', fontSize: 14 },
+  sectionLabel: { fontSize: 12, fontWeight: '700', color: '#64748b', letterSpacing: 0.5, marginBottom: 12 },
+  fileCard: { padding: 14, borderRadius: 12, gap: 12, marginBottom: 16 },
+  fileRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   fileIconBox: {
     width: 44,
     height: 44,
@@ -243,91 +210,20 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  fileInfo: {
-    flex: 1,
-    gap: 2,
-  },
-  fileName: {
-    fontSize: 14,
-    color: '#0f172a',
-  },
-  fileSize: {
-    fontSize: 12,
-    color: '#94a3b8',
-  },
-  deleteBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: '#f8fafc',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  /* Verification */
-  verificationRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  verificationLabel: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#0a49a8',
-    letterSpacing: 0.3,
-  },
-  verificationPercent: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#0a49a8',
-  },
-  progressTrack: {
-    height: 6,
-    backgroundColor: '#e2e8f0',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    width: '100%',
-    backgroundColor: '#0a49a8',
-    borderRadius: 3,
-  },
-
-  /* Submission Guide */
-  guideCard: {
-    padding: 16,
-    borderRadius: 14,
-    gap: 12,
-    marginBottom: 20,
-    backgroundColor: '#f8fbff',
-    borderWidth: 1,
-    borderColor: '#e8edf2',
-  },
-  guideTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
-  },
-  guideTitle: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#0f172a',
-    letterSpacing: 0.5,
-  },
-  guideItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  guideText: {
-    fontSize: 14,
-    color: '#334155',
-    flex: 1,
-  },
-
-  /* Submit Button */
+  fileInfo: { flex: 1, gap: 2 },
+  fileName: { fontSize: 14, color: '#0f172a' },
+  fileSize: { fontSize: 12, color: '#94a3b8' },
+  deleteBtn: { width: 36, height: 36, borderRadius: 8, backgroundColor: '#f8fafc', alignItems: 'center', justifyContent: 'center' },
+  verificationRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  verificationLabel: { fontSize: 11, fontWeight: '800', color: '#0a49a8', letterSpacing: 0.3 },
+  verificationPercent: { fontSize: 13, fontWeight: '800', color: '#0a49a8' },
+  progressTrack: { height: 6, backgroundColor: '#e2e8f0', borderRadius: 3, overflow: 'hidden' },
+  progressFill: { height: '100%', width: '100%', backgroundColor: '#0a49a8', borderRadius: 3 },
+  guideCard: { padding: 16, borderRadius: 14, gap: 12, marginBottom: 20, backgroundColor: '#f8fbff', borderWidth: 1, borderColor: '#e8edf2' },
+  guideTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
+  guideTitle: { fontSize: 13, fontWeight: '800', color: '#0f172a', letterSpacing: 0.5 },
+  guideItem: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  guideText: { fontSize: 14, color: '#334155', flex: 1 },
   submitBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -339,8 +235,5 @@ const s = StyleSheet.create({
     ...shadows.button,
     marginBottom: 8,
   },
-  submitBtnText: {
-    color: '#fff',
-    fontSize: 15,
-  },
+  submitBtnText: { color: '#fff', fontSize: 15 },
 });

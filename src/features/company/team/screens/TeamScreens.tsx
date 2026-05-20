@@ -2,47 +2,63 @@ import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
-import { Pressable, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 import { Briefcase, CheckCircle2, ChevronDown, Mail, Search, ShieldCheck, UserPlus } from 'lucide-react-native';
 import { AppButton } from '@/components/common/AppButton';
 import { AppCard } from '@/components/common/AppCard';
 import { AppHeader } from '@/components/common/AppHeader';
 import { AppInput } from '@/components/common/AppInput';
 import { AppText } from '@/components/common/AppText';
+import { EmptyState } from '@/components/common/EmptyState';
+import { ErrorState } from '@/components/common/ErrorState';
+import { LoadingState } from '@/components/common/LoadingState';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { TeamMemberCard } from '@/components/team/TeamMemberCard';
-import { teamMembers } from '@/constants/mockData';
+import { useAsyncResource } from '@/hooks/useAsyncResource';
+import { createTeamMember, getTeamMembers } from '@/services/team.service';
 import { styles } from '@/features/shared/styles/screenStyles';
 import { colors } from '@/theme';
 import { MemberForm, memberSchema } from '@/utils/validation';
+
 export function TeamScreen() {
   const [refreshing, setRefreshing] = useState(false);
-  const handleRefresh = () => {
+  const [search, setSearch] = useState('');
+  const { data: members, loading, error, reload } = useAsyncResource(() => getTeamMembers(), []);
+
+  const handleRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1200);
+    await reload();
+    setRefreshing(false);
   };
+
+  const filteredMembers = (members ?? []).filter((member) =>
+    !search.trim() || `${member.name} ${member.email}`.toLowerCase().includes(search.trim().toLowerCase()),
+  );
+
   return (
-    <ScreenContainer refreshing={refreshing} onRefresh={handleRefresh}>
+    <ScreenContainer refreshing={refreshing} onRefresh={() => void handleRefresh()}>
       <AppHeader onProfilePress={() => router.push('/company/settings')} />
-      
+
       <View style={styles.pageHeader}>
         <AppText style={styles.pageTitle}>Team Management</AppText>
         <AppText muted style={styles.pageSubtitle}>Manage your company team members and roles</AppText>
       </View>
 
-      <AppButton 
-        title="Add Member" 
-        icon={<UserPlus color={colors.white} size={18} />} 
-        onPress={() => router.push('/company/team/add')} 
+      <AppButton
+        title="Add Member"
+        icon={<UserPlus color={colors.white} size={18} />}
+        onPress={() => router.push('/company/team/add')}
         style={styles.teamAddBtn}
       />
 
       <View style={styles.searchContainer}>
         <Search color="#94a3b8" size={18} style={styles.searchIcon} />
-        <AppInput 
-          placeholder="Search members..." 
-          style={styles.searchInput} 
-          containerStyle={styles.searchBox} 
+        <AppInput
+          placeholder="Search members..."
+          style={styles.searchInput}
+          containerStyle={styles.searchBox}
+          value={search}
+          onChangeText={setSearch}
         />
       </View>
 
@@ -52,13 +68,20 @@ export function TeamScreen() {
           <ChevronDown color="#64748b" size={16} />
         </Pressable>
         <Pressable style={styles.dropdownBtn}>
-          <AppText style={styles.dropdownText}>Status: Active</AppText>
+          <AppText style={styles.dropdownText}>Status: Mixed</AppText>
           <ChevronDown color="#64748b" size={16} />
         </Pressable>
       </View>
 
+      {loading && !members ? <LoadingState /> : null}
+      {error ? <ErrorState message={error} /> : null}
+
       <View style={styles.memberList}>
-        {teamMembers.map((member) => <TeamMemberCard key={member.id} member={member} />)}
+        {filteredMembers.length ? (
+          filteredMembers.map((member) => <TeamMemberCard key={member.id} member={member} />)
+        ) : (
+          !loading && <EmptyState title="No team members found" />
+        )}
       </View>
       <View style={{ height: 40 }} />
     </ScreenContainer>
@@ -68,74 +91,95 @@ export function TeamScreen() {
 export function AddMemberScreen() {
   const [role, setRole] = useState<'Admin' | 'Member'>('Member');
   const [permissions, setPermissions] = useState({
-    create: true,
-    view: true,
-    download: false
+    createOrders: true,
+    viewOrders: true,
+    downloadDocuments: false,
   });
 
-  const { control, handleSubmit, formState: { errors } } = useForm<MemberForm>({ 
-    resolver: zodResolver(memberSchema), 
-    defaultValues: { fullName: '', phone: '', email: '' } 
+  const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<MemberForm>({
+    resolver: zodResolver(memberSchema),
+    defaultValues: { fullName: '', phone: '', email: '' },
   });
-  
-  const submit = handleSubmit(() => router.replace('/company/team'));
+
+  const submit = handleSubmit(async (values) => {
+    try {
+      const result = await createTeamMember({
+        name: values.fullName,
+        email: values.email,
+        phone: values.phone,
+        role,
+        permissions,
+        sendInvite: true,
+      });
+
+      Alert.alert(
+        'Member created',
+        result.inviteDelivered
+          ? 'Invitation email sent successfully.'
+          : `Invite email could not be delivered. Temporary password: ${result.temporaryPassword}`,
+      );
+      router.replace('/company/team');
+    } catch (error) {
+      Alert.alert('Unable to add member', error instanceof Error ? error.message : 'Please try again.');
+    }
+  });
 
   return (
     <ScreenContainer>
-      <AppHeader 
-        back 
-        centerTitle 
-        title="Add New Member" 
-        onProfilePress={() => router.push('/company/settings')} 
+      <AppHeader
+        back
+        centerTitle
+        title="Add New Member"
+        onProfilePress={() => router.push('/company/settings')}
       />
-      
+
       <View style={styles.formSection}>
-        <Controller 
-          control={control} 
-          name="fullName" 
+        <Controller
+          control={control}
+          name="fullName"
           render={({ field }) => (
-            <AppInput 
-              label="FULL NAME" 
-              placeholder="e.g. Alexander Pierce" 
-              value={field.value} 
-              onChangeText={field.onChange} 
-              error={errors.fullName?.message} 
+            <AppInput
+              label="FULL NAME"
+              placeholder="e.g. Alexander Pierce"
+              value={field.value}
+              onChangeText={field.onChange}
+              error={errors.fullName?.message}
             />
-          )} 
+          )}
         />
-        <Controller 
-          control={control} 
-          name="phone" 
+        <Controller
+          control={control}
+          name="phone"
           render={({ field }) => (
-            <AppInput 
-              label="PHONE" 
-              placeholder="+1 (555) 000-0000" 
-              value={field.value} 
-              onChangeText={field.onChange} 
+            <AppInput
+              label="PHONE"
+              placeholder="+1 (555) 000-0000"
+              value={field.value}
+              onChangeText={field.onChange}
               rightElement={<AppText variant="caption" muted style={{ fontSize: 10 }}>OPTIONAL</AppText>}
             />
-          )} 
+          )}
         />
-        <Controller 
-          control={control} 
-          name="email" 
+        <Controller
+          control={control}
+          name="email"
           render={({ field }) => (
-            <AppInput 
-              label="EMAIL ADDRESS" 
-              placeholder="alexander@company.com" 
-              value={field.value} 
-              onChangeText={field.onChange} 
-              error={errors.email?.message} 
+            <AppInput
+              label="EMAIL ADDRESS"
+              placeholder="alexander@company.com"
+              value={field.value}
+              onChangeText={field.onChange}
+              error={errors.email?.message}
             />
-          )} 
+          )}
         />
       </View>
 
       <View style={styles.roleSelectionSection}>
         <AppText variant="label" muted style={styles.formSectionLabel}>SELECT ROLE</AppText>
         <View style={styles.roleRow}>
-          <Pressable 
-            style={[styles.roleSelectCard, role === 'Admin' && styles.roleSelectCardActive]} 
+          <Pressable
+            style={[styles.roleSelectCard, role === 'Admin' && styles.roleSelectCardActive]}
             onPress={() => setRole('Admin')}
           >
             <View style={[styles.roleIconBox, role === 'Admin' && styles.roleIconBoxActive]}>
@@ -146,8 +190,8 @@ export function AddMemberScreen() {
             {role === 'Admin' && <View style={styles.roleCheckCircle}><CheckCircle2 color="#0a49a8" size={16} /></View>}
           </Pressable>
 
-          <Pressable 
-            style={[styles.roleSelectCard, role === 'Member' && styles.roleSelectCardActive]} 
+          <Pressable
+            style={[styles.roleSelectCard, role === 'Member' && styles.roleSelectCardActive]}
             onPress={() => setRole('Member')}
           >
             <View style={[styles.roleIconBox, role === 'Member' && styles.roleIconBoxActive]}>
@@ -162,21 +206,24 @@ export function AddMemberScreen() {
 
       <AppCard style={styles.permissionsCard}>
         <AppText weight="bold" style={styles.permissionsTitle}>MEMBER PERMISSIONS</AppText>
-        <Pressable style={styles.checkRow} onPress={() => setPermissions(p => ({ ...p, create: !p.create }))}>
-          <View style={[styles.checkBox, permissions.create && styles.checkBoxActive]}>
-            {permissions.create && <CheckCircle2 color="#fff" size={14} />}
+        <Pressable style={styles.checkRow} onPress={() => setPermissions((p) => ({ ...p, createOrders: !p.createOrders }))}>
+          <View style={[styles.checkBox, permissions.createOrders && styles.checkBoxActive]}>
+            {permissions.createOrders && <CheckCircle2 color="#fff" size={14} />}
           </View>
           <AppText weight="bold" style={styles.checkLabel}>Create Orders</AppText>
         </Pressable>
-        <Pressable style={styles.checkRow} onPress={() => setPermissions(p => ({ ...p, view: !p.view }))}>
-          <View style={[styles.checkBox, permissions.view && styles.checkBoxActive]}>
-            {permissions.view && <CheckCircle2 color="#fff" size={14} />}
+        <Pressable style={styles.checkRow} onPress={() => setPermissions((p) => ({ ...p, viewOrders: !p.viewOrders }))}>
+          <View style={[styles.checkBox, permissions.viewOrders && styles.checkBoxActive]}>
+            {permissions.viewOrders && <CheckCircle2 color="#fff" size={14} />}
           </View>
           <AppText weight="bold" style={styles.checkLabel}>View Orders</AppText>
         </Pressable>
-        <Pressable style={styles.checkRow} onPress={() => setPermissions(p => ({ ...p, download: !p.download }))}>
-          <View style={[styles.checkBox, permissions.download && styles.checkBoxActive]}>
-            {permissions.download && <CheckCircle2 color="#fff" size={14} />}
+        <Pressable
+          style={styles.checkRow}
+          onPress={() => setPermissions((p) => ({ ...p, downloadDocuments: !p.downloadDocuments }))}
+        >
+          <View style={[styles.checkBox, permissions.downloadDocuments && styles.checkBoxActive]}>
+            {permissions.downloadDocuments && <CheckCircle2 color="#fff" size={14} />}
           </View>
           <AppText weight="bold" style={styles.checkLabel}>Download Documents</AppText>
         </Pressable>
@@ -185,20 +232,18 @@ export function AddMemberScreen() {
       <AppCard style={styles.inviteToggleCard}>
         <View style={styles.inviteToggleRow}>
           <View style={styles.inviteIconBox}><Mail color="#64748b" size={18} /></View>
-          <AppText weight="bold" style={styles.inviteText}>Send invitation email</AppText>
-          <View style={styles.toggleSwitch}><View style={styles.toggleKnob} /></View>
+          <AppText weight="bold" style={styles.inviteText}>Invitation email will be sent automatically</AppText>
         </View>
       </AppCard>
 
       <View style={styles.formActions}>
-        <AppButton title="Add Member" style={styles.addMemberBtn} onPress={submit} />
+        <AppButton title={isSubmitting ? 'Adding...' : 'Add Member'} style={styles.addMemberBtn} onPress={() => void submit()} />
         <Pressable onPress={() => router.back()} style={styles.cancelLink}>
           <AppText weight="bold" style={styles.cancelLinkText}>Cancel</AppText>
         </Pressable>
       </View>
-      
+
       <View style={{ height: 40 }} />
     </ScreenContainer>
   );
 }
-

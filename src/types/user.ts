@@ -1,10 +1,23 @@
 export type UserRole = 'company' | 'notary';
 
+export type UserPermissions = {
+  createOrders: boolean;
+  viewOrders: boolean;
+  downloadDocuments: boolean;
+};
+
 export type User = {
   id: string;
-  name: string;
-  email: string;
   role: UserRole;
+  email: string;
+  name: string;
+  fullName?: string;
   company?: string;
+  phone?: string;
+  status?: string;
+  avatarUrl?: string;
   avatarInitials: string;
+  accountType?: 'owner' | 'team-member';
+  memberRole?: 'Admin' | 'Member';
+  permissions: UserPermissions;
 };

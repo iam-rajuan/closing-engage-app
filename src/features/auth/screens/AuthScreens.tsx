@@ -34,6 +34,7 @@ import { useAuthStore } from '@/features/auth/auth.store';
 import { LoginForm, loginSchema } from '@/utils/validation';
 import { colors, shadows } from '@/theme';
 import { styles as sharedStyles } from '@/features/shared/styles/screenStyles';
+import { requestPasswordReset } from '@/services/auth.service';
 
 /* ─── Role Selector Card ─── */
 function RoleCard({
@@ -76,6 +77,7 @@ function RoleCard({
 export function LoginScreen() {
   const login = useAuthStore((state) => state.login);
   const [showPassword, setShowPassword] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
     control,
@@ -85,14 +87,19 @@ export function LoginScreen() {
     formState: { errors, isSubmitting },
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: 'your@email.com', password: '', role: 'company' },
+    defaultValues: { email: '', password: '', role: 'company' },
   });
 
   const role = watch('role');
 
   const submit = handleSubmit(async (values) => {
-    await login(values.role, values.email);
-    router.replace(values.role === 'company' ? '/company/home' : '/notary/home');
+    setSubmitError(null);
+    try {
+      await login(values.role, values.email, values.password);
+      router.replace(values.role === 'company' ? '/company/home' : '/notary/home');
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Unable to sign in');
+    }
   });
 
   return (
@@ -134,11 +141,10 @@ export function LoginScreen() {
                       style={s.input}
                       value={field.value}
                       onChangeText={field.onChange}
-                      placeholder="your@email.com"
+                      placeholder="Email or username"
                       placeholderTextColor="#94a3b8"
                       autoCapitalize="none"
-                      keyboardType="email-address"
-                      autoComplete="email"
+                      autoCorrect={false}
                     />
                   </View>
                 )}
@@ -224,6 +230,7 @@ export function LoginScreen() {
               </AppText>
               {!isSubmitting && <ArrowRight color="#fff" size={20} />}
             </Pressable>
+            {submitError ? <AppText style={s.submitErrorText}>{submitError}</AppText> : null}
 
             {/* ── Security Notice ── */}
             <View style={s.securityRow}>
@@ -248,12 +255,52 @@ export function LoginScreen() {
 
 /* ─── Forgot Password Screen ─── */
 export function ForgotPasswordScreen() {
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState<'company' | 'notary'>('company');
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const submitReset = async () => {
+    setSubmitting(true);
+    setFeedback(null);
+    try {
+      await requestPasswordReset(email, role);
+      setFeedback('If your account exists, a verification code has been sent to your email.');
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : 'Unable to send verification code');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <ScreenContainer>
       <AppHeader back title="Forgot Password" />
       <AppCard style={sharedStyles.formCard}>
-        <AppInput label="Email" placeholder="your@email.com" />
-        <AppButton title="Send Reset Link" />
+        <AppInput
+          label="Email"
+          placeholder="your@email.com"
+          value={email}
+          onChangeText={setEmail}
+        />
+        <View style={s.roleRow}>
+          <RoleCard
+            active={role === 'company'}
+            onPress={() => setRole('company')}
+            icon={<Building2 color={role === 'company' ? '#0a49a8' : '#94a3b8'} size={18} />}
+            title="Title Company"
+            subtitle="Company portal"
+          />
+          <RoleCard
+            active={role === 'notary'}
+            onPress={() => setRole('notary')}
+            icon={<PenTool color={role === 'notary' ? '#0a49a8' : '#94a3b8'} size={18} />}
+            title="Notary"
+            subtitle="Notary portal"
+          />
+        </View>
+        <AppButton title={submitting ? 'Sending...' : 'Send Verification Code'} onPress={() => void submitReset()} />
+        {feedback ? <AppText style={s.resetInfoText}>{feedback}</AppText> : null}
       </AppCard>
     </ScreenContainer>
   );
@@ -349,6 +396,17 @@ const s = StyleSheet.create({
     fontSize: 12,
     color: '#ef4444',
     marginTop: -4,
+  },
+  submitErrorText: {
+    fontSize: 12,
+    color: '#ef4444',
+    textAlign: 'center',
+    marginTop: -4,
+  },
+  resetInfoText: {
+    fontSize: 12,
+    color: '#475569',
+    lineHeight: 18,
   },
 
   /* Forgot Password */

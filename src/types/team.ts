@@ -4,6 +4,12 @@ export type TeamMember = {
   email: string;
   role: 'Admin' | 'Member';
   joinedLabel: string;
-  status: 'Active' | 'Pending Invite';
+  status: 'Active' | 'Pending Invite' | 'Inactive';
   avatar: string;
+  phone?: string;
+  permissions?: {
+    createOrders: boolean;
+    viewOrders: boolean;
+    downloadDocuments: boolean;
+  };
 };

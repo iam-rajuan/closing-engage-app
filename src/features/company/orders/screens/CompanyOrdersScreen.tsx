@@ -1,43 +1,62 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { router, type Href } from 'expo-router';
-import {
-  ArrowRight,
-  Calendar,
-  ChevronLeft,
-  FileText,
-  Plus,
-  Search,
-  SlidersHorizontal,
-} from 'lucide-react-native';
+import { Calendar, FileText, Plus, Search, SlidersHorizontal } from 'lucide-react-native';
 import { AppButton } from '@/components/common/AppButton';
 import { AppCard } from '@/components/common/AppCard';
 import { AppHeader } from '@/components/common/AppHeader';
 import { AppInput } from '@/components/common/AppInput';
 import { AppText } from '@/components/common/AppText';
+import { EmptyState } from '@/components/common/EmptyState';
+import { ErrorState } from '@/components/common/ErrorState';
+import { LoadingState } from '@/components/common/LoadingState';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { OrderCard } from '@/components/orders/OrderCard';
-import { companyOrders } from '@/constants/mockData';
+import { useAsyncResource } from '@/hooks/useAsyncResource';
+import { getCompanyOrders } from '@/services/orders.service';
 import { colors } from '@/theme';
 
 export function CompanyOrdersScreen() {
   const [refreshing, setRefreshing] = useState(false);
-  const handleRefresh = () => {
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'Under Review' | 'Completed'>('all');
+  const { data: orders, loading, error, reload } = useAsyncResource(() => getCompanyOrders(), []);
+
+  const filteredOrders = useMemo(() => {
+    const items = orders ?? [];
+    return items.filter((order) => {
+      const matchesSearch =
+        !search.trim() ||
+        `${order.orderNumber} ${order.clientName} ${order.address}`.toLowerCase().includes(search.trim().toLowerCase());
+      const matchesStatus = statusFilter === 'all' ? true : order.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [orders, search, statusFilter]);
+
+  const stats = useMemo(() => {
+    const items = orders ?? [];
+    return {
+      total: items.length,
+      pendingReview: items.filter((order) => order.status === 'Under Review').length,
+      completed: items.filter((order) => order.status === 'Completed').length,
+    };
+  }, [orders]);
+
+  const handleRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1200);
+    await reload();
+    setRefreshing(false);
   };
 
   return (
-    <ScreenContainer refreshing={refreshing} onRefresh={handleRefresh}>
+    <ScreenContainer refreshing={refreshing} onRefresh={() => void handleRefresh()}>
       <AppHeader onProfilePress={() => router.push('/company/settings')} />
 
-      {/* Page Header */}
       <View style={styles.pageHeader}>
         <AppText style={styles.pageTitle}>Orders</AppText>
         <AppText style={styles.pageSubtitle}>Manage and track all your closing orders</AppText>
       </View>
 
-      {/* Create Button */}
       <AppButton
         title="Create New Order"
         icon={<Plus color={colors.white} size={18} />}
@@ -45,9 +64,7 @@ export function CompanyOrdersScreen() {
         style={styles.createBtn}
       />
 
-      {/* Stats: 1 large + 2 small — matches Figma exactly */}
       <View style={styles.statsContainer}>
-        {/* Large card — Total Orders */}
         <AppCard style={styles.statCardLarge}>
           <View style={styles.statCardHeader}>
             <AppText style={styles.statLabelLarge}>Total Orders</AppText>
@@ -55,64 +72,62 @@ export function CompanyOrdersScreen() {
               <FileText color={colors.primary} size={16} />
             </View>
           </View>
-          <AppText style={styles.statValueLarge}>1,248</AppText>
+          <AppText style={styles.statValueLarge}>{stats.total}</AppText>
         </AppCard>
 
-        {/* Two small cards */}
         <View style={styles.statRowSmall}>
           <AppCard style={styles.statCardSmall}>
             <AppText style={styles.statLabelSmall}>PENDING REVIEW</AppText>
-            <AppText style={styles.statValueSmall}>56</AppText>
+            <AppText style={styles.statValueSmall}>{stats.pendingReview}</AppText>
           </AppCard>
           <AppCard style={styles.statCardSmall}>
-            <AppText style={styles.statLabelSmall}>COMPLETED TODAY</AppText>
-            <AppText style={styles.statValueSmall}>850</AppText>
+            <AppText style={styles.statLabelSmall}>COMPLETED</AppText>
+            <AppText style={styles.statValueSmall}>{stats.completed}</AppText>
           </AppCard>
         </View>
       </View>
 
-      {/* Search */}
       <View style={styles.searchContainer}>
         <Search color="#94a3b8" size={16} style={styles.searchIcon} />
         <AppInput
           placeholder="Search orders..."
           style={styles.searchInput}
           containerStyle={styles.searchBox}
+          value={search}
+          onChangeText={setSearch}
         />
       </View>
 
-      {/* Filter Pills */}
       <View style={styles.filterRow}>
-        <Pressable style={styles.filterBtn}>
+        <Pressable style={styles.filterBtn} onPress={() => setStatusFilter('all')}>
           <SlidersHorizontal color="#64748b" size={13} />
-          <AppText style={styles.filterBtnText}>Status</AppText>
+          <AppText style={styles.filterBtnText}>All</AppText>
         </Pressable>
-        <Pressable style={styles.filterBtn}>
+        <Pressable style={styles.filterBtn} onPress={() => setStatusFilter('Under Review')}>
           <Calendar color="#64748b" size={13} />
-          <AppText style={styles.filterBtnText}>Date Range</AppText>
+          <AppText style={styles.filterBtnText}>Under Review</AppText>
         </Pressable>
-        <Pressable style={styles.filterBtn}>
+        <Pressable style={styles.filterBtn} onPress={() => setStatusFilter('Completed')}>
           <SlidersHorizontal color="#64748b" size={13} />
-          <AppText style={styles.filterBtnText}>Newest</AppText>
+          <AppText style={styles.filterBtnText}>Completed</AppText>
         </Pressable>
       </View>
 
-      {/* Order Cards */}
-      <View style={styles.orderList}>
-        {companyOrders.map((order) => (
-          <OrderCard key={order.id} order={order} href={`/company/orders/${order.id}` as Href} />
-        ))}
-      </View>
+      {loading && !orders ? <LoadingState /> : null}
+      {error ? <ErrorState message={error} /> : null}
 
-      {/* Pagination */}
-      <View style={styles.paginationContainer}>
-        <Pressable style={styles.pageArrow}><ChevronLeft color="#64748b" size={16} /></Pressable>
-        <View style={styles.pageNumbers}>
-          <View style={[styles.pageNumber, styles.pageActive]}><AppText style={styles.pageTextActive}>1</AppText></View>
-          <View style={styles.pageNumber}><AppText style={styles.pageText}>2</AppText></View>
-          <View style={styles.pageNumber}><AppText style={styles.pageText}>3</AppText></View>
-        </View>
-        <Pressable style={styles.pageArrow}><ArrowRight color="#64748b" size={16} /></Pressable>
+      <View style={styles.orderList}>
+        {filteredOrders.length ? (
+          filteredOrders.map((order) => (
+            <OrderCard
+              key={order.id}
+              order={order}
+              href={{ pathname: '/company/orders/[id]', params: { id: order.id.replace(/^#/, '') } } as Href}
+            />
+          ))
+        ) : (
+          !loading && <EmptyState title="No orders matched your filters" />
+        )}
       </View>
     </ScreenContainer>
   );
@@ -141,8 +156,6 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 12,
   },
-
-  // Stats layout — 1 large + 2 small (Figma)
   statsContainer: {
     gap: 14,
     marginTop: 20,
@@ -201,8 +214,6 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     letterSpacing: -0.3,
   },
-
-  // Search
   searchContainer: {
     marginTop: 20,
     position: 'relative',
@@ -226,8 +237,6 @@ const styles = StyleSheet.create({
     top: 14,
     zIndex: 1,
   },
-
-  // Filters
   filterRow: {
     flexDirection: 'row',
     gap: 10,
@@ -249,53 +258,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#334155',
   },
-
-  // Orders
   orderList: {
     gap: 12,
     marginTop: 16,
-  },
-
-  // Pagination
-  paginationContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 20,
-    marginTop: 28,
-    marginBottom: 40,
-  },
-  pageArrow: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: '#f1f5f9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pageNumbers: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  pageNumber: {
-    width: 34,
-    height: 34,
-    borderRadius: 8,
-    backgroundColor: '#f1f5f9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pageActive: {
-    backgroundColor: '#0a49a8',
-  },
-  pageText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#64748b',
-  },
-  pageTextActive: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.white,
+    paddingBottom: 40,
   },
 });

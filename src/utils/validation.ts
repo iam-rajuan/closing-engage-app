@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 export const loginSchema = z.object({
-  email: z.string().email('Enter a valid email address'),
-  password: z.string().optional(),
+  email: z.string().trim().min(1, 'Enter your email or username'),
+  password: z.string().trim().min(1, 'Enter your password'),
   role: z.enum(['company', 'notary']),
 });
 

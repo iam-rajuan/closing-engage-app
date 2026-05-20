@@ -16,6 +16,7 @@ export async function pickAvatar() {
     allowsEditing: true,
     aspect: [1, 1],
     quality: 0.8,
+    base64: true,
   });
   return result.canceled ? null : result.assets[0];
 }

@@ -1,22 +1,53 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { router, type Href } from 'expo-router';
 import { Activity, CheckCircle2, FileText, Hourglass } from 'lucide-react-native';
 import { AppCard } from '@/components/common/AppCard';
 import { AppHeader } from '@/components/common/AppHeader';
 import { AppText } from '@/components/common/AppText';
+import { EmptyState } from '@/components/common/EmptyState';
+import { ErrorState } from '@/components/common/ErrorState';
+import { LoadingState } from '@/components/common/LoadingState';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { SectionHeader } from '@/components/common/SectionHeader';
 import { OrderCard } from '@/components/orders/OrderCard';
 import { ProgressPipeline } from '@/components/orders/ProgressPipeline';
-import { companyOrders, pipeline } from '@/constants/mockData';
+import { useAuthStore } from '@/features/auth/auth.store';
+import { useAsyncResource } from '@/hooks/useAsyncResource';
+import { getCompanyOrders } from '@/services/orders.service';
+
+const statusValue = (count: number, total: number) => (total === 0 ? 0 : Math.round((count / total) * 100));
 
 export function CompanyHomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
+  const user = useAuthStore((state) => state.user);
+  const { data: orders, loading, error, reload } = useAsyncResource(() => getCompanyOrders(), []);
 
-  const handleRefresh = () => {
+  const metrics = useMemo(() => {
+    const items = orders ?? [];
+    const total = items.length;
+    const active = items.filter((order) => !['Completed', 'Approved'].includes(order.status)).length;
+    const pendingReview = items.filter((order) => order.status === 'Under Review').length;
+    const completed = items.filter((order) => order.status === 'Completed').length;
+    return { total, active, pendingReview, completed };
+  }, [orders]);
+
+  const pipeline = useMemo(() => {
+    const items = orders ?? [];
+    const total = items.length;
+    return [
+      { label: 'Received', value: statusValue(items.filter((order) => order.status === 'Received').length, total) },
+      { label: 'Assigned', value: statusValue(items.filter((order) => order.status === 'Assigned').length, total) },
+      { label: 'Under Review', value: statusValue(items.filter((order) => order.status === 'Under Review').length, total) },
+      { label: 'Approved', value: statusValue(items.filter((order) => order.status === 'Approved').length, total) },
+      { label: 'Completed', value: statusValue(items.filter((order) => order.status === 'Completed').length, total) },
+    ];
+  }, [orders]);
+
+  const handleRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1500);
+    await reload();
+    setRefreshing(false);
   };
 
   return (
@@ -24,17 +55,15 @@ export function CompanyHomeScreen() {
       scroll
       contentStyle={styles.homeContainer}
       refreshing={refreshing}
-      onRefresh={handleRefresh}
+      onRefresh={() => void handleRefresh()}
     >
-      <AppHeader onProfilePress={() => router.push('/company/settings')} />
+      <AppHeader onProfilePress={() => router.push('/company/settings')} name={user?.name} />
 
-      {/* Greeting */}
       <View style={styles.homeGreeting}>
         <AppText style={styles.overviewLabel}>Overview</AppText>
-        <AppText style={styles.greetingText}>Good morning, Alex.</AppText>
+        <AppText style={styles.greetingText}>Good day, {user?.name ?? 'there'}.</AppText>
       </View>
 
-      {/* 2×2 Stats — two rows of two cards */}
       <View style={styles.statsContainer}>
         <View style={styles.statsRow}>
           <AppCard style={styles.statCard}>
@@ -42,14 +71,14 @@ export function CompanyHomeScreen() {
               <FileText color="#1d63d2" size={16} />
             </View>
             <AppText style={styles.statLabel}>TOTAL ORDERS</AppText>
-            <AppText style={styles.statValue}>1,248</AppText>
+            <AppText style={styles.statValue}>{metrics.total}</AppText>
           </AppCard>
           <AppCard style={styles.statCard}>
             <View style={[styles.statIcon, { backgroundColor: '#eff6ff' }]}>
               <Activity color="#1d63d2" size={16} />
             </View>
             <AppText style={styles.statLabel}>ACTIVE ORDERS</AppText>
-            <AppText style={styles.statValue}>342</AppText>
+            <AppText style={styles.statValue}>{metrics.active}</AppText>
           </AppCard>
         </View>
         <View style={styles.statsRow}>
@@ -58,22 +87,22 @@ export function CompanyHomeScreen() {
               <Hourglass color="#f59e0b" size={16} />
             </View>
             <AppText style={styles.statLabel}>PENDING REVIEW</AppText>
-            <AppText style={styles.statValue}>56</AppText>
+            <AppText style={styles.statValue}>{metrics.pendingReview}</AppText>
           </AppCard>
           <AppCard style={styles.statCard}>
             <View style={[styles.statIcon, { backgroundColor: '#ecfdf5' }]}>
               <CheckCircle2 color="#10b981" size={16} />
             </View>
             <AppText style={styles.statLabel}>COMPLETED</AppText>
-            <AppText style={styles.statValue}>850</AppText>
+            <AppText style={styles.statValue}>{metrics.completed}</AppText>
           </AppCard>
         </View>
       </View>
 
-      {/* Pipeline */}
-      <ProgressPipeline items={pipeline} style={styles.pipeline} />
+      {loading && !orders ? <LoadingState /> : null}
+      {error ? <ErrorState message={error} /> : null}
+      {orders ? <ProgressPipeline items={pipeline} style={styles.pipeline} /> : null}
 
-      {/* Recent Orders */}
       <SectionHeader
         title="Recent Orders"
         action="View All"
@@ -81,9 +110,17 @@ export function CompanyHomeScreen() {
         onActionPress={() => router.push('/company/orders')}
       />
       <View style={styles.orderList}>
-        {companyOrders.slice(0, 3).map((order) => (
-          <OrderCard key={order.id} order={order} href={`/company/orders/${order.id}` as Href} />
-        ))}
+        {orders?.length ? (
+          orders.slice(0, 3).map((order) => (
+            <OrderCard
+              key={order.id}
+              order={order}
+              href={{ pathname: '/company/orders/[id]', params: { id: order.id.replace(/^#/, '') } } as Href}
+            />
+          ))
+        ) : (
+          !loading && <EmptyState title="No company orders yet" />
+        )}
       </View>
     </ScreenContainer>
   );

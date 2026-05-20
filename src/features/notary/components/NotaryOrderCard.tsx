@@ -27,14 +27,14 @@ export function NotaryOrderCard({ order }: { order: any }) {
           <MapPin size={16} color="#0a49a8" />
           <View>
             <AppText variant="caption" muted weight="bold" style={{ fontSize: 10 }}>LOCATION</AppText>
-            <AppText weight="bold" style={{ color: '#0f172a', fontSize: 14 }}>Denver, CO</AppText>
+            <AppText weight="bold" style={{ color: '#0f172a', fontSize: 14 }}>{order.location || order.address}</AppText>
           </View>
         </View>
         <View style={notaryStyles.infoItem}>
           <Calendar size={16} color="#0a49a8" />
           <View>
             <AppText variant="caption" muted weight="bold" style={{ fontSize: 10 }}>DATE & TIME</AppText>
-            <AppText weight="bold" style={{ color: '#0f172a', fontSize: 14 }}>{order.signingDate}</AppText>
+            <AppText weight="bold" style={{ color: '#0f172a', fontSize: 14 }}>{order.signingDate}{order.signingTime ? ` • ${order.signingTime}` : ''}</AppText>
           </View>
         </View>
       </View>
@@ -55,7 +55,15 @@ export function NotaryOrderCard({ order }: { order: any }) {
             </View>
           )}
         </View>
-        <Pressable style={notaryStyles.viewDetailsBtn} onPress={() => router.push(`/notary/assigned/${order.id}` as Href)}>
+        <Pressable
+          style={notaryStyles.viewDetailsBtn}
+          onPress={() =>
+            router.push({
+              pathname: '/notary/assigned/[id]',
+              params: { id: String(order.id).replace(/^#/, '') },
+            } as Href)
+          }
+        >
           <AppText weight="bold" style={notaryStyles.viewDetailsText}>VIEW DETAILS</AppText>
           <ArrowRight size={16} color="#0a49a8" />
         </Pressable>

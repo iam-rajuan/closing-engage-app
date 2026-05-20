@@ -3,4 +3,5 @@ export type Message = {
   author: 'admin' | 'me';
   body: string;
   time: string;
+  senderName?: string;
 };

@@ -7,6 +7,7 @@ export type AuthState = {
   isHydrated: boolean;
   hydrate: () => Promise<void>;
   completeOnboarding: () => Promise<void>;
-  login: (role: UserRole, email: string) => Promise<void>;
+  login: (role: UserRole, email: string, password: string) => Promise<void>;
+  setUser: (user: User | null) => Promise<void>;
   logout: () => Promise<void>;
 };
