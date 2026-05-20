@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { CalendarDays, ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react-native';
+import { CalendarDays, Check, ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react-native';
 import { AppButton } from '@/components/common/AppButton';
 import { AppCard } from '@/components/common/AppCard';
 import { AppText } from '@/components/common/AppText';
@@ -68,6 +68,7 @@ export function ScheduleClosingScreen() {
   const [selectedTime, setSelectedTime] = useState('');
   const [manualTime, setManualTime] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
 
   useEffect(() => {
     if (!order) {
@@ -136,14 +137,17 @@ export function ScheduleClosingScreen() {
     setIsSubmitting(true);
     try {
       await scheduleOrderMeeting(orderId, formatPayloadDate(selectedDate), activeTime);
-      Alert.alert('Meeting scheduled', 'The company user has been notified and can now confirm the closing from their order page.', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
+      setSuccessModalVisible(true);
     } catch (caught) {
       Alert.alert('Unable to schedule', caught instanceof Error ? caught.message : 'Please try again.');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleModalClose = () => {
+    setSuccessModalVisible(false);
+    router.back();
   };
 
   return (
@@ -263,6 +267,35 @@ export function ScheduleClosingScreen() {
             style={styles.confirmButton}
             onPress={() => void submitSchedule()}
           />
+
+          <Modal
+            visible={successModalVisible}
+            transparent
+            animationType="fade"
+            statusBarTranslucent
+            onRequestClose={handleModalClose}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <View style={styles.modalIconContainer}>
+                  <View style={styles.modalIconRing}>
+                    <Check color="#10b981" size={28} strokeWidth={3} />
+                  </View>
+                </View>
+                <AppText weight="bold" style={styles.modalTitle}>
+                  Meeting Scheduled
+                </AppText>
+                <AppText style={styles.modalDescription}>
+                  The company user has been notified and can now confirm the closing from their order page.
+                </AppText>
+                <AppButton
+                  title="Great, Got It"
+                  onPress={handleModalClose}
+                  style={styles.modalButton}
+                />
+              </View>
+            </View>
+          </Modal>
         </>
       ) : null}
     </ScreenContainer>
@@ -423,5 +456,57 @@ const styles = StyleSheet.create({
     height: 54,
     backgroundColor: '#2563eb',
     borderRadius: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#ffffff',
+    borderRadius: 28,
+    padding: 28,
+    alignItems: 'center',
+    ...shadows.card,
+  },
+  modalIconContainer: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: '#ecfdf5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  modalIconRing: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#d1fae5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    color: '#0f172a',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  modalDescription: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#64748b',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  modalButton: {
+    width: '100%',
+    height: 50,
+    backgroundColor: '#2563eb',
+    borderRadius: 14,
   },
 });
