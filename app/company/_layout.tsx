@@ -68,6 +68,12 @@ export default function CompanyLayout() {
           tabBarIcon: ({ color }) => <Settings color={color} size={22} /> 
         }} 
       />
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

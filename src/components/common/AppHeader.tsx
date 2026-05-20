@@ -1,6 +1,7 @@
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { Bell, ChevronLeft } from 'lucide-react-native';
 import { router, useNavigation } from 'expo-router';
+import { useAuthStore } from '@/features/auth/auth.store';
 import { colors, spacing } from '@/theme';
 import { BrandLogo } from './BrandLogo';
 import { AppText } from './AppText';
@@ -12,13 +13,26 @@ type Props = {
   avatar?: string;
   name?: string;
   onProfilePress?: () => void;
+  onNotificationPress?: () => void;
   centerTitle?: boolean;
 };
 
-export function AppHeader({ title, subtitle, back, avatar, name = "Alex Thompson", onProfilePress, centerTitle }: Props) {
+export function AppHeader({
+  title,
+  subtitle,
+  back,
+  avatar,
+  name = "Alex Thompson",
+  onProfilePress,
+  onNotificationPress,
+  centerTitle,
+}: Props) {
   const navigation = useNavigation();
+  const user = useAuthStore((state) => state.user);
+  const resolvedName = name === "Alex Thompson" ? user?.fullName || user?.name || name : name;
+  const resolvedAvatar = avatar || user?.avatarUrl;
   
-  const initials = name
+  const initials = resolvedName
     .split(' ')
     .map((n) => n[0])
     .join('')
@@ -32,6 +46,20 @@ export function AppHeader({ title, subtitle, back, avatar, name = "Alex Thompson
     }
   };
 
+  const handleNotificationPress = () => {
+    if (onNotificationPress) {
+      onNotificationPress();
+      return;
+    }
+
+    if (user?.role === 'notary') {
+      router.push('/notary/notifications');
+      return;
+    }
+
+    router.push('/company/notifications');
+  };
+
   const handleBack = () => {
     if (navigation.canGoBack()) {
       router.back();
@@ -43,9 +71,6 @@ export function AppHeader({ title, subtitle, back, avatar, name = "Alex Thompson
       }
     }
   };
-
-  const defaultAvatar = 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=256&auto=format&fit=crop';
-
   return (
     <View style={styles.header}>
       {/* Centered Title Layer */}
@@ -73,13 +98,17 @@ export function AppHeader({ title, subtitle, back, avatar, name = "Alex Thompson
       </View>
 
       <View style={styles.right}>
-        {!back && <Bell color={colors.textMuted} size={22} />}
+        {!back && (
+          <Pressable onPress={handleNotificationPress} style={styles.bellButton}>
+            <Bell color={colors.textMuted} size={22} />
+          </Pressable>
+        )}
         {!centerTitle && (
           <Pressable onPress={handleProfilePress} style={styles.avatarWrapper}>
             <View style={styles.avatarContainer}>
-              {avatar || defaultAvatar ? (
+              {resolvedAvatar ? (
                 <Image 
-                  source={{ uri: avatar || defaultAvatar }} 
+                  source={{ uri: resolvedAvatar }} 
                   style={styles.avatar} 
                 />
               ) : (
@@ -148,6 +177,9 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   avatarWrapper: {
+    padding: 2,
+  },
+  bellButton: {
     padding: 2,
   },
   avatarContainer: {

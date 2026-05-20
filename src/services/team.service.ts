@@ -21,6 +21,10 @@ type CreateTeamMemberInput = {
   sendInvite: boolean;
 };
 
+type UpdateTeamMemberInput = Partial<CreateTeamMemberInput> & {
+  status?: TeamMember['status'];
+};
+
 const initialsFrom = (name: string) =>
   name
     .split(/\s+/)
@@ -57,4 +61,15 @@ export async function createTeamMember(input: CreateTeamMemberInput) {
     temporaryPassword: result.temporaryPassword,
     inviteDelivered: result.inviteDelivered,
   };
+}
+
+export async function updateTeamMember(email: string, input: UpdateTeamMemberInput) {
+  const encodedEmail = encodeURIComponent(email);
+  const result = await unwrap<BackendTeamMember>(api.patch(`/api/v1/team/${encodedEmail}`, input));
+  return normalizeTeamMember(result);
+}
+
+export async function deleteTeamMember(email: string) {
+  const encodedEmail = encodeURIComponent(email);
+  await unwrap<Record<string, never>>(api.delete(`/api/v1/team/${encodedEmail}`));
 }

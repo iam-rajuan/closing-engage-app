@@ -15,6 +15,7 @@ import { StatCard } from '@/features/notary/components/StatCard';
 import { notaryStyles } from '@/features/notary/styles';
 import { useAsyncResource } from '@/hooks/useAsyncResource';
 import { getNotaryOrders } from '@/services/orders.service';
+import { colors } from '@/theme';
 
 export function NotaryHomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
@@ -36,23 +37,34 @@ export function NotaryHomeScreen() {
       <View style={notaryStyles.header}>
         <BrandLogo width={140} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <Pressable>
-            <Bell color="#334155" size={24} />
+          <Pressable 
+            onPress={() => router.push('/notary/notifications')}
+            style={notaryStyles.headerIconButton}
+          >
+            <Bell color="#475569" size={20} />
           </Pressable>
           <Pressable onPress={() => router.push('/notary/settings')}>
-            <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=256&auto=format&fit=crop' }}
-              style={{ width: 36, height: 36, borderRadius: 18 }}
-            />
+            {user?.avatarUrl ? (
+              <Image
+                source={{ uri: user.avatarUrl }}
+                style={notaryStyles.profileAvatar}
+              />
+            ) : (
+              <View style={notaryStyles.profileAvatarFallback}>
+                <AppText weight="bold" style={{ color: '#fff', fontSize: 12 }}>
+                  {user?.avatarInitials || 'NU'}
+                </AppText>
+              </View>
+            )}
           </Pressable>
         </View>
       </View>
 
-      <View style={{ marginTop: 12, marginBottom: 12 }}>
-        <AppText weight="bold" style={{ fontSize: 20, color: '#0a49a8' }}>
+      <View style={notaryStyles.welcomeContainer}>
+        <AppText weight="bold" style={notaryStyles.welcomeTitle}>
           Assigned Workload{user?.name ? `, ${user.name}` : ''}
         </AppText>
-        <AppText muted style={{ fontSize: 12, marginTop: 3, lineHeight: 17 }}>
+        <AppText muted style={notaryStyles.welcomeSubtitle}>
           Manage your active signing appointments and document verifications.
         </AppText>
       </View>
@@ -61,34 +73,35 @@ export function NotaryHomeScreen() {
         title="Upload Documents"
         icon={<Upload color="#fff" size={16} />}
         onPress={() => router.push('/notary/documents/upload')}
-        style={{ marginBottom: 20, backgroundColor: '#0a49a8', height: 44 }}
-        textStyle={{ fontSize: 14 }}
+        style={{ marginBottom: 20, borderRadius: 12 }}
       />
 
-      <StatCard
-        label="Total Assigned"
-        sublabel="GLOBAL"
-        value={String(totalAssigned)}
-        color="#3b82f6"
-        icon={<FileText color="#3b82f6" size={18} />}
-      />
-      <StatCard
-        label="In Progress"
-        sublabel="ACTIVE"
-        value={String(inProgress)}
-        color="#f97316"
-        icon={<Zap color="#f97316" size={18} />}
-      />
-      <StatCard
-        label="Completed"
-        sublabel="HISTORY"
-        value={String(completed)}
-        color="#22c55e"
-        icon={<CheckCircle2 color="#22c55e" size={18} />}
-      />
+      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+        <StatCard
+          label="Total Assigned"
+          sublabel="GLOBAL"
+          value={String(totalAssigned)}
+          color="#3b82f6"
+          icon={<FileText color="#3b82f6" size={15} />}
+        />
+        <StatCard
+          label="In Progress"
+          sublabel="ACTIVE"
+          value={String(inProgress)}
+          color="#f97316"
+          icon={<Zap color="#f97316" size={15} />}
+        />
+        <StatCard
+          label="Completed"
+          sublabel="HISTORY"
+          value={String(completed)}
+          color="#22c55e"
+          icon={<CheckCircle2 color="#22c55e" size={15} />}
+        />
+      </View>
 
       <View style={notaryStyles.sectionTitleRow}>
-        <AppText weight="bold" style={{ fontSize: 15, color: '#0a49a8' }}>Assigned Orders</AppText>
+        <AppText weight="bold" style={notaryStyles.sectionTitle}>Assigned Orders</AppText>
       </View>
 
       {loading && !orders ? <LoadingState /> : null}

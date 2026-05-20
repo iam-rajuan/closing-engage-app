@@ -13,11 +13,13 @@ import { NotaryOrderCard } from '@/features/notary/components/NotaryOrderCard';
 import { StatusReference } from '@/features/notary/components/StatusReference';
 import { notaryStyles } from '@/features/notary/styles';
 import { useAsyncResource } from '@/hooks/useAsyncResource';
+import { useAuthStore } from '@/features/auth/auth.store';
 import { getNotaryOrders } from '@/services/orders.service';
 
 export function NotaryAssignedScreen() {
   const [activeTab, setActiveTab] = useState<'ALL ORDERS' | 'ASSIGNED' | 'IN PROGRESS'>('ALL ORDERS');
   const [search, setSearch] = useState('');
+  const user = useAuthStore((state) => state.user);
   const { data: orders, loading, error } = useAsyncResource(() => getNotaryOrders(), []);
 
   const filteredOrders = useMemo(() => {
@@ -36,12 +38,20 @@ export function NotaryAssignedScreen() {
       <View style={notaryStyles.header}>
         <BrandLogo width={140} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <Pressable><Bell color="#334155" size={24} /></Pressable>
+          <Pressable onPress={() => router.push('/notary/notifications')}><Bell color="#334155" size={24} /></Pressable>
           <Pressable onPress={() => router.push('/notary/settings')}>
-            <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=256&auto=format&fit=crop' }}
-              style={{ width: 36, height: 36, borderRadius: 18 }}
-            />
+            {user?.avatarUrl ? (
+              <Image
+                source={{ uri: user.avatarUrl }}
+                style={{ width: 36, height: 36, borderRadius: 18 }}
+              />
+            ) : (
+              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#0a49a8', alignItems: 'center', justifyContent: 'center' }}>
+                <AppText weight="bold" style={{ color: '#fff', fontSize: 12 }}>
+                  {user?.avatarInitials || 'NU'}
+                </AppText>
+              </View>
+            )}
           </Pressable>
         </View>
       </View>

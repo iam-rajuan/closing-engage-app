@@ -52,22 +52,27 @@ export function DocumentCard({ doc, onView }: { doc: DocumentFile; onView?: () =
 
 const styles = StyleSheet.create({
   card: { 
-    padding: spacing.md,
-    gap: 12,
-    borderRadius: 12,
+    padding: 16,
+    gap: 14,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#f1f5f9',
+    borderColor: '#e8eef8',
+    shadowColor: '#0f172a',
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   top: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    gap: 12 
+    gap: 12,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: '#fef2f2',
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#fff1f2',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -76,7 +81,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   fileName: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#1e293b',
     letterSpacing: -0.2,
   },
@@ -87,8 +92,8 @@ const styles = StyleSheet.create({
   },
   infoRow: { 
     flexDirection: 'row', 
-    gap: 30,
-    paddingLeft: 4,
+    gap: 32,
+    paddingLeft: 2,
   },
   infoItem: {
     gap: 4,
@@ -105,18 +110,20 @@ const styles = StyleSheet.create({
   },
   actions: { 
     flexDirection: 'row', 
-    gap: 10 
+    gap: 12,
   },
   viewBtn: {
     flex: 1,
-    height: 38,
-    backgroundColor: '#f1f5f9',
+    height: 42,
+    backgroundColor: '#f3f6fb',
     borderWidth: 0,
+    borderRadius: 12,
   },
   downloadBtn: {
     flex: 1,
-    height: 38,
+    height: 42,
     backgroundColor: '#0a49a8',
+    borderRadius: 12,
   },
 });
 

@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { router } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
-import { Alert, Pressable, View } from 'react-native';
-import { Briefcase, CheckCircle2, ChevronDown, Mail, Search, ShieldCheck, UserPlus } from 'lucide-react-native';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Briefcase, CheckCircle2, ChevronDown, Mail, Search, ShieldAlert, ShieldCheck, UserPlus } from 'lucide-react-native';
 import { AppButton } from '@/components/common/AppButton';
 import { AppCard } from '@/components/common/AppCard';
 import { AppHeader } from '@/components/common/AppHeader';
@@ -14,113 +15,151 @@ import { ErrorState } from '@/components/common/ErrorState';
 import { LoadingState } from '@/components/common/LoadingState';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { TeamMemberCard } from '@/components/team/TeamMemberCard';
-import { useAsyncResource } from '@/hooks/useAsyncResource';
-import { createTeamMember, getTeamMembers } from '@/services/team.service';
+import { createTeamMember, deleteTeamMember, getTeamMembers, updateTeamMember } from '@/services/team.service';
 import { styles } from '@/features/shared/styles/screenStyles';
-import { colors } from '@/theme';
+import { colors, spacing } from '@/theme';
+import { TeamMember } from '@/types/team';
 import { MemberForm, memberSchema } from '@/utils/validation';
 
-export function TeamScreen() {
+type MemberRole = 'Admin' | 'Member';
+type MemberPermissions = {
+  createOrders: boolean;
+  viewOrders: boolean;
+  downloadDocuments: boolean;
+};
+
+type MemberScreenMode = 'create' | 'edit';
+type RoleFilter = 'All' | MemberRole;
+type StatusFilter = 'Mixed' | TeamMember['status'];
+
+const defaultPermissions: MemberPermissions = {
+  createOrders: true,
+  viewOrders: true,
+  downloadDocuments: false,
+};
+const roleFilterOptions: RoleFilter[] = ['All', 'Admin', 'Member'];
+const statusFilterOptions: StatusFilter[] = ['Mixed', 'Active', 'Pending Invite', 'Inactive'];
+
+function useTeamMembers() {
+  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [search, setSearch] = useState('');
-  const { data: members, loading, error, reload } = useAsyncResource(() => getTeamMembers(), []);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await reload();
-    setRefreshing(false);
+  const load = useCallback(async (isRefresh = false) => {
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+
+    try {
+      const result = await getTeamMembers();
+      setMembers(result);
+      setError(null);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Unable to load team members.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load]),
+  );
+
+  return {
+    members,
+    setMembers,
+    loading,
+    refreshing,
+    error,
+    reload: load,
   };
-
-  const filteredMembers = (members ?? []).filter((member) =>
-    !search.trim() || `${member.name} ${member.email}`.toLowerCase().includes(search.trim().toLowerCase()),
-  );
-
-  return (
-    <ScreenContainer refreshing={refreshing} onRefresh={() => void handleRefresh()}>
-      <AppHeader onProfilePress={() => router.push('/company/settings')} />
-
-      <View style={styles.pageHeader}>
-        <AppText style={styles.pageTitle}>Team Management</AppText>
-        <AppText muted style={styles.pageSubtitle}>Manage your company team members and roles</AppText>
-      </View>
-
-      <AppButton
-        title="Add Member"
-        icon={<UserPlus color={colors.white} size={18} />}
-        onPress={() => router.push('/company/team/add')}
-        style={styles.teamAddBtn}
-      />
-
-      <View style={styles.searchContainer}>
-        <Search color="#94a3b8" size={18} style={styles.searchIcon} />
-        <AppInput
-          placeholder="Search members..."
-          style={styles.searchInput}
-          containerStyle={styles.searchBox}
-          value={search}
-          onChangeText={setSearch}
-        />
-      </View>
-
-      <View style={styles.filterRow}>
-        <Pressable style={styles.dropdownBtn}>
-          <AppText style={styles.dropdownText}>Role: All</AppText>
-          <ChevronDown color="#64748b" size={16} />
-        </Pressable>
-        <Pressable style={styles.dropdownBtn}>
-          <AppText style={styles.dropdownText}>Status: Mixed</AppText>
-          <ChevronDown color="#64748b" size={16} />
-        </Pressable>
-      </View>
-
-      {loading && !members ? <LoadingState /> : null}
-      {error ? <ErrorState message={error} /> : null}
-
-      <View style={styles.memberList}>
-        {filteredMembers.length ? (
-          filteredMembers.map((member) => <TeamMemberCard key={member.id} member={member} />)
-        ) : (
-          !loading && <EmptyState title="No team members found" />
-        )}
-      </View>
-      <View style={{ height: 40 }} />
-    </ScreenContainer>
-  );
 }
 
-export function AddMemberScreen() {
-  const [role, setRole] = useState<'Admin' | 'Member'>('Member');
-  const [permissions, setPermissions] = useState({
-    createOrders: true,
-    viewOrders: true,
-    downloadDocuments: false,
-  });
+function TeamMemberForm({
+  mode,
+  initialMember,
+  submitLabel,
+}: {
+  mode: MemberScreenMode;
+  initialMember?: TeamMember | null;
+  submitLabel: string;
+}) {
+  const [role, setRole] = useState<MemberRole>(initialMember?.role ?? 'Member');
+  const [permissions, setPermissions] = useState<MemberPermissions>(initialMember?.permissions ?? defaultPermissions);
 
-  const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<MemberForm>({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<MemberForm>({
     resolver: zodResolver(memberSchema),
-    defaultValues: { fullName: '', phone: '', email: '' },
+    defaultValues: {
+      fullName: initialMember?.name ?? '',
+      phone: initialMember?.phone ?? '',
+      email: initialMember?.email ?? '',
+    },
   });
 
   const submit = handleSubmit(async (values) => {
     try {
-      const result = await createTeamMember({
-        name: values.fullName,
-        email: values.email,
-        phone: values.phone,
-        role,
-        permissions,
-        sendInvite: true,
-      });
+      if (mode === 'edit' && initialMember) {
+        await updateTeamMember(initialMember.email, {
+          name: values.fullName,
+          email: values.email,
+          phone: values.phone,
+          role,
+          permissions,
+          status: initialMember.status,
+        });
+      } else {
+        const result = await createTeamMember({
+          name: values.fullName,
+          email: values.email,
+          phone: values.phone,
+          role,
+          permissions,
+          sendInvite: true,
+        });
 
-      Alert.alert(
-        'Member created',
-        result.inviteDelivered
-          ? 'Invitation email sent successfully.'
-          : `Invite email could not be delivered. Temporary password: ${result.temporaryPassword}`,
-      );
-      router.replace('/company/team');
+        if (!result.inviteDelivered) {
+          router.replace({
+            pathname: '/company/team',
+            params: {
+              bannerTitle: 'Member created',
+              bannerMessage: `Invite email was not delivered. Temporary password: ${result.temporaryPassword}`,
+              bannerTone: 'warning',
+            },
+          });
+          return;
+        }
+      }
+
+      router.replace({
+        pathname: '/company/team',
+        params: {
+          bannerTitle: mode === 'edit' ? 'Member updated' : 'Member added',
+          bannerMessage:
+            mode === 'edit'
+              ? 'Team member details were updated successfully.'
+              : 'Invitation email sent successfully.',
+          bannerTone: 'success',
+        },
+      });
     } catch (error) {
-      Alert.alert('Unable to add member', error instanceof Error ? error.message : 'Please try again.');
+      router.replace({
+        pathname: '/company/team',
+        params: {
+          bannerTitle: mode === 'edit' ? 'Unable to update member' : 'Unable to add member',
+          bannerMessage: error instanceof Error ? error.message : 'Please try again.',
+          bannerTone: 'danger',
+        },
+      });
     }
   });
 
@@ -129,7 +168,7 @@ export function AddMemberScreen() {
       <AppHeader
         back
         centerTitle
-        title="Add New Member"
+        title={mode === 'edit' ? 'Edit Member' : 'Add New Member'}
         onProfilePress={() => router.push('/company/settings')}
       />
 
@@ -206,13 +245,13 @@ export function AddMemberScreen() {
 
       <AppCard style={styles.permissionsCard}>
         <AppText weight="bold" style={styles.permissionsTitle}>MEMBER PERMISSIONS</AppText>
-        <Pressable style={styles.checkRow} onPress={() => setPermissions((p) => ({ ...p, createOrders: !p.createOrders }))}>
+        <Pressable style={styles.checkRow} onPress={() => setPermissions((current) => ({ ...current, createOrders: !current.createOrders }))}>
           <View style={[styles.checkBox, permissions.createOrders && styles.checkBoxActive]}>
             {permissions.createOrders && <CheckCircle2 color="#fff" size={14} />}
           </View>
           <AppText weight="bold" style={styles.checkLabel}>Create Orders</AppText>
         </Pressable>
-        <Pressable style={styles.checkRow} onPress={() => setPermissions((p) => ({ ...p, viewOrders: !p.viewOrders }))}>
+        <Pressable style={styles.checkRow} onPress={() => setPermissions((current) => ({ ...current, viewOrders: !current.viewOrders }))}>
           <View style={[styles.checkBox, permissions.viewOrders && styles.checkBoxActive]}>
             {permissions.viewOrders && <CheckCircle2 color="#fff" size={14} />}
           </View>
@@ -220,7 +259,7 @@ export function AddMemberScreen() {
         </Pressable>
         <Pressable
           style={styles.checkRow}
-          onPress={() => setPermissions((p) => ({ ...p, downloadDocuments: !p.downloadDocuments }))}
+          onPress={() => setPermissions((current) => ({ ...current, downloadDocuments: !current.downloadDocuments }))}
         >
           <View style={[styles.checkBox, permissions.downloadDocuments && styles.checkBoxActive]}>
             {permissions.downloadDocuments && <CheckCircle2 color="#fff" size={14} />}
@@ -232,12 +271,14 @@ export function AddMemberScreen() {
       <AppCard style={styles.inviteToggleCard}>
         <View style={styles.inviteToggleRow}>
           <View style={styles.inviteIconBox}><Mail color="#64748b" size={18} /></View>
-          <AppText weight="bold" style={styles.inviteText}>Invitation email will be sent automatically</AppText>
+          <AppText weight="bold" style={styles.inviteText}>
+            {mode === 'edit' ? 'Changes will update the existing member record' : 'Invitation email will be sent automatically'}
+          </AppText>
         </View>
       </AppCard>
 
       <View style={styles.formActions}>
-        <AppButton title={isSubmitting ? 'Adding...' : 'Add Member'} style={styles.addMemberBtn} onPress={() => void submit()} />
+        <AppButton title={isSubmitting ? `${submitLabel}...` : submitLabel} style={styles.addMemberBtn} onPress={() => void submit()} />
         <Pressable onPress={() => router.back()} style={styles.cancelLink}>
           <AppText weight="bold" style={styles.cancelLinkText}>Cancel</AppText>
         </Pressable>
@@ -247,3 +288,451 @@ export function AddMemberScreen() {
     </ScreenContainer>
   );
 }
+
+function DeleteMemberModal({
+  visible,
+  member,
+  loading,
+  onCancel,
+  onConfirm,
+}: {
+  visible: boolean;
+  member: TeamMember | null;
+  loading: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  if (!member) {
+    return null;
+  }
+
+  return (
+    <Modal transparent visible={visible} animationType="fade" onRequestClose={onCancel}>
+      <View style={localStyles.overlay}>
+        <View style={localStyles.dialog}>
+          <View style={localStyles.dialogIcon}>
+            <ShieldAlert color="#dc2626" size={24} />
+          </View>
+          <AppText variant="subtitle" weight="bold" style={localStyles.dialogTitle}>
+            Delete team member?
+          </AppText>
+          <AppText muted style={localStyles.dialogMessage}>
+            {member.name} will lose access to the company workspace immediately. This action cannot be undone.
+          </AppText>
+
+          <View style={localStyles.dialogMeta}>
+            <AppText weight="bold" style={localStyles.dialogMetaName}>{member.name}</AppText>
+            <AppText muted style={localStyles.dialogMetaEmail}>{member.email}</AppText>
+          </View>
+
+          <View style={localStyles.dialogActions}>
+            <AppButton
+              title="Cancel"
+              variant="secondary"
+              onPress={onCancel}
+              style={localStyles.dialogButton}
+            />
+            <AppButton
+              title={loading ? 'Deleting...' : 'Delete Member'}
+              variant="danger"
+              onPress={onConfirm}
+              disabled={loading}
+              style={localStyles.dialogButton}
+              textStyle={localStyles.dialogDeleteText}
+            />
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function FilterPickerModal<T extends string>({
+  visible,
+  title,
+  options,
+  selectedValue,
+  onClose,
+  onSelect,
+}: {
+  visible: boolean;
+  title: string;
+  options: readonly T[];
+  selectedValue: T;
+  onClose: () => void;
+  onSelect: (value: T) => void;
+}) {
+  return (
+    <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
+      <Pressable style={localStyles.overlay} onPress={onClose}>
+        <Pressable style={localStyles.filterDialog} onPress={(event) => event.stopPropagation()}>
+          <AppText variant="subtitle" weight="bold" style={localStyles.filterDialogTitle}>
+            {title}
+          </AppText>
+          <View style={localStyles.filterOptions}>
+            {options.map((option) => {
+              const isActive = option === selectedValue;
+              return (
+                <Pressable
+                  key={option}
+                  style={[localStyles.filterOption, isActive && localStyles.filterOptionActive]}
+                  onPress={() => {
+                    onSelect(option);
+                    onClose();
+                  }}
+                >
+                  <AppText weight="bold" style={[localStyles.filterOptionText, isActive && localStyles.filterOptionTextActive]}>
+                    {option}
+                  </AppText>
+                  {isActive ? <CheckCircle2 color="#2563eb" size={18} /> : null}
+                </Pressable>
+              );
+            })}
+          </View>
+          <AppButton title="Close" variant="secondary" onPress={onClose} style={localStyles.filterCloseButton} />
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+export function TeamScreen() {
+  const params = useLocalSearchParams<{
+    bannerTitle?: string;
+    bannerMessage?: string;
+    bannerTone?: 'success' | 'warning' | 'danger';
+  }>();
+  const { members, setMembers, loading, refreshing, error, reload } = useTeamMembers();
+  const [search, setSearch] = useState('');
+  const [selectedRole, setSelectedRole] = useState<RoleFilter>('All');
+  const [selectedStatus, setSelectedStatus] = useState<StatusFilter>('Mixed');
+  const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<'role' | 'status' | null>(null);
+
+  const filteredMembers = useMemo(
+    () =>
+      members.filter((member) => {
+        const matchesSearch =
+          !search.trim() || `${member.name} ${member.email}`.toLowerCase().includes(search.trim().toLowerCase());
+        const matchesRole = selectedRole === 'All' || member.role === selectedRole;
+        const matchesStatus = selectedStatus === 'Mixed' || member.status === selectedStatus;
+        return matchesSearch && matchesRole && matchesStatus;
+      }),
+    [members, search, selectedRole, selectedStatus],
+  );
+
+  const handleRefresh = async () => {
+    await reload(true);
+  };
+
+  const handleDelete = async () => {
+    if (!memberToDelete || isDeleting) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await deleteTeamMember(memberToDelete.email);
+      setMembers((current) => current.filter((member) => member.email !== memberToDelete.email));
+      setMemberToDelete(null);
+    } catch (deleteError) {
+      router.replace({
+        pathname: '/company/team',
+        params: {
+          bannerTitle: 'Unable to delete member',
+          bannerMessage: deleteError instanceof Error ? deleteError.message : 'Please try again.',
+          bannerTone: 'danger',
+        },
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  return (
+    <ScreenContainer refreshing={refreshing} onRefresh={() => void handleRefresh()}>
+      <AppHeader onProfilePress={() => router.push('/company/settings')} />
+
+      <View style={styles.pageHeader}>
+        <AppText style={styles.pageTitle}>Team Management</AppText>
+        <AppText muted style={styles.pageSubtitle}>Manage your company team members and roles</AppText>
+      </View>
+
+      {params.bannerTitle && params.bannerMessage ? (
+        <AppCard
+          style={[
+            localStyles.bannerCard,
+            params.bannerTone === 'danger'
+              ? localStyles.bannerDanger
+              : params.bannerTone === 'warning'
+                ? localStyles.bannerWarning
+                : localStyles.bannerSuccess,
+          ]}
+        >
+          <AppText weight="bold" style={localStyles.bannerTitle}>{params.bannerTitle}</AppText>
+          <AppText style={localStyles.bannerText}>{params.bannerMessage}</AppText>
+        </AppCard>
+      ) : null}
+
+      <AppButton
+        title="Add Member"
+        icon={<UserPlus color={colors.white} size={18} />}
+        onPress={() => router.push('/company/team/add')}
+        style={styles.teamAddBtn}
+      />
+
+      <View style={styles.searchContainer}>
+        <Search color="#94a3b8" size={18} style={styles.searchIcon} />
+        <AppInput
+          placeholder="Search members..."
+          style={styles.searchInput}
+          containerStyle={styles.searchBox}
+          value={search}
+          onChangeText={setSearch}
+        />
+      </View>
+
+      <View style={styles.filterRow}>
+        <Pressable
+          style={[styles.dropdownBtn, selectedRole !== 'All' && localStyles.dropdownBtnActive]}
+          onPress={() => setActiveFilter('role')}
+        >
+          <AppText style={styles.dropdownText}>Role: {selectedRole}</AppText>
+          <ChevronDown color="#64748b" size={16} />
+        </Pressable>
+        <Pressable
+          style={[styles.dropdownBtn, selectedStatus !== 'Mixed' && localStyles.dropdownBtnActive]}
+          onPress={() => setActiveFilter('status')}
+        >
+          <AppText style={styles.dropdownText}>Status: {selectedStatus}</AppText>
+          <ChevronDown color="#64748b" size={16} />
+        </Pressable>
+      </View>
+
+      {loading ? <LoadingState /> : null}
+      {!loading && error ? <ErrorState message={error} /> : null}
+
+      <View style={styles.memberList}>
+        {!loading && !error ? (
+          filteredMembers.length ? (
+            filteredMembers.map((member) => (
+              <TeamMemberCard
+                key={member.id}
+                member={member}
+                onEdit={(selectedMember) =>
+                  router.push({
+                    pathname: '/company/team/edit',
+                    params: { email: selectedMember.email },
+                  })
+                }
+                onDelete={(selectedMember) => setMemberToDelete(selectedMember)}
+              />
+            ))
+          ) : (
+            <EmptyState title="No team members found" />
+          )
+        ) : null}
+      </View>
+
+      <DeleteMemberModal
+        visible={!!memberToDelete}
+        member={memberToDelete}
+        loading={isDeleting}
+        onCancel={() => {
+          if (!isDeleting) {
+            setMemberToDelete(null);
+          }
+        }}
+        onConfirm={() => void handleDelete()}
+      />
+      <FilterPickerModal
+        visible={activeFilter === 'role'}
+        title="Filter by role"
+        options={roleFilterOptions}
+        selectedValue={selectedRole}
+        onClose={() => setActiveFilter(null)}
+        onSelect={setSelectedRole}
+      />
+      <FilterPickerModal
+        visible={activeFilter === 'status'}
+        title="Filter by status"
+        options={statusFilterOptions}
+        selectedValue={selectedStatus}
+        onClose={() => setActiveFilter(null)}
+        onSelect={setSelectedStatus}
+      />
+
+      <View style={{ height: 40 }} />
+    </ScreenContainer>
+  );
+}
+
+export function AddMemberScreen() {
+  return <TeamMemberForm mode="create" submitLabel="Add Member" />;
+}
+
+export function EditMemberScreen() {
+  const { email } = useLocalSearchParams<{ email?: string }>();
+  const { members, loading, error } = useTeamMembers();
+
+  const member = useMemo(
+    () => members.find((item) => item.email.toLowerCase() === (email ?? '').toLowerCase()) ?? null,
+    [email, members],
+  );
+
+  if (loading) {
+    return (
+      <ScreenContainer>
+        <AppHeader back centerTitle title="Edit Member" onProfilePress={() => router.push('/company/settings')} />
+        <LoadingState />
+      </ScreenContainer>
+    );
+  }
+
+  if (error || !member) {
+    return (
+      <ScreenContainer>
+        <AppHeader back centerTitle title="Edit Member" onProfilePress={() => router.push('/company/settings')} />
+        <ErrorState message={error ?? 'Unable to find this team member.'} />
+      </ScreenContainer>
+    );
+  }
+
+  return <TeamMemberForm mode="edit" initialMember={member} submitLabel="Save Changes" />;
+}
+
+const localStyles = StyleSheet.create({
+  bannerCard: {
+    marginTop: spacing.md,
+    padding: spacing.md,
+    gap: 6,
+    borderWidth: 1,
+  },
+  bannerSuccess: {
+    backgroundColor: '#effcf6',
+    borderColor: '#bbf7d0',
+  },
+  bannerWarning: {
+    backgroundColor: '#fff7ed',
+    borderColor: '#fed7aa',
+  },
+  bannerDanger: {
+    backgroundColor: '#fff1f2',
+    borderColor: '#fecdd3',
+  },
+  bannerTitle: {
+    fontSize: 14,
+    color: '#0f172a',
+  },
+  bannerText: {
+    fontSize: 13,
+    color: '#475569',
+    lineHeight: 18,
+  },
+  dropdownBtnActive: {
+    borderColor: '#93c5fd',
+    backgroundColor: '#eff6ff',
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.52)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 22,
+  },
+  dialog: {
+    width: '100%',
+    borderRadius: 22,
+    backgroundColor: colors.white,
+    paddingHorizontal: 20,
+    paddingTop: 22,
+    paddingBottom: 18,
+  },
+  dialogIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: '#fff1f2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+  },
+  dialogTitle: {
+    color: '#0f172a',
+    marginBottom: 8,
+  },
+  dialogMessage: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: '#64748b',
+  },
+  dialogMeta: {
+    marginTop: 16,
+    borderRadius: 16,
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    padding: 14,
+    gap: 2,
+  },
+  dialogMetaName: {
+    fontSize: 14,
+    color: '#0f172a',
+  },
+  dialogMetaEmail: {
+    fontSize: 12,
+    color: '#64748b',
+  },
+  dialogActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 18,
+  },
+  dialogButton: {
+    flex: 1,
+  },
+  dialogDeleteText: {
+    color: '#dc2626',
+  },
+  filterDialog: {
+    width: '100%',
+    borderRadius: 22,
+    backgroundColor: colors.white,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 18,
+  },
+  filterDialogTitle: {
+    color: '#0f172a',
+    marginBottom: 14,
+  },
+  filterOptions: {
+    gap: 10,
+  },
+  filterOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    backgroundColor: '#f8fafc',
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
+  filterOptionActive: {
+    borderColor: '#93c5fd',
+    backgroundColor: '#eff6ff',
+  },
+  filterOptionText: {
+    fontSize: 14,
+    color: '#334155',
+  },
+  filterOptionTextActive: {
+    color: '#2563eb',
+  },
+  filterCloseButton: {
+    marginTop: 16,
+  },
+});

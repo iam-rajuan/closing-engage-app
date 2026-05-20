@@ -1,4 +1,4 @@
-import { Image, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Edit3, Mail, Trash2 } from 'lucide-react-native';
 import { AppCard } from '@/components/common/AppCard';
 import { AppText } from '@/components/common/AppText';
@@ -6,22 +6,25 @@ import { Badge } from '@/components/common/Badge';
 import { colors, spacing } from '@/theme';
 import { TeamMember } from '@/types/team';
 
-export function TeamMemberCard({ member }: { member: TeamMember }) {
+export function TeamMemberCard({
+  member,
+  onEdit,
+  onDelete,
+}: {
+  member: TeamMember;
+  onEdit?: (member: TeamMember) => void;
+  onDelete?: (member: TeamMember) => void;
+}) {
   const isPending = member.status === 'Pending Invite';
   const statusColor = isPending ? '#f59e0b' : '#10b981'; // Orange for pending, Green for active
-
-  const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=eff6ff&color=0a49a8&bold=true`;
 
   return (
     <AppCard style={styles.card}>
       <View style={styles.topRow}>
         <View style={styles.avatarContainer}>
-          <Image 
-            source={{ uri: member.id === 't1' ? 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=128&auto=format&fit=crop' : 
-                          member.id === 't2' ? 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=128&auto=format&fit=crop' :
-                          member.id === 't3' ? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=128&auto=format&fit=crop' : defaultAvatar }} 
-            style={styles.avatar} 
-          />
+          <View style={styles.avatarFallback}>
+            <AppText weight="bold" style={styles.avatarLabel}>{member.avatar}</AppText>
+          </View>
         </View>
         <View style={styles.infoContainer}>
           <AppText weight="bold" style={styles.name}>{member.name}</AppText>
@@ -45,11 +48,17 @@ export function TeamMemberCard({ member }: { member: TeamMember }) {
 
         <View style={styles.actions}>
           {isPending ? (
-            <Mail size={18} color="#64748b" style={styles.actionIcon} />
+            <Pressable onPress={() => onEdit?.(member)} hitSlop={10}>
+              <Mail size={18} color="#64748b" style={styles.actionIcon} />
+            </Pressable>
           ) : (
-            <Edit3 size={18} color="#64748b" style={styles.actionIcon} />
+            <Pressable onPress={() => onEdit?.(member)} hitSlop={10}>
+              <Edit3 size={18} color="#64748b" style={styles.actionIcon} />
+            </Pressable>
           )}
-          <Trash2 size={18} color="#ef4444" style={styles.actionIcon} />
+          <Pressable onPress={() => onDelete?.(member)} hitSlop={10}>
+            <Trash2 size={18} color="#ef4444" style={styles.actionIcon} />
+          </Pressable>
         </View>
       </View>
     </AppCard>
@@ -73,9 +82,18 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#f8fafc',
   },
-  avatar: {
+  avatarFallback: {
     width: '100%',
     height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#eff6ff',
+    borderWidth: 1,
+    borderColor: '#dbeafe',
+  },
+  avatarLabel: {
+    fontSize: 16,
+    color: '#2563eb',
   },
   infoContainer: { 
     flex: 1,

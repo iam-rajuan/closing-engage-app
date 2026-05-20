@@ -1,48 +1,92 @@
 import { StyleSheet } from 'react-native';
-import { shadows } from '@/theme';
+import { colors, shadows } from '@/theme';
 
 export const notaryStyles = StyleSheet.create({
-header: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 12,
   },
-statCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    gap: 12,
-    marginBottom: 6,
-  },
-iconBox: {
-    width: 34,
-    height: 34,
-    borderRadius: 9,
+  headerIconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
     alignItems: 'center',
     justifyContent: 'center',
   },
-statTextContent: {
+  profileAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+  },
+  profileAvatarFallback: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  welcomeContainer: {
+    marginTop: 16,
+    marginBottom: 16,
+  },
+  welcomeTitle: {
+    fontSize: 22,
+    color: colors.text,
+    letterSpacing: -0.5,
+  },
+  welcomeSubtitle: {
+    fontSize: 13,
+    marginTop: 4,
+    lineHeight: 18,
+    color: colors.textMuted,
+  },
+  statCard: {
     flex: 1,
+    padding: 12,
+    alignItems: 'flex-start',
+    backgroundColor: '#ffffff',
+  },
+  iconBox: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statTextContent: {
+    marginTop: 6,
     gap: 1,
   },
-statLabel: {
-    fontSize: 13,
-    color: '#1e293b',
+  statLabel: {
+    fontSize: 11,
+    color: '#64748b',
+    fontWeight: '500',
   },
-statValueLarge: {
-    fontSize: 20,
+  statValueLarge: {
+    fontSize: 18,
     fontWeight: '800',
     color: '#0f172a',
   },
-sectionTitleRow: {
+  sectionTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 16,
     marginBottom: 10,
   },
-liveBadge: {
+  sectionTitle: {
+    fontSize: 16,
+    color: colors.text,
+  },
+  liveBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f1f5f9',
@@ -51,43 +95,67 @@ liveBadge: {
     borderRadius: 20,
     gap: 5,
   },
-dot: {
+  dot: {
     width: 5,
     height: 5,
     borderRadius: 2.5,
     backgroundColor: '#ef4444',
   },
-orderCard: {
+  orderCard: {
     padding: 12,
     marginBottom: 10,
     gap: 12,
   },
-orderTop: {
+  orderTop: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
-initialsAvatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 9,
+  initialsAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
-orderClientName: {
+  orderClientName: {
     fontSize: 15,
     color: '#0f172a',
   },
-orderInfoRow: {
+  orderInfoSection: {
+    gap: 10,
+    marginVertical: 4,
+  },
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  infoIconBox: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  infoLabel: {
+    fontSize: 9,
+    letterSpacing: 0.8,
+    color: '#64748b',
+    marginBottom: 2,
+  },
+  infoValue: {
+    fontSize: 13,
+    color: '#334155',
+    lineHeight: 18,
+  },
+  orderInfoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-infoItem: {
-    flexDirection: 'row',
-    gap: 8,
-    alignItems: 'center',
-  },
-orderFooter: {
+  orderFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
