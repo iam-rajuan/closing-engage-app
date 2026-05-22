@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const loginSchema = z.object({
   email: z.string().trim().min(1, 'Enter your email or username'),
   password: z.string().trim().min(1, 'Enter your password'),
-  role: z.enum(['company', 'notary']),
+  role: z.enum(['company', 'notary']).optional(),
 });
 
 export const orderSchema = z.object({

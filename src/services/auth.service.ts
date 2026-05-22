@@ -90,17 +90,13 @@ const normalizeNotaryUser = (input: Record<string, unknown>): User => {
 export const normalizePortalUser = (role: UserRole, input: Record<string, unknown>): User =>
   role === 'company' ? normalizeCompanyUser(input) : normalizeNotaryUser(input);
 
-export async function loginPortal(role: UserRole, email: string, password: string) {
+export async function loginPortal(_role: UserRole | undefined, email: string, password: string) {
   const result = await unwrap<PortalLoginResponse>(
     api.post('/api/v1/auth/portal/login', {
       email,
       password,
     }),
   );
-
-  if (result.role !== role) {
-    throw new Error(`This account belongs to the ${result.role} portal. Please switch roles and try again.`);
-  }
 
   return {
     token: result.token,

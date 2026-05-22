@@ -87,7 +87,7 @@ export function LoginScreen() {
     formState: { errors, isSubmitting },
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '', role: 'company' },
+    defaultValues: { email: '', password: '', role: undefined },
   });
 
   const role = watch('role');
@@ -95,8 +95,8 @@ export function LoginScreen() {
   const submit = handleSubmit(async (values) => {
     setSubmitError(null);
     try {
-      await login(values.role, values.email, values.password);
-      router.replace(values.role === 'company' ? '/company/home' : '/notary/home');
+      const user = await login(values.role, values.email, values.password);
+      router.replace(user.role === 'company' ? '/company/home' : '/notary/home');
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Unable to sign in');
     }
@@ -200,7 +200,10 @@ export function LoginScreen() {
 
             {/* ── Role Selector ── */}
             <View style={s.roleSection}>
-              <AppText weight="bold" style={s.roleSectionLabel}>SIGN IN AS</AppText>
+              <AppText weight="bold" style={s.roleSectionLabel}>SIGN IN AS (OPTIONAL)</AppText>
+              <AppText style={s.roleHint}>
+                You can leave this unselected. The app will detect whether the account is a title company or notary.
+              </AppText>
               <View style={s.roleRow}>
                 <RoleCard
                   active={role === 'company'}
@@ -429,6 +432,11 @@ const s = StyleSheet.create({
     fontWeight: '700',
     color: '#64748b',
     letterSpacing: 0.8,
+  },
+  roleHint: {
+    fontSize: 11,
+    color: '#94a3b8',
+    lineHeight: 16,
   },
   roleRow: {
     flexDirection: 'row',
