@@ -19,9 +19,12 @@ npm install
 
 ```bash
 cp .env.example .env
+cp .env.local.example .env.local
 ```
 
-Set `EXPO_PUBLIC_API_URL` to your backend URL when the API is available.
+Put shared defaults in `.env`, and put machine-specific values in `.env.local`.
+
+Set `EXPO_PUBLIC_API_URL` in `.env.local` to your backend URL when the API is available.
 
 ## Run
 

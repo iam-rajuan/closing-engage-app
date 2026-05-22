@@ -1,5 +1,8 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import { ExpoConfig } from 'expo/config';
+
+dotenv.config({ path: '.env' });
+dotenv.config({ path: '.env.local', override: true });
 
 const config: ExpoConfig = {
   name: process.env.EXPO_PUBLIC_APP_NAME ?? 'Closing Engage',
