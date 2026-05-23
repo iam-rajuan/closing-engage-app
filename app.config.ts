@@ -4,6 +4,8 @@ import { ExpoConfig } from 'expo/config';
 dotenv.config({ path: '.env' });
 dotenv.config({ path: '.env.local', override: true });
 
+const easProjectId = process.env.EXPO_PUBLIC_EAS_PROJECT_ID ?? 'a646fa7f-28aa-4974-8d2d-69b7eb09fcce';
+
 const config: ExpoConfig = {
   name: process.env.EXPO_PUBLIC_APP_NAME ?? 'Closing Engage',
   slug: 'closing-engage-mobile',
@@ -36,7 +38,7 @@ const config: ExpoConfig = {
     apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'https://api.closingengage.example',
     environment: process.env.EXPO_PUBLIC_ENV ?? 'development',
     eas: {
-      projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID ?? undefined,
+      projectId: easProjectId,
     },
   },
 };
