@@ -27,6 +27,7 @@ type BackendOrderListItem = {
   scanbacksRequired?: boolean;
   preferredNotaryName?: string;
   notaryPrintedConfirmed?: boolean;
+  openForAll?: boolean;
   meeting?: BackendMeeting;
 };
 
@@ -52,6 +53,7 @@ type BackendOrderDetail = {
   notaryPrintedConfirmed?: boolean;
   assignedNotaryName?: string;
   assignedNotaryId?: string;
+  openForAll?: boolean;
   notaryAvatarUrl?: string;
   meeting?: BackendMeeting;
   documents: OrderDocumentSummary[];
@@ -107,7 +109,7 @@ export const normalizeOrderListItem = (item: BackendOrderListItem): Order => ({
   clientName: item.clientName,
   companyName: item.companyName,
   companyAvatarUrl: item.companyAvatarUrl,
-  notaryName: item.notary && item.notary !== '--' ? item.notary : undefined,
+  notaryName: item.notary && item.notary !== '--' && item.notary !== 'Open for All' ? item.notary : undefined,
   notaryAvatarUrl: item.notaryAvatarUrl,
   address: item.propertyAddress,
   location: item.location,
@@ -118,6 +120,7 @@ export const normalizeOrderListItem = (item: BackendOrderListItem): Order => ({
   scanbacksRequired: item.scanbacksRequired,
   preferredNotaryName: item.preferredNotaryName,
   notaryPrintedConfirmed: item.notaryPrintedConfirmed,
+  openForAll: item.openForAll ?? false,
   meeting: item.meeting ?? null,
 });
 
@@ -127,7 +130,10 @@ export const normalizeOrderDetail = (detail: BackendOrderDetail): Order & { time
   clientName: detail.clientName,
   companyName: detail.companyName,
   companyAvatarUrl: detail.companyAvatarUrl,
-  notaryName: detail.assignedNotaryName && detail.assignedNotaryName !== '--' ? detail.assignedNotaryName : undefined,
+  notaryName:
+    detail.assignedNotaryName && detail.assignedNotaryName !== '--' && detail.assignedNotaryName !== 'Open for All'
+      ? detail.assignedNotaryName
+      : undefined,
   notaryAvatarUrl: detail.notaryAvatarUrl,
   address: detail.propertyAddress,
   location: detail.location,
@@ -143,6 +149,7 @@ export const normalizeOrderDetail = (detail: BackendOrderDetail): Order & { time
   preferredNotaryName: detail.preferredNotaryName,
   notaryPrintedConfirmed: detail.notaryPrintedConfirmed,
   assignedNotaryId: detail.assignedNotaryId,
+  openForAll: detail.openForAll ?? false,
   meeting: detail.meeting ?? null,
   documents: detail.documents,
   createdDate: detail.createdDate,
@@ -221,5 +228,17 @@ export async function updateNotaryOrderStatus(orderId: string, status: Order['st
   const result = await unwrap<BackendOrderListItem>(
     api.patch(`/api/v1/orders/${encodeURIComponent(orderId)}/notary-status`, { status }),
   );
+  return normalizeOrderListItem(result);
+}
+
+export async function acceptOpenOrder(orderId: string) {
+  const result = await unwrap<BackendOrderDetail | BackendOrderListItem>(
+    api.patch(`/api/v1/orders/${encodeURIComponent(orderId)}/accept-open`),
+  );
+
+  if ('timeline' in result) {
+    return normalizeOrderDetail(result);
+  }
+
   return normalizeOrderListItem(result);
 }

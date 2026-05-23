@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
@@ -13,13 +13,14 @@ import { LoadingState } from '@/components/common/LoadingState';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { notaryStyles } from '@/features/notary/styles';
 import { useAsyncResource } from '@/hooks/useAsyncResource';
-import { confirmPrintedDocuments, getOrderById } from '@/services/orders.service';
+import { acceptOpenOrder, confirmPrintedDocuments, getOrderById } from '@/services/orders.service';
 import { colors } from '@/theme';
 
 export function NotaryOrderDetailsScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
   const orderId = params.id ?? '';
   const { data: order, loading, error, setData, reload } = useAsyncResource(() => getOrderById(orderId), [orderId]);
+  const isOpenOrder = Boolean(order?.openForAll && !order?.assignedNotaryId);
 
   useFocusEffect(
     useCallback(() => {
@@ -32,13 +33,43 @@ export function NotaryOrderDetailsScreen() {
     setData(updated);
   };
 
+  const handleAcceptOrder = async () => {
+    try {
+      const acceptedOrder = await acceptOpenOrder(orderId);
+      if (Array.isArray((acceptedOrder as { timelineSteps?: unknown }).timelineSteps)) {
+        setData(acceptedOrder as Awaited<ReturnType<typeof getOrderById>>);
+      } else {
+        try {
+          await reload();
+        } catch {
+          // The order is already assigned, so a fresh detail fetch is optional here.
+        }
+      }
+      Alert.alert('Order accepted', 'This order is now assigned to you.');
+    } catch (caught) {
+      Alert.alert(
+        'Unable to accept order',
+        caught instanceof Error ? caught.message : 'Order is accepted by another notaries.',
+      );
+      try {
+        await reload();
+      } catch {
+        // If another notary claimed it, the current user may no longer have access.
+      }
+    }
+  };
+
   return (
     <ScreenContainer scroll={false}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}>
         <View style={notaryStyles.detailsHeader}>
           <Pressable onPress={() => router.back()}><ChevronLeft color="#0a49a8" size={24} /></Pressable>
           <AppText weight="bold" style={{ fontSize: 15, color: '#0f172a' }}>Order Details</AppText>
-          <Badge label={(order?.status || 'ASSIGNED').toUpperCase()} tone="blue" style={{ paddingHorizontal: 12 }} />
+          <Badge
+            label={isOpenOrder ? 'OPEN FOR ALL' : (order?.status || 'ASSIGNED').toUpperCase()}
+            tone="blue"
+            style={{ paddingHorizontal: 12 }}
+          />
         </View>
 
         {loading && !order ? <LoadingState /> : null}
@@ -67,6 +98,19 @@ export function NotaryOrderDetailsScreen() {
             </View>
 
             <View style={{ marginTop: 16, gap: 10 }}>
+              {isOpenOrder ? (
+                <AppCard style={[notaryStyles.infoStrip, { backgroundColor: '#eff6ff', borderColor: '#bfdbfe' }]}>
+                  <View style={[notaryStyles.iconCircle, { backgroundColor: '#dbeafe' }]}>
+                    <Info size={18} color="#2563eb" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <AppText variant="caption" muted weight="bold">OPEN ORDER</AppText>
+                    <AppText weight="bold" style={{ fontSize: 14, color: '#0f172a' }}>
+                      First notary to accept will be assigned automatically.
+                    </AppText>
+                  </View>
+                </AppCard>
+              ) : null}
               <AppCard style={notaryStyles.infoStrip}>
                 <View style={[notaryStyles.iconCircle, { backgroundColor: '#eff6ff' }]}>
                   <UserRound size={18} color="#2563eb" />
@@ -124,13 +168,14 @@ export function NotaryOrderDetailsScreen() {
                   : 'Choose a closing date and time so the company user can confirm this meeting.'}
               </AppText>
               <Pressable
-                style={styles.meetingAction}
+                style={[styles.meetingAction, isOpenOrder && styles.meetingActionDisabled]}
+                disabled={isOpenOrder}
                 onPress={() => router.push(`/notary/assigned/schedule?orderId=${encodeURIComponent(order.id)}`)}
               >
                 <AppText weight="bold" style={styles.meetingActionText}>
-                  {order.meeting ? 'Reschedule Closing' : 'Schedule Closing'}
+                  {isOpenOrder ? 'Accept order to schedule closing' : order.meeting ? 'Reschedule Closing' : 'Schedule Closing'}
                 </AppText>
-                <ArrowRight size={18} color={colors.primary} />
+                {!isOpenOrder ? <ArrowRight size={18} color={colors.primary} /> : null}
               </Pressable>
             </AppCard>
 
@@ -165,23 +210,34 @@ export function NotaryOrderDetailsScreen() {
               </AppCard>
             </View>
 
-            <AppButton
-              title={order.notaryPrintedConfirmed ? 'Printed Confirmed' : 'Confirm Printed Documents'}
-              icon={<Send color="#fff" size={16} />}
-              style={{ marginTop: 24, backgroundColor: '#0a49a8', height: 46 }}
-              onPress={() => void markPrinted()}
-            />
+            {isOpenOrder ? (
+              <AppButton
+                title="Accept This Order"
+                icon={<Send color="#fff" size={16} />}
+                style={{ marginTop: 24, backgroundColor: '#0a49a8', height: 46 }}
+                onPress={() => void handleAcceptOrder()}
+              />
+            ) : (
+              <AppButton
+                title={order.notaryPrintedConfirmed ? 'Printed Confirmed' : 'Confirm Printed Documents'}
+                icon={<Send color="#fff" size={16} />}
+                style={{ marginTop: 24, backgroundColor: '#0a49a8', height: 46 }}
+                onPress={() => void markPrinted()}
+              />
+            )}
           </>
         ) : null}
       </ScrollView>
 
-      <Pressable
-        style={notaryStyles.floatingChat}
-        onPress={() => router.push(`/notary/assigned/chat?orderId=${encodeURIComponent(orderId)}`)}
-      >
-        <MessageCircle color="#fff" size={24} />
-        <View style={notaryStyles.onlineDotSmall} />
-      </Pressable>
+      {!isOpenOrder ? (
+        <Pressable
+          style={notaryStyles.floatingChat}
+          onPress={() => router.push(`/notary/assigned/chat?orderId=${encodeURIComponent(orderId)}`)}
+        >
+          <MessageCircle color="#fff" size={24} />
+          <View style={notaryStyles.onlineDotSmall} />
+        </Pressable>
+      ) : null}
     </ScreenContainer>
   );
 }
@@ -223,6 +279,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
     paddingTop: 12,
+  },
+  meetingActionDisabled: {
+    opacity: 0.7,
   },
   meetingActionText: {
     fontSize: 14,

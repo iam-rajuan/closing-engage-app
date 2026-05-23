@@ -25,8 +25,13 @@ export function NotaryAssignedScreen() {
   const filteredOrders = useMemo(() => {
     const items = orders ?? [];
     return items.filter((order) => {
+      const isOpenOrder = Boolean(order.openForAll && !order.assignedNotaryId);
       const matchesTab =
-        activeTab === 'ALL ORDERS' ? true : activeTab === 'ASSIGNED' ? order.status === 'Assigned' : order.status === 'In Progress';
+        activeTab === 'ALL ORDERS'
+          ? true
+          : activeTab === 'ASSIGNED'
+            ? order.status === 'Assigned' && !isOpenOrder
+            : order.status === 'In Progress';
       const matchesSearch =
         !search.trim() || `${order.orderNumber} ${order.clientName}`.toLowerCase().includes(search.trim().toLowerCase());
       return matchesTab && matchesSearch;
@@ -83,7 +88,9 @@ export function NotaryAssignedScreen() {
         ))}
       </View>
 
-      <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginTop: 24, marginBottom: 16 }}>CURRENT ASSIGNMENTS</AppText>
+      <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginTop: 24, marginBottom: 16 }}>
+        LIVE ORDER BOARD
+      </AppText>
 
       {loading && !orders ? <LoadingState /> : null}
       {error ? <ErrorState message={error} /> : null}

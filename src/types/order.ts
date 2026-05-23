@@ -49,6 +49,7 @@ export type Order = {
   preferredNotaryName?: string;
   notaryPrintedConfirmed?: boolean;
   assignedNotaryId?: string;
+  openForAll?: boolean;
   meeting?: OrderMeeting | null;
   documents?: OrderDocumentSummary[];
   createdDate?: string;

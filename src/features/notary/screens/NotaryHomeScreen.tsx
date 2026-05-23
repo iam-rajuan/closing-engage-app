@@ -28,9 +28,10 @@ export function NotaryHomeScreen() {
     setRefreshing(false);
   };
 
-  const totalAssigned = orders?.length ?? 0;
-  const inProgress = orders?.filter((order) => order.status === 'In Progress').length ?? 0;
+  const claimedOrders = orders?.filter((order) => !order.openForAll || Boolean(order.assignedNotaryId)) ?? [];
+  const totalAssigned = claimedOrders.length;
   const completed = orders?.filter((order) => order.status === 'Completed').length ?? 0;
+  const openClaims = orders?.filter((order) => order.openForAll && !order.assignedNotaryId).length ?? 0;
 
   return (
     <ScreenContainer refreshing={refreshing} onRefresh={() => void handleRefresh()} contentStyle={{ paddingBottom: 16 }}>
@@ -85,9 +86,9 @@ export function NotaryHomeScreen() {
           icon={<FileText color="#3b82f6" size={15} />}
         />
         <StatCard
-          label="In Progress"
-          sublabel="ACTIVE"
-          value={String(inProgress)}
+          label="Open Claims"
+          sublabel="LIVE"
+          value={String(openClaims)}
           color="#f97316"
           icon={<Zap color="#f97316" size={15} />}
         />
@@ -101,12 +102,12 @@ export function NotaryHomeScreen() {
       </View>
 
       <View style={notaryStyles.sectionTitleRow}>
-        <AppText weight="bold" style={notaryStyles.sectionTitle}>Assigned Orders</AppText>
+        <AppText weight="bold" style={notaryStyles.sectionTitle}>Order Opportunities</AppText>
       </View>
 
       {loading && !orders ? <LoadingState /> : null}
       {error ? <ErrorState message={error} /> : null}
-      {orders?.length ? orders.map((order) => <NotaryOrderCard key={order.id} order={order} />) : !loading ? <EmptyState title="No assigned orders yet" /> : null}
+      {orders?.length ? orders.map((order) => <NotaryOrderCard key={order.id} order={order} />) : !loading ? <EmptyState title="No assigned or open orders yet" /> : null}
     </ScreenContainer>
   );
 }

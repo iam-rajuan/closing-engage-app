@@ -42,6 +42,8 @@ export function NotaryOrderCard({ order }: { order: Order }) {
   const companyInitials = initialsFrom(order.companyName || order.clientName || 'Company');
   const notaryInitials = initialsFrom(order.notaryName || user?.name || user?.fullName || 'Notary');
   
+  const isOpenOrder = Boolean(order.openForAll && !order.assignedNotaryId);
+
   return (
     <AppCard style={notaryStyles.orderCard}>
       <View style={notaryStyles.orderTop}>
@@ -58,7 +60,7 @@ export function NotaryOrderCard({ order }: { order: Order }) {
           <AppText weight="bold" style={notaryStyles.orderClientName}>{order.clientName}</AppText>
           <AppText variant="caption" muted weight="semibold" style={{ fontSize: 11, marginTop: 1 }}>#{order.orderNumber.replace('#', '')}</AppText>
         </View>
-        <Badge label={order.status} tone={getStatusTone(order.status)} />
+        <Badge label={isOpenOrder ? 'Open for All' : order.status} tone={isOpenOrder ? 'blue' : getStatusTone(order.status)} />
       </View>
 
       <View style={notaryStyles.orderInfoSection}>
@@ -99,7 +101,12 @@ export function NotaryOrderCard({ order }: { order: Order }) {
                   <AppText weight="bold" style={notaryStyles.miniAvatarText}>{companyInitials}</AppText>
                 </View>
               )}
-              {notaryAvatar ? (
+              {isOpenOrder ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Info size={14} color={colors.primary} />
+                  <AppText variant="caption" weight="bold" style={{ color: colors.primary }}>First notary to accept wins</AppText>
+                </View>
+              ) : notaryAvatar ? (
                 <Image source={{ uri: notaryAvatar }} style={[notaryStyles.miniAvatar, { marginLeft: -10 }]} />
               ) : (
                 <View style={[notaryStyles.miniAvatar, notaryStyles.miniAvatarFallback, { marginLeft: -10 }]}>
@@ -118,7 +125,9 @@ export function NotaryOrderCard({ order }: { order: Order }) {
             } as Href)
           }
         >
-          <AppText weight="bold" style={[notaryStyles.viewDetailsText, { color: colors.primary }]}>VIEW DETAILS</AppText>
+          <AppText weight="bold" style={[notaryStyles.viewDetailsText, { color: colors.primary }]}>
+            {isOpenOrder ? 'REVIEW & ACCEPT' : 'VIEW DETAILS'}
+          </AppText>
           <ArrowRight size={14} color={colors.primary} />
         </Pressable>
       </View>
