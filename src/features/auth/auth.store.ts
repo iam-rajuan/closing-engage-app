@@ -7,9 +7,6 @@ const identity = (state: AuthState) => state;
 export function useAuthStore(): AuthState;
 export function useAuthStore<T>(selector: (state: AuthState) => T): T;
 export function useAuthStore<T>(selector?: (state: AuthState) => T) {
-  if (!selector) {
-    return useStore(authStore, identity) as T;
-  }
-
-  return useStore(authStore, selector);
+  const resolvedSelector = (selector ?? identity) as (state: AuthState) => T;
+  return useStore(authStore, resolvedSelector);
 }
