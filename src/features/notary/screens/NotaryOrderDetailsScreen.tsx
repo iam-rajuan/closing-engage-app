@@ -1,8 +1,8 @@
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import { useCallback } from 'react';
-import { ArrowRight, Building, Calendar, CheckCircle2, ChevronLeft, FileText, Info, MapPin, MessageCircle, Send, UserRound } from 'lucide-react-native';
+import { useCallback, useState } from 'react';
+import { ArrowRight, Building, Calendar, CheckCircle2, ChevronLeft, CloudUpload, FileText, Info, MapPin, MessageCircle, Send, Trash2, UserRound } from 'lucide-react-native';
 import { AppButton } from '@/components/common/AppButton';
 import { AppCard } from '@/components/common/AppCard';
 import { AppText } from '@/components/common/AppText';
@@ -13,14 +13,23 @@ import { LoadingState } from '@/components/common/LoadingState';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { notaryStyles } from '@/features/notary/styles';
 import { useAsyncResource } from '@/hooks/useAsyncResource';
+import { uploadDocumentBinary } from '@/services/documents.service';
 import { acceptOpenOrder, confirmPrintedDocuments, getOrderById } from '@/services/orders.service';
 import { colors } from '@/theme';
+import { pickDocument } from '@/utils/fileUpload';
 
 export function NotaryOrderDetailsScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
   const orderId = params.id ?? '';
   const { data: order, loading, error, setData, reload } = useAsyncResource(() => getOrderById(orderId), [orderId]);
   const isOpenOrder = Boolean(order?.openForAll && !order?.assignedNotaryId);
+  const [selectedFile, setSelectedFile] = useState<{
+    uri: string;
+    name: string;
+    mimeType?: string;
+    size?: number;
+  } | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -31,6 +40,40 @@ export function NotaryOrderDetailsScreen() {
   const markPrinted = async () => {
     const updated = await confirmPrintedDocuments(orderId);
     setData(updated);
+  };
+
+  const browseFiles = async () => {
+    const picked = await pickDocument();
+    if (picked) {
+      setSelectedFile({
+        uri: picked.uri,
+        name: picked.name,
+        size: picked.size,
+        mimeType: picked.mimeType,
+      });
+    }
+  };
+
+  const submitUpload = async () => {
+    if (!order || !selectedFile) {
+      Alert.alert('Select a file', 'Pick a scanback before submitting.');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      await uploadDocumentBinary({
+        orderNumber: order.orderNumber,
+        file: selectedFile,
+      });
+      setSelectedFile(null);
+      await reload();
+      Alert.alert('Upload complete', 'Your scanback was uploaded successfully.');
+    } catch (caught) {
+      Alert.alert('Upload failed', caught instanceof Error ? caught.message : 'Please try again.');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleAcceptOrder = async () => {
@@ -210,6 +253,44 @@ export function NotaryOrderDetailsScreen() {
               </AppCard>
             </View>
 
+            {!isOpenOrder ? (
+              <View style={{ marginTop: 16 }}>
+                <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 12 }}>UPLOAD SCANBACKS</AppText>
+                <AppCard style={styles.uploadCard}>
+                  <Pressable style={styles.uploadDropZone} onPress={() => void browseFiles()}>
+                    <View style={styles.uploadIconCircle}>
+                      <CloudUpload color={colors.primary} size={28} />
+                    </View>
+                    <AppText weight="bold" style={styles.uploadTitle}>Select Scanbacks</AppText>
+                    <AppText muted style={styles.uploadSubtitle}>Choose a PDF, JPG, or PNG from your device</AppText>
+                  </Pressable>
+
+                  <Pressable style={styles.uploadBrowseButton} onPress={() => void browseFiles()}>
+                    <AppText weight="bold" style={styles.uploadBrowseButtonText}>Browse Files</AppText>
+                  </Pressable>
+                </AppCard>
+
+                {selectedFile ? (
+                  <AppCard style={styles.selectedFileCard}>
+                    <View style={styles.selectedFileRow}>
+                      <View style={styles.selectedFileIconBox}>
+                        <FileText color="#dc2626" size={20} />
+                      </View>
+                      <View style={styles.selectedFileInfo}>
+                        <AppText weight="bold" style={styles.selectedFileName}>{selectedFile.name}</AppText>
+                        <AppText muted style={styles.selectedFileSize}>
+                          {selectedFile.size ? `${(selectedFile.size / 1024 / 1024).toFixed(1)} MB` : 'Unknown size'}
+                        </AppText>
+                      </View>
+                      <Pressable style={styles.selectedFileDeleteButton} onPress={() => setSelectedFile(null)}>
+                        <Trash2 color="#94a3b8" size={20} />
+                      </Pressable>
+                    </View>
+                  </AppCard>
+                ) : null}
+              </View>
+            ) : null}
+
             {isOpenOrder ? (
               <AppButton
                 title="Accept This Order"
@@ -218,12 +299,20 @@ export function NotaryOrderDetailsScreen() {
                 onPress={() => void handleAcceptOrder()}
               />
             ) : (
-              <AppButton
-                title={order.notaryPrintedConfirmed ? 'Printed Confirmed' : 'Confirm Printed Documents'}
-                icon={<Send color="#fff" size={16} />}
-                style={{ marginTop: 24, backgroundColor: '#0a49a8', height: 46 }}
-                onPress={() => void markPrinted()}
-              />
+              <>
+                <AppButton
+                  title={uploading ? 'Uploading...' : 'Upload & Submit'}
+                  icon={<Send color="#fff" size={16} />}
+                  style={{ marginTop: 24, backgroundColor: '#0a49a8', height: 46 }}
+                  onPress={() => void submitUpload()}
+                />
+                <AppButton
+                  title={order.notaryPrintedConfirmed ? 'Printed Confirmed' : 'Confirm Printed Documents'}
+                  icon={<Send color="#fff" size={16} />}
+                  style={{ marginTop: 12, backgroundColor: '#0a49a8', height: 46 }}
+                  onPress={() => void markPrinted()}
+                />
+              </>
             )}
           </>
         ) : null}
@@ -286,5 +375,92 @@ const styles = StyleSheet.create({
   meetingActionText: {
     fontSize: 14,
     color: colors.primary,
+  },
+  uploadCard: {
+    padding: 16,
+    borderRadius: 14,
+    gap: 16,
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+  uploadDropZone: {
+    width: '100%',
+    minHeight: 130,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: '#cbd5e1',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#f8fbff',
+    paddingVertical: 20,
+  },
+  uploadIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#eff6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
+  },
+  uploadTitle: {
+    fontSize: 15,
+    color: '#0f172a',
+  },
+  uploadSubtitle: {
+    fontSize: 13,
+    color: '#94a3b8',
+  },
+  uploadBrowseButton: {
+    width: '100%',
+    height: 44,
+    backgroundColor: '#0a49a8',
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  uploadBrowseButtonText: {
+    color: '#fff',
+    fontSize: 14,
+  },
+  selectedFileCard: {
+    marginTop: 12,
+    padding: 14,
+    borderRadius: 12,
+  },
+  selectedFileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  selectedFileIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: '#fef2f2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectedFileInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  selectedFileName: {
+    fontSize: 14,
+    color: '#0f172a',
+  },
+  selectedFileSize: {
+    fontSize: 12,
+    color: '#94a3b8',
+  },
+  selectedFileDeleteButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#f8fafc',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
