@@ -359,7 +359,7 @@ export function CompanyHomeScreen() {
               href={
                 {
                   pathname: '/company/orders/[id]',
-                  params: { id: order.id.replace(/^#/, '') },
+                  params: { id: order.id.replace(/^#/, ''), from: 'home' },
                 } as Href
               }
             />

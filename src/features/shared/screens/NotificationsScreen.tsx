@@ -65,11 +65,11 @@ export function NotificationsScreen() {
     if (notification.type === 'order' && notification.linkId) {
       const orderId = normalizeLinkId(notification.linkId);
       if (role === 'notary') {
-        router.push({ pathname: '/notary/assigned/[id]', params: { id: orderId } });
+        router.push({ pathname: '/notary/assigned/[id]', params: { id: orderId, from: 'notifications' } });
         return;
       }
 
-      router.push({ pathname: '/company/orders/[id]', params: { id: orderId } });
+      router.push({ pathname: '/company/orders/[id]', params: { id: orderId, from: 'notifications' } });
       return;
     }
 

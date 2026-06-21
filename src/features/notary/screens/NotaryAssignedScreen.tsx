@@ -101,7 +101,7 @@ export function NotaryAssignedScreen() {
 
       {loading && !orders ? <LoadingState /> : null}
       {error ? <ErrorState message={error} /> : null}
-      {filteredOrders.length ? filteredOrders.map((order) => <NotaryOrderCard key={order.id} order={order} />) : !loading ? <EmptyState title="No orders matched your filters" /> : null}
+      {filteredOrders.length ? filteredOrders.map((order) => <NotaryOrderCard key={order.id} order={order} origin="assigned" />) : !loading ? <EmptyState title="No orders matched your filters" /> : null}
 
       <StatusReference />
     </ScreenContainer>

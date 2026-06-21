@@ -19,7 +19,13 @@ const NOTARY_AVATARS: Record<string, string> = {
   'Sarah Jenkins': 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=128&auto=format&fit=crop',
 };
 
-export function OrderCard({ order, href }: { order: Order; href: Href }) {
+export function OrderCard({
+  order,
+  href,
+}: {
+  order: Order;
+  href: Href;
+}) {
   const notaryAvatar = order.notaryName ? NOTARY_AVATARS[order.notaryName] : undefined;
   const displayAddress = order.address || '742 Evergreen Terrace, Springfield';
 

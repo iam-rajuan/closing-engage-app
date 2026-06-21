@@ -1,4 +1,4 @@
-import { Alert, ActivityIndicator, Image, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, ActivityIndicator, BackHandler, Image, Pressable, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
@@ -23,18 +23,33 @@ import { colors } from '@/theme';
 function DetailField({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
   return (
     <View style={styles.detailField}>
-      <AppText variant="caption" muted style={styles.detailLabel}>{label}</AppText>
+      <AppText variant="caption" muted style={styles.detailLabel} maxFontSizeMultiplier={1.1}>
+        {label}
+      </AppText>
       <View style={styles.detailValueRow}>
         {icon && <View style={styles.detailIcon}>{icon}</View>}
-        <AppText weight="bold" style={styles.detailValue}>{value}</AppText>
+        <AppText weight="semibold" style={styles.detailValue} maxFontSizeMultiplier={1.2}>
+          {value}
+        </AppText>
       </View>
     </View>
   );
 }
 
+const firstParam = (value?: string | string[]) => (Array.isArray(value) ? value[0] : value);
+
 export function CompanyOrderDetailsScreen() {
-  const params = useLocalSearchParams<{ id?: string }>();
-  const orderId = params.id ?? '';
+  const params = useLocalSearchParams<{ id?: string; from?: string }>();
+  const orderId = firstParam(params.id) ?? '';
+  const source = firstParam(params.from);
+  const backTarget = source === 'home'
+    ? '/company/home'
+    : source === 'notifications'
+      ? '/company/notifications'
+      : '/company/orders';
+  const handleBack = useCallback(() => {
+    router.replace(backTarget);
+  }, [backTarget]);
   const { data: order, loading, error, reload, setData } = useAsyncResource(
     () => getOrderById(orderId),
     [orderId],
@@ -79,6 +94,17 @@ export function CompanyOrderDetailsScreen() {
     }, [reload]),
   );
 
+  useFocusEffect(
+    useCallback(() => {
+      const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+        handleBack();
+        return true;
+      });
+
+      return () => subscription.remove();
+    }, [handleBack]),
+  );
+
   const confirmMeeting = async () => {
     if (!orderId) return;
     setIsConfirmingMeeting(true);
@@ -95,7 +121,7 @@ export function CompanyOrderDetailsScreen() {
 
   return (
     <ScreenContainer scroll refreshing={refreshing} onRefresh={() => void handleRefresh()}>
-      <AppHeader back title="Order Details" onProfilePress={() => router.push('/company/settings')} />
+      <AppHeader back title="Order Details" onProfilePress={() => router.push('/company/settings')} onBackPress={handleBack} />
 
       {loading && !order ? <LoadingState /> : null}
       {error ? <ErrorState message={error} /> : null}
@@ -105,8 +131,10 @@ export function CompanyOrderDetailsScreen() {
         <>
           <AppCard style={styles.detailsMainCard}>
             <View style={styles.detailsHeader}>
-              <AppText style={styles.detailsOrderNum} numberOfLines={1}>{order.orderNumber}</AppText>
-              <Badge label={order.status.toUpperCase()} tone={order.status === 'Completed' ? 'green' : 'blue'} />
+              <AppText style={styles.detailsOrderNum} numberOfLines={1} maxFontSizeMultiplier={1.15}>
+                {order.orderNumber}
+              </AppText>
+              <Badge label={order.status.toUpperCase()} tone={order.status === 'Completed' ? 'green' : 'blue'} style={styles.detailsBadge} />
             </View>
 
             <DetailField label="CLIENT" value={order.clientName} />
@@ -125,9 +153,13 @@ export function CompanyOrderDetailsScreen() {
           {order.instructions ? (
             <View style={styles.specialInstructionBox}>
               <Info color={colors.primary} size={18} />
-              <View style={{ flex: 1 }}>
-                <AppText weight="bold" style={{ color: colors.primary }}>Special Instructions</AppText>
-                <AppText style={styles.instructionText}>{order.instructions}</AppText>
+              <View style={styles.flexContent}>
+                <AppText weight="semibold" style={styles.calloutTitle} maxFontSizeMultiplier={1.1}>
+                  Special Instructions
+                </AppText>
+                <AppText style={styles.instructionText} maxFontSizeMultiplier={1.2}>
+                  {order.instructions}
+                </AppText>
               </View>
             </View>
           ) : null}
@@ -138,12 +170,14 @@ export function CompanyOrderDetailsScreen() {
                 <View style={styles.engagementIconBox}>
                   <Calendar color={colors.primary} size={24} />
                 </View>
-                <View style={{ flex: 1 }}>
-                  <AppText variant="caption" muted style={styles.engagementSub}>Closing Meeting</AppText>
-                  <AppText weight="bold" style={styles.engagementTitle}>
+                <View style={styles.flexContent}>
+                  <AppText variant="caption" muted style={styles.engagementSub} maxFontSizeMultiplier={1.1}>
+                    Closing Meeting
+                  </AppText>
+                  <AppText weight="semibold" style={styles.engagementTitle} maxFontSizeMultiplier={1.15}>
                     {order.meeting.date} • {order.meeting.time}
                   </AppText>
-                  <AppText variant="caption" muted>
+                  <AppText variant="caption" muted style={styles.engagementDescription} maxFontSizeMultiplier={1.15}>
                     {order.meeting.status === 'confirmed' ? 'Confirmed and shared with the notary.' : 'The notary scheduled this meeting. Confirm it to notify them instantly.'}
                   </AppText>
                 </View>
@@ -154,14 +188,18 @@ export function CompanyOrderDetailsScreen() {
               </View>
               {order.meeting.status === 'scheduled' ? (
                 <Pressable style={styles.confirmButton} onPress={() => void confirmMeeting()} disabled={isConfirmingMeeting}>
-                  <AppText weight="bold" style={styles.confirmButtonText}>{isConfirmingMeeting ? 'Confirming...' : 'Confirm Meeting'}</AppText>
+                  <AppText weight="semibold" style={styles.confirmButtonText} maxFontSizeMultiplier={1.1}>
+                    {isConfirmingMeeting ? 'Confirming...' : 'Confirm Meeting'}
+                  </AppText>
                 </Pressable>
               ) : null}
             </AppCard>
           ) : null}
 
           <View style={styles.detailsSection}>
-            <AppText weight="bold" style={styles.detailsSectionTitle}>Assigned Notary</AppText>
+            <AppText weight="semibold" style={styles.detailsSectionTitle} maxFontSizeMultiplier={1.1}>
+              Assigned Notary
+            </AppText>
             <AppCard style={styles.fileCardDetails}>
               {order.assignedNotaryId && order.notaryAvatarUrl ? (
                 <Image source={{ uri: order.notaryAvatarUrl }} style={styles.avatarImage} />
@@ -170,9 +208,13 @@ export function CompanyOrderDetailsScreen() {
                   <UserRound color="#2563eb" size={20} />
                 </View>
               )}
-              <View style={{ flex: 1 }}>
-                <AppText weight="bold">{order.notaryName || 'Not assigned yet'}</AppText>
-                <AppText variant="caption" muted>{order.assignedNotaryId ? 'Assigned' : 'Pending assignment'}</AppText>
+              <View style={styles.flexContent}>
+                <AppText weight="semibold" style={styles.primaryRowText} maxFontSizeMultiplier={1.15}>
+                  {order.notaryName || 'Not assigned yet'}
+                </AppText>
+                <AppText variant="caption" muted style={styles.secondaryRowText} maxFontSizeMultiplier={1.1}>
+                  {order.assignedNotaryId ? 'Assigned' : 'Pending assignment'}
+                </AppText>
               </View>
             </AppCard>
           </View>
@@ -190,16 +232,20 @@ export function CompanyOrderDetailsScreen() {
             return (
               <>
                 <View style={styles.detailsSection}>
-                  <AppText weight="bold" style={styles.detailsSectionTitle}>Title Documents</AppText>
+                  <AppText weight="semibold" style={styles.detailsSectionTitle} maxFontSizeMultiplier={1.1}>
+                    Title Documents
+                  </AppText>
                   {companyDocs.length ? (
                     companyDocs.map((document, index) => (
                       <AppCard key={`company-doc-${index}`} style={styles.fileCardDetails}>
                         <DocumentIcon fileName={document.name} size={44} iconSize={20} />
-                        <View style={{ flex: 1 }}>
-                          <AppText weight="bold" numberOfLines={1} ellipsizeMode="middle" style={{ color: '#1e293b' }}>
+                        <View style={styles.flexContent}>
+                          <AppText weight="semibold" numberOfLines={1} ellipsizeMode="middle" style={styles.documentName} maxFontSizeMultiplier={1.1}>
                             {document.name}
                           </AppText>
-                          <AppText variant="caption" muted>{document.meta} • Provided by Company</AppText>
+                          <AppText variant="caption" muted style={styles.documentMeta} numberOfLines={1} maxFontSizeMultiplier={1.05}>
+                            {document.meta} • Provided by Company
+                          </AppText>
                         </View>
                         {document.id ? (
                           <Pressable
@@ -224,16 +270,20 @@ export function CompanyOrderDetailsScreen() {
                 </View>
 
                 <View style={styles.detailsSection}>
-                  <AppText weight="bold" style={styles.detailsSectionTitle}>Notary Scanbacks</AppText>
+                  <AppText weight="semibold" style={styles.detailsSectionTitle} maxFontSizeMultiplier={1.1}>
+                    Notary Scanbacks
+                  </AppText>
                   {notaryDocs.length ? (
                     notaryDocs.map((document, index) => (
                       <AppCard key={`notary-doc-${index}`} style={styles.fileCardDetails}>
                         <DocumentIcon fileName={document.name} size={44} iconSize={20} />
-                        <View style={{ flex: 1 }}>
-                          <AppText weight="bold" numberOfLines={1} ellipsizeMode="middle" style={{ color: '#1e293b' }}>
+                        <View style={styles.flexContent}>
+                          <AppText weight="semibold" numberOfLines={1} ellipsizeMode="middle" style={styles.documentName} maxFontSizeMultiplier={1.1}>
                             {document.name}
                           </AppText>
-                          <AppText variant="caption" muted>{document.meta} • Provided by Notary</AppText>
+                          <AppText variant="caption" muted style={styles.documentMeta} numberOfLines={1} maxFontSizeMultiplier={1.05}>
+                            {document.meta} • Provided by Notary
+                          </AppText>
                         </View>
                         {document.id ? (
                           <Pressable
@@ -261,7 +311,9 @@ export function CompanyOrderDetailsScreen() {
           })()}
 
           <View style={styles.detailsSection}>
-            <AppText weight="bold" style={styles.detailsSectionTitle}>Order Status</AppText>
+            <AppText weight="semibold" style={styles.detailsSectionTitle} maxFontSizeMultiplier={1.1}>
+              Order Status
+            </AppText>
             <AppCard style={styles.logCard}>
               {order.timelineSteps.map((step, index) => {
                 const isLast = index === order.timelineSteps.length - 1;
@@ -291,10 +343,10 @@ export function CompanyOrderDetailsScreen() {
                     </View>
 
                     <View style={styles.timelineContent}>
-                      <AppText weight="bold" style={[styles.timelineLabel, !step.done && styles.timelineLabelPending]}>
+                      <AppText weight="semibold" style={[styles.timelineLabel, !step.done && styles.timelineLabelPending]} maxFontSizeMultiplier={1.1}>
                         {step.label}
                       </AppText>
-                      <AppText variant="caption" muted style={styles.timelineTime}>
+                      <AppText variant="caption" muted style={styles.timelineTime} maxFontSizeMultiplier={1.05}>
                         {step.time || (step.done ? 'Completed' : 'Pending')}
                       </AppText>
                     </View>
@@ -305,7 +357,9 @@ export function CompanyOrderDetailsScreen() {
           </View>
 
           <View style={styles.detailsSection}>
-            <AppText weight="bold" style={styles.detailsSectionTitle}>Activity Log</AppText>
+            <AppText weight="semibold" style={styles.detailsSectionTitle} maxFontSizeMultiplier={1.1}>
+              Activity Log
+            </AppText>
             <AppCard style={styles.activityCard}>
               {(() => {
                 const timeline = order.timeline ?? [];
@@ -339,10 +393,10 @@ export function CompanyOrderDetailsScreen() {
                             ) : null}
                           </View>
                           <View style={styles.timelineContent}>
-                            <AppText weight="bold" style={styles.activityEventTitle}>
+                            <AppText weight="semibold" style={styles.activityEventTitle} maxFontSizeMultiplier={1.1}>
                               {event.title}
                             </AppText>
-                            <AppText variant="caption" muted style={styles.timelineTime}>
+                            <AppText variant="caption" muted style={styles.timelineTime} maxFontSizeMultiplier={1.05}>
                               {event.date}
                             </AppText>
                           </View>
@@ -362,7 +416,7 @@ export function CompanyOrderDetailsScreen() {
                           borderTopColor: '#f1f5f9',
                         }}
                       >
-                        <AppText weight="bold" style={{ color: '#2563eb', fontSize: 13 }}>
+                        <AppText weight="semibold" style={styles.showMoreText} maxFontSizeMultiplier={1.05}>
                           {activityExpanded ? 'Show Less' : `Show More (${timeline.length - showLimit} more)`}
                         </AppText>
                       </Pressable>
@@ -398,67 +452,90 @@ const styles = StyleSheet.create({
   detailsMainCard: {
     marginTop: 16,
     padding: 16,
-    gap: 12,
+    gap: 14,
   },
   detailsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    alignItems: 'flex-start',
+    gap: 12,
+    marginBottom: 4,
   },
   detailsOrderNum: {
-    fontSize: 18,
-    fontWeight: '800',
+    flex: 1,
+    minWidth: 0,
+    fontSize: 16,
+    fontWeight: '700',
     color: '#0a49a8',
-    lineHeight: 24,
+    lineHeight: 22,
+    letterSpacing: -0.2,
   },
-  detailField: { gap: 6 },
+  detailsBadge: {
+    flexShrink: 0,
+  },
+  detailField: { gap: 5 },
   detailLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
     color: '#64748b',
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
   detailValueRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+    alignItems: 'flex-start',
+    gap: 8,
+    minWidth: 0,
   },
-  detailIcon: { width: 24, alignItems: 'center' },
+  detailIcon: {
+    width: 20,
+    alignItems: 'center',
+    paddingTop: 1,
+  },
   detailValue: {
-    fontSize: 14,
-    color: '#1e293b',
-    lineHeight: 20,
     flex: 1,
+    minWidth: 0,
+    fontSize: 13,
+    color: '#1e293b',
+    lineHeight: 19,
+  },
+  flexContent: {
+    flex: 1,
+    minWidth: 0,
   },
   specialInstructionBox: {
     flexDirection: 'row',
-    gap: 14,
-    padding: 18,
+    alignItems: 'flex-start',
+    gap: 12,
+    padding: 16,
     backgroundColor: '#eff6ff',
     borderRadius: 14,
     marginTop: 16,
     borderWidth: 1,
     borderColor: '#dbeafe',
   },
-  instructionText: {
+  calloutTitle: {
+    color: colors.primary,
     fontSize: 14,
+    lineHeight: 18,
+  },
+  instructionText: {
+    fontSize: 13,
     color: '#1e3a8a',
-    marginTop: 6,
-    lineHeight: 20,
+    marginTop: 4,
+    lineHeight: 19,
   },
   engagementCard: {
     padding: 16,
     marginTop: 16,
     backgroundColor: '#f8fbff',
-    gap: 14,
+    gap: 12,
     borderWidth: 1,
     borderColor: '#dbeafe',
   },
   engagementTopRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
+    alignItems: 'flex-start',
+    gap: 12,
   },
   engagementIconBox: {
     width: 48,
@@ -471,15 +548,21 @@ const styles = StyleSheet.create({
     borderColor: '#f1f5f9',
   },
   engagementSub: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '600',
     color: '#64748b',
+    letterSpacing: 0.8,
   },
   engagementTitle: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '600',
     color: '#1e293b',
-    lineHeight: 20,
+    lineHeight: 21,
+    marginTop: 2,
+  },
+  engagementDescription: {
+    marginTop: 4,
+    lineHeight: 18,
   },
   confirmButton: {
     alignSelf: 'flex-start',
@@ -495,18 +578,37 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   detailsSectionTitle: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '600',
     color: '#0f172a',
-    marginBottom: 14,
-    lineHeight: 20,
+    marginBottom: 12,
+    lineHeight: 18,
+    letterSpacing: -0.1,
   },
   fileCardDetails: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    padding: 16,
+    alignItems: 'flex-start',
+    gap: 12,
+    padding: 14,
     marginBottom: 10,
+  },
+  primaryRowText: {
+    fontSize: 14,
+    lineHeight: 18,
+    color: '#0f172a',
+  },
+  secondaryRowText: {
+    marginTop: 2,
+    lineHeight: 17,
+  },
+  documentName: {
+    color: '#1e293b',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  documentMeta: {
+    marginTop: 3,
+    lineHeight: 17,
   },
   fileIconBox: {
     width: 44,
@@ -517,6 +619,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   downloadBtn: {
+    marginLeft: 8,
     width: 40,
     height: 40,
     borderRadius: 10,
@@ -602,8 +705,8 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   timelineLabel: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '600',
     color: '#0f172a',
     lineHeight: 18,
   },
@@ -611,9 +714,10 @@ const styles = StyleSheet.create({
     color: '#64748b',
   },
   timelineTime: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#64748b',
     marginTop: 2,
+    lineHeight: 16,
   },
   activityCard: {
     paddingTop: 20,
@@ -635,8 +739,13 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   activityEventTitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#334155',
     lineHeight: 18,
+  },
+  showMoreText: {
+    color: '#2563eb',
+    fontSize: 12,
+    lineHeight: 16,
   },
 });

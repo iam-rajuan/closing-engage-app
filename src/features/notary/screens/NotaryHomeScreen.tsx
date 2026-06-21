@@ -107,7 +107,7 @@ export function NotaryHomeScreen() {
 
       {loading && !orders ? <LoadingState /> : null}
       {error ? <ErrorState message={error} /> : null}
-      {orders?.length ? orders.map((order) => <NotaryOrderCard key={order.id} order={order} />) : !loading ? <EmptyState title="No assigned or open orders yet" /> : null}
+      {orders?.length ? orders.map((order) => <NotaryOrderCard key={order.id} order={order} origin="home" />) : !loading ? <EmptyState title="No assigned or open orders yet" /> : null}
     </ScreenContainer>
   );
 }

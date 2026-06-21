@@ -1,4 +1,4 @@
-import { Alert, ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, ActivityIndicator, BackHandler, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
@@ -22,9 +22,20 @@ import { acceptOpenOrder, confirmPrintedDocuments, getOrderById } from '@/servic
 import { colors } from '@/theme';
 import { pickDocument } from '@/utils/fileUpload';
 
+const firstParam = (value?: string | string[]) => (Array.isArray(value) ? value[0] : value);
+
 export function NotaryOrderDetailsScreen() {
-  const params = useLocalSearchParams<{ id?: string }>();
-  const orderId = params.id ?? '';
+  const params = useLocalSearchParams<{ id?: string; from?: string }>();
+  const orderId = firstParam(params.id) ?? '';
+  const source = firstParam(params.from);
+  const backTarget = source === 'home'
+    ? '/notary/home'
+    : source === 'notifications'
+      ? '/notary/notifications'
+      : '/notary/assigned';
+  const handleBack = useCallback(() => {
+    router.replace(backTarget);
+  }, [backTarget]);
   const { data: order, loading, error, setData, reload } = useAsyncResource(() => getOrderById(orderId), [orderId]);
   const isOpenOrder = Boolean(order?.openForAll && !order?.assignedNotaryId);
   const [selectedFile, setSelectedFile] = useState<{
@@ -70,6 +81,17 @@ export function NotaryOrderDetailsScreen() {
     useCallback(() => {
       void reload();
     }, [reload]),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+        handleBack();
+        return true;
+      });
+
+      return () => subscription.remove();
+    }, [handleBack]),
   );
 
   const markPrinted = async () => {
@@ -140,12 +162,12 @@ export function NotaryOrderDetailsScreen() {
   return (
     <ScreenContainer scroll refreshing={refreshing} onRefresh={() => void handleRefresh()} contentStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}>
         <View style={notaryStyles.detailsHeader}>
-          <Pressable onPress={() => router.back()}><ChevronLeft color="#0a49a8" size={24} /></Pressable>
-          <AppText weight="bold" style={{ fontSize: 15, color: '#0f172a' }}>Order Details</AppText>
+          <Pressable onPress={handleBack}><ChevronLeft color="#0a49a8" size={24} /></Pressable>
+          <AppText weight="semibold" style={styles.headerTitle} maxFontSizeMultiplier={1.1}>Order Details</AppText>
           <Badge
             label={isOpenOrder ? 'OPEN FOR ALL' : (order?.status || 'ASSIGNED').toUpperCase()}
             tone="blue"
-            style={{ paddingHorizontal: 12 }}
+            style={styles.headerBadge}
           />
         </View>
 
@@ -155,7 +177,7 @@ export function NotaryOrderDetailsScreen() {
         {order ? (
           <>
             <View style={{ marginTop: 16 }}>
-              <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 12 }}>WORKFLOW PROGRESS</AppText>
+              <AppText variant="caption" muted weight="bold" style={styles.sectionEyebrow} maxFontSizeMultiplier={1.05}>WORKFLOW PROGRESS</AppText>
               <AppCard style={{ padding: 16 }}>
                 {order.timelineSteps.map((item, i) => (
                   <View key={item.label} style={notaryStyles.timelineItem}>
@@ -165,9 +187,9 @@ export function NotaryOrderDetailsScreen() {
                       </View>
                       {i < order.timelineSteps.length - 1 && <View style={notaryStyles.timelineLine} />}
                     </View>
-                    <View style={{ flex: 1, paddingBottom: 24 }}>
-                      <AppText weight="bold" style={{ fontSize: 14, color: item.done ? '#0f172a' : '#94a3b8' }}>{item.label}</AppText>
-                      <AppText variant="caption" muted style={{ fontSize: 12, marginTop: 2 }}>{item.time}</AppText>
+                    <View style={styles.timelineStepContent}>
+                      <AppText weight="semibold" style={[styles.timelineTitle, item.done ? styles.timelineTitleDone : styles.timelineTitlePending]} maxFontSizeMultiplier={1.1}>{item.label}</AppText>
+                      <AppText variant="caption" muted style={styles.timelineMeta} maxFontSizeMultiplier={1.05}>{item.time}</AppText>
                     </View>
                   </View>
                 ))}
@@ -175,7 +197,7 @@ export function NotaryOrderDetailsScreen() {
             </View>
 
             <View style={{ marginTop: 16 }}>
-              <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 12 }}>ACTIVITY LOG</AppText>
+              <AppText variant="caption" muted weight="bold" style={styles.sectionEyebrow} maxFontSizeMultiplier={1.05}>ACTIVITY LOG</AppText>
               <AppCard style={styles.activityCard}>
                 {(() => {
                   const timeline = order.timeline ?? [];
@@ -209,10 +231,10 @@ export function NotaryOrderDetailsScreen() {
                               ) : null}
                             </View>
                             <View style={styles.timelineContent}>
-                              <AppText weight="bold" style={styles.activityEventTitle}>
+                              <AppText weight="semibold" style={styles.activityEventTitle} maxFontSizeMultiplier={1.1}>
                                 {event.title}
                               </AppText>
-                              <AppText variant="caption" muted style={styles.timelineTime}>
+                              <AppText variant="caption" muted style={styles.timelineTime} maxFontSizeMultiplier={1.05}>
                                 {event.date}
                               </AppText>
                             </View>
@@ -232,7 +254,7 @@ export function NotaryOrderDetailsScreen() {
                             borderTopColor: '#f1f5f9',
                           }}
                         >
-                          <AppText weight="bold" style={{ color: '#2563eb', fontSize: 13 }}>
+                          <AppText weight="semibold" style={styles.showMoreText} maxFontSizeMultiplier={1.05}>
                             {activityExpanded ? 'Show Less' : `Show More (${timeline.length - showLimit} more)`}
                           </AppText>
                         </Pressable>
@@ -249,9 +271,9 @@ export function NotaryOrderDetailsScreen() {
                   <View style={[notaryStyles.iconCircle, { backgroundColor: '#dbeafe' }]}>
                     <Info size={18} color="#2563eb" />
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <AppText variant="caption" muted weight="bold">OPEN ORDER</AppText>
-                    <AppText weight="bold" style={{ fontSize: 14, color: '#0f172a' }}>
+                  <View style={styles.flexContent}>
+                    <AppText variant="caption" muted weight="bold" style={styles.infoLabel} maxFontSizeMultiplier={1.05}>OPEN ORDER</AppText>
+                    <AppText weight="semibold" style={styles.infoValue} maxFontSizeMultiplier={1.15}>
                       First notary to accept will be assigned automatically.
                     </AppText>
                   </View>
@@ -261,18 +283,18 @@ export function NotaryOrderDetailsScreen() {
                 <View style={[notaryStyles.iconCircle, { backgroundColor: '#eff6ff' }]}>
                   <UserRound size={18} color="#2563eb" />
                 </View>
-                <View>
-                  <AppText variant="caption" muted weight="bold">CLIENT</AppText>
-                  <AppText weight="bold" style={{ fontSize: 14, color: '#0f172a' }}>{order.clientName}</AppText>
+                <View style={styles.flexContent}>
+                  <AppText variant="caption" muted weight="bold" style={styles.infoLabel} maxFontSizeMultiplier={1.05}>CLIENT</AppText>
+                  <AppText weight="semibold" style={styles.infoValue} maxFontSizeMultiplier={1.15}>{order.clientName}</AppText>
                 </View>
               </AppCard>
               <AppCard style={notaryStyles.infoStrip}>
                 <View style={[notaryStyles.iconCircle, { backgroundColor: '#eff6ff' }]}>
                   <Calendar size={18} color="#2563eb" />
                 </View>
-                <View>
-                  <AppText variant="caption" muted weight="bold">SIGNING SCHEDULE</AppText>
-                  <AppText weight="bold" style={{ fontSize: 14, color: '#0f172a' }}>
+                <View style={styles.flexContent}>
+                  <AppText variant="caption" muted weight="bold" style={styles.infoLabel} maxFontSizeMultiplier={1.05}>SIGNING SCHEDULE</AppText>
+                  <AppText weight="semibold" style={styles.infoValue} maxFontSizeMultiplier={1.15}>
                     {order.meeting?.date || order.signingDate} at {order.meeting?.time || order.signingTime || 'TBD'}
                   </AppText>
                 </View>
@@ -280,15 +302,15 @@ export function NotaryOrderDetailsScreen() {
             </View>
 
             <View style={{ marginTop: 16 }}>
-              <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 12 }}>PROPERTY ADDRESSES</AppText>
+              <AppText variant="caption" muted weight="bold" style={styles.sectionEyebrow} maxFontSizeMultiplier={1.05}>PROPERTY ADDRESSES</AppText>
               <AppCard style={{ padding: 14, gap: 12 }}>
-                <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+                <View style={styles.addressRow}>
                   <MapPin size={18} color="#2563eb" />
-                  <AppText weight="bold" style={{ color: '#334155', fontSize: 14 }}>{order.address}</AppText>
+                  <AppText weight="semibold" style={styles.addressValue} maxFontSizeMultiplier={1.15}>{order.address}</AppText>
                 </View>
-                <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+                <View style={styles.addressRow}>
                   <Building size={18} color="#2563eb" />
-                  <AppText weight="bold" style={{ color: '#334155', fontSize: 14 }}>{order.location}</AppText>
+                  <AppText weight="semibold" style={styles.addressValue} maxFontSizeMultiplier={1.15}>{order.location}</AppText>
                 </View>
               </AppCard>
             </View>
@@ -296,8 +318,8 @@ export function NotaryOrderDetailsScreen() {
             <AppCard style={styles.meetingCard}>
               <View style={styles.meetingHeader}>
                 <View>
-                  <AppText variant="caption" muted weight="bold" style={styles.meetingEyebrow}>CLOSING MEETING</AppText>
-                  <AppText weight="bold" style={styles.meetingTitle}>
+                  <AppText variant="caption" muted weight="bold" style={styles.meetingEyebrow} maxFontSizeMultiplier={1.05}>CLOSING MEETING</AppText>
+                  <AppText weight="semibold" style={styles.meetingTitle} maxFontSizeMultiplier={1.1}>
                     {order.meeting ? (order.meeting.status === 'confirmed' ? 'Meeting Confirmed' : 'Awaiting Company Confirmation') : 'Schedule a meeting'}
                   </AppText>
                 </View>
@@ -308,7 +330,7 @@ export function NotaryOrderDetailsScreen() {
                   />
                 ) : null}
               </View>
-              <AppText style={styles.meetingBody}>
+              <AppText style={styles.meetingBody} maxFontSizeMultiplier={1.15}>
                 {order.meeting
                   ? `${order.meeting.date} at ${order.meeting.time}`
                   : 'Choose a closing date and time so the company user can confirm this meeting.'}
@@ -318,7 +340,7 @@ export function NotaryOrderDetailsScreen() {
                 disabled={isOpenOrder}
                 onPress={() => router.push(`/notary/assigned/schedule?orderId=${encodeURIComponent(order.id)}`)}
               >
-                <AppText weight="bold" style={styles.meetingActionText}>
+                <AppText weight="semibold" style={styles.meetingActionText} maxFontSizeMultiplier={1.1}>
                   {isOpenOrder ? 'Accept order to schedule closing' : order.meeting ? 'Reschedule Closing' : 'Schedule Closing'}
                 </AppText>
                 {!isOpenOrder ? <ArrowRight size={18} color={colors.primary} /> : null}
@@ -327,8 +349,8 @@ export function NotaryOrderDetailsScreen() {
 
             {order.instructions ? (
               <AppCard style={{ backgroundColor: '#f8fafc', padding: 16, marginTop: 12 }}>
-                <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 12 }}>SPECIAL INSTRUCTIONS</AppText>
-                <AppText style={{ fontSize: 14, color: '#475569', lineHeight: 22 }}>{order.instructions}</AppText>
+                <AppText variant="caption" muted weight="bold" style={styles.sectionEyebrow} maxFontSizeMultiplier={1.05}>SPECIAL INSTRUCTIONS</AppText>
+                <AppText style={styles.instructionsText} maxFontSizeMultiplier={1.15}>{order.instructions}</AppText>
               </AppCard>
             ) : null}
 
@@ -343,17 +365,17 @@ export function NotaryOrderDetailsScreen() {
               return (
                 <>
                   <View style={{ marginTop: 16 }}>
-                    <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 12 }}>TITLE DOCUMENTS</AppText>
+                    <AppText variant="caption" muted weight="bold" style={styles.sectionEyebrow} maxFontSizeMultiplier={1.05}>TITLE DOCUMENTS</AppText>
                     <AppCard style={{ padding: 0 }}>
                       {companyDocs.length ? (
                         companyDocs.map((doc, i) => (
                           <View key={`company-doc-${i}`} style={[notaryStyles.docItem, i > 0 && { borderTopWidth: 1, borderTopColor: '#f1f5f9' }]}>
                             <DocumentIcon fileName={doc.name} size={36} iconSize={18} />
-                            <View style={{ flex: 1 }}>
-                              <AppText weight="bold" numberOfLines={1} ellipsizeMode="middle" style={{ fontSize: 14, color: '#1e293b' }}>
+                            <View style={styles.flexContent}>
+                              <AppText weight="semibold" numberOfLines={1} ellipsizeMode="middle" style={styles.documentName} maxFontSizeMultiplier={1.1}>
                                 {doc.name}
                               </AppText>
-                              <AppText variant="caption" muted>{doc.meta} • Provided by Company</AppText>
+                              <AppText variant="caption" muted style={styles.documentMeta} numberOfLines={1} maxFontSizeMultiplier={1.05}>{doc.meta} • Provided by Company</AppText>
                             </View>
                             {doc.id ? (
                               <Pressable
@@ -381,17 +403,17 @@ export function NotaryOrderDetailsScreen() {
                   </View>
 
                   <View style={{ marginTop: 16 }}>
-                    <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 12 }}>NOTARY SCANBACKS</AppText>
+                    <AppText variant="caption" muted weight="bold" style={styles.sectionEyebrow} maxFontSizeMultiplier={1.05}>NOTARY SCANBACKS</AppText>
                     <AppCard style={{ padding: 0 }}>
                       {notaryDocs.length ? (
                         notaryDocs.map((doc, i) => (
                           <View key={`notary-doc-${i}`} style={[notaryStyles.docItem, i > 0 && { borderTopWidth: 1, borderTopColor: '#f1f5f9' }]}>
                             <DocumentIcon fileName={doc.name} size={36} iconSize={18} />
-                            <View style={{ flex: 1 }}>
-                              <AppText weight="bold" numberOfLines={1} ellipsizeMode="middle" style={{ fontSize: 14, color: '#1e293b' }}>
+                            <View style={styles.flexContent}>
+                              <AppText weight="semibold" numberOfLines={1} ellipsizeMode="middle" style={styles.documentName} maxFontSizeMultiplier={1.1}>
                                 {doc.name}
                               </AppText>
-                              <AppText variant="caption" muted>{doc.meta} • Provided by Notary</AppText>
+                              <AppText variant="caption" muted style={styles.documentMeta} numberOfLines={1} maxFontSizeMultiplier={1.05}>{doc.meta} • Provided by Notary</AppText>
                             </View>
                             {doc.id ? (
                               <Pressable
@@ -423,18 +445,18 @@ export function NotaryOrderDetailsScreen() {
 
             {!isOpenOrder ? (
               <View style={{ marginTop: 16 }}>
-                <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 12 }}>UPLOAD SCANBACKS</AppText>
+                <AppText variant="caption" muted weight="bold" style={styles.sectionEyebrow} maxFontSizeMultiplier={1.05}>UPLOAD SCANBACKS</AppText>
                 <AppCard style={styles.uploadCard}>
                   <Pressable style={styles.uploadDropZone} onPress={() => void browseFiles()}>
                     <View style={styles.uploadIconCircle}>
                       <CloudUpload color={colors.primary} size={28} />
                     </View>
-                    <AppText weight="bold" style={styles.uploadTitle}>Select Scanbacks</AppText>
-                    <AppText muted style={styles.uploadSubtitle}>Choose a PDF, JPG, or PNG from your device</AppText>
+                    <AppText weight="semibold" style={styles.uploadTitle} maxFontSizeMultiplier={1.1}>Select Scanbacks</AppText>
+                    <AppText muted style={styles.uploadSubtitle} maxFontSizeMultiplier={1.1}>Choose a PDF, JPG, or PNG from your device</AppText>
                   </Pressable>
 
                   <Pressable style={styles.uploadBrowseButton} onPress={() => void browseFiles()}>
-                    <AppText weight="bold" style={styles.uploadBrowseButtonText}>Browse Files</AppText>
+                    <AppText weight="semibold" style={styles.uploadBrowseButtonText} maxFontSizeMultiplier={1.05}>Browse Files</AppText>
                   </Pressable>
                 </AppCard>
 
@@ -445,8 +467,8 @@ export function NotaryOrderDetailsScreen() {
                         <FileText color="#dc2626" size={20} />
                       </View>
                       <View style={styles.selectedFileInfo}>
-                        <AppText weight="bold" style={styles.selectedFileName}>{selectedFile.name}</AppText>
-                        <AppText muted style={styles.selectedFileSize}>
+                        <AppText weight="semibold" style={styles.selectedFileName} numberOfLines={1} maxFontSizeMultiplier={1.1}>{selectedFile.name}</AppText>
+                        <AppText muted style={styles.selectedFileSize} maxFontSizeMultiplier={1.05}>
                           {selectedFile.size ? `${(selectedFile.size / 1024 / 1024).toFixed(1)} MB` : 'Unknown size'}
                         </AppText>
                       </View>
@@ -508,6 +530,71 @@ export function NotaryOrderDetailsScreen() {
 }
 
 const styles = StyleSheet.create({
+  headerTitle: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: 15,
+    color: '#0f172a',
+    lineHeight: 20,
+    textAlign: 'center',
+  },
+  headerBadge: {
+    paddingHorizontal: 12,
+    flexShrink: 0,
+  },
+  sectionEyebrow: {
+    letterSpacing: 1,
+    marginBottom: 12,
+    fontSize: 10,
+    lineHeight: 14,
+  },
+  flexContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+  timelineStepContent: {
+    flex: 1,
+    minWidth: 0,
+    paddingBottom: 24,
+  },
+  timelineTitle: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  timelineTitleDone: {
+    color: '#0f172a',
+  },
+  timelineTitlePending: {
+    color: '#94a3b8',
+  },
+  timelineMeta: {
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 2,
+  },
+  infoLabel: {
+    fontSize: 10,
+    lineHeight: 14,
+    letterSpacing: 0.8,
+  },
+  infoValue: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#0f172a',
+    marginTop: 2,
+  },
+  addressRow: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'flex-start',
+  },
+  addressValue: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#334155',
+  },
   meetingCard: {
     marginTop: 18,
     padding: 16,
@@ -524,16 +611,18 @@ const styles = StyleSheet.create({
   },
   meetingEyebrow: {
     letterSpacing: 1,
-    fontSize: 11,
+    fontSize: 10,
+    lineHeight: 14,
   },
   meetingTitle: {
-    fontSize: 15,
+    fontSize: 14,
     color: '#0f172a',
     marginTop: 4,
+    lineHeight: 19,
   },
   meetingBody: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 19,
     color: '#475569',
   },
   meetingAction: {
@@ -549,8 +638,23 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   meetingActionText: {
-    fontSize: 14,
+    fontSize: 13,
+    lineHeight: 18,
     color: colors.primary,
+  },
+  instructionsText: {
+    fontSize: 13,
+    color: '#475569',
+    lineHeight: 19,
+  },
+  documentName: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#1e293b',
+  },
+  documentMeta: {
+    marginTop: 2,
+    lineHeight: 16,
   },
   uploadCard: {
     padding: 16,
@@ -582,11 +686,13 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   uploadTitle: {
-    fontSize: 15,
+    fontSize: 14,
+    lineHeight: 18,
     color: '#0f172a',
   },
   uploadSubtitle: {
-    fontSize: 13,
+    fontSize: 12,
+    lineHeight: 17,
     color: '#94a3b8',
   },
   uploadBrowseButton: {
@@ -599,7 +705,8 @@ const styles = StyleSheet.create({
   },
   uploadBrowseButtonText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 13,
+    lineHeight: 18,
   },
   selectedFileCard: {
     marginTop: 12,
@@ -624,11 +731,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   selectedFileName: {
-    fontSize: 14,
+    fontSize: 13,
+    lineHeight: 18,
     color: '#0f172a',
   },
   selectedFileSize: {
-    fontSize: 12,
+    fontSize: 11,
+    lineHeight: 16,
     color: '#94a3b8',
   },
   selectedFileDeleteButton: {
@@ -640,6 +749,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   downloadBtn: {
+    marginLeft: 8,
     width: 40,
     height: 40,
     borderRadius: 10,
@@ -674,9 +784,10 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   timelineTime: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#64748b',
     marginTop: 2,
+    lineHeight: 16,
   },
   activityDot: {
     width: 16,
@@ -693,8 +804,13 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   activityEventTitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#334155',
     lineHeight: 18,
+  },
+  showMoreText: {
+    color: '#2563eb',
+    fontSize: 12,
+    lineHeight: 16,
   },
 });

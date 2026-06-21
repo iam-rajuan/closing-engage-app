@@ -1,6 +1,6 @@
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { Bell, ChevronLeft } from 'lucide-react-native';
-import { router, useNavigation } from 'expo-router';
+import { router, useNavigation, type Href } from 'expo-router';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { colors, spacing } from '@/theme';
 import { BrandLogo } from './BrandLogo';
@@ -14,6 +14,8 @@ type Props = {
   name?: string;
   onProfilePress?: () => void;
   onNotificationPress?: () => void;
+  onBackPress?: () => void;
+  backHref?: Href;
   centerTitle?: boolean;
 };
 
@@ -25,6 +27,8 @@ export function AppHeader({
   name = "Alex Thompson",
   onProfilePress,
   onNotificationPress,
+  onBackPress,
+  backHref,
   centerTitle,
 }: Props) {
   const navigation = useNavigation();
@@ -61,6 +65,16 @@ export function AppHeader({
   };
 
   const handleBack = () => {
+    if (onBackPress) {
+      onBackPress();
+      return;
+    }
+
+    if (backHref) {
+      router.replace(backHref);
+      return;
+    }
+
     if (navigation.canGoBack()) {
       router.back();
     } else {

@@ -122,7 +122,10 @@ export function CompanyOrdersScreen() {
             <OrderCard
               key={order.id}
               order={order}
-              href={{ pathname: '/company/orders/[id]', params: { id: order.id.replace(/^#/, '') } } as Href}
+              href={{
+                pathname: '/company/orders/[id]',
+                params: { id: order.id.replace(/^#/, ''), from: 'orders' },
+              } as Href}
             />
           ))
         ) : (

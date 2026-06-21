@@ -35,7 +35,13 @@ const initialsFrom = (value: string) =>
     .join('')
     .toUpperCase() || value.trim().slice(0, 2).toUpperCase();
 
-export function NotaryOrderCard({ order }: { order: Order }) {
+export function NotaryOrderCard({
+  order,
+  origin = 'assigned',
+}: {
+  order: Order;
+  origin?: 'home' | 'assigned' | 'notifications';
+}) {
   const user = useAuthStore((state) => state.user);
   const companyAvatar = order.companyAvatarUrl;
   const notaryAvatar = order.notaryAvatarUrl || user?.avatarUrl;
@@ -121,7 +127,7 @@ export function NotaryOrderCard({ order }: { order: Order }) {
           onPress={() =>
             router.push({
               pathname: '/notary/assigned/[id]',
-              params: { id: String(order.id).replace(/^#/, '') },
+              params: { id: String(order.id).replace(/^#/, ''), from: origin },
             } as Href)
           }
         >
