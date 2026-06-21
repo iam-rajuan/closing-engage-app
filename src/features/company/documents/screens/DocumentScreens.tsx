@@ -1,8 +1,11 @@
 import { useMemo, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, View, Alert } from 'react-native';
 import { Calendar, Download, FileText, Search } from 'lucide-react-native';
 import * as Linking from 'expo-linking';
+import { downloadFileToDevice } from '@/utils/fileDownload';
+import { DownloadSuccessModal } from '@/components/common/DownloadSuccessModal';
+import { DocumentIcon } from '@/components/common/DocumentIcon';
 import { AppButton } from '@/components/common/AppButton';
 import { AppCard } from '@/components/common/AppCard';
 import { AppHeader } from '@/components/common/AppHeader';
@@ -190,6 +193,12 @@ export function DocumentViewScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
   const documentId = params.id ?? '';
   const { data: document, loading, error } = useAsyncResource(() => getDocumentById(documentId), [documentId]);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadSuccess, setDownloadSuccess] = useState<{
+    name: string;
+    localUri: string;
+    mimeType: string;
+  } | null>(null);
 
   const openPreview = async () => {
     const url = await getDocumentPreviewUrl(documentId);
@@ -197,8 +206,22 @@ export function DocumentViewScreen() {
   };
 
   const download = async () => {
-    const url = await getDocumentDownloadUrl(documentId);
-    await Linking.openURL(url);
+    if (!document) return;
+    try {
+      setDownloading(true);
+      const url = await getDocumentDownloadUrl(documentId);
+      const mimeTypeParam = document.mimeType || 'application/pdf';
+      const { localUri, mimeType } = await downloadFileToDevice(url, document.name, mimeTypeParam);
+      setDownloadSuccess({ name: document.name, localUri, mimeType });
+    } catch (caught) {
+      console.error('Download failed:', caught);
+      Alert.alert(
+        'Download failed',
+        caught instanceof Error ? caught.message : 'Could not download or save this document.'
+      );
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (
@@ -217,7 +240,7 @@ export function DocumentViewScreen() {
         <>
           <View style={styles.previewContainer}>
             <View style={styles.previewContent}>
-              <FileText color="#cbd5e1" size={140} strokeWidth={1} />
+              <DocumentIcon fileName={document.name} size={140} iconSize={64} />
               <AppText muted style={{ marginTop: 12, textAlign: 'center' }}>
                 Live document metadata loaded from backend. Tap preview to open the secure file URL.
               </AppText>
@@ -227,6 +250,7 @@ export function DocumentViewScreen() {
           <View style={styles.viewActionRow}>
             <AppButton
               title="Download"
+              loading={downloading}
               icon={<Download color={colors.white} size={18} />}
               style={styles.viewDownloadBtn}
               onPress={() => void download()}
@@ -267,6 +291,14 @@ export function DocumentViewScreen() {
           </AppCard>
         </>
       ) : null}
+
+      <DownloadSuccessModal
+        visible={downloadSuccess !== null}
+        fileName={downloadSuccess?.name ?? ''}
+        localUri={downloadSuccess?.localUri}
+        mimeType={downloadSuccess?.mimeType}
+        onClose={() => setDownloadSuccess(null)}
+      />
     </ScreenContainer>
   );
 }

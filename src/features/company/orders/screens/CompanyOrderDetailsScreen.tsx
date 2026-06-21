@@ -1,10 +1,12 @@
-import { Alert, Image, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, ActivityIndicator, Image, Pressable, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
 import { Calendar, Download, FileText, Info, MapPin, UserRound } from 'lucide-react-native';
-import * as Linking from 'expo-linking';
 import { getDocumentDownloadUrl } from '@/services/documents.service';
+import { downloadFileToDevice } from '@/utils/fileDownload';
+import { DownloadSuccessModal } from '@/components/common/DownloadSuccessModal';
+import { DocumentIcon } from '@/components/common/DocumentIcon';
 import { AppCard } from '@/components/common/AppCard';
 import { AppHeader } from '@/components/common/AppHeader';
 import { AppText } from '@/components/common/AppText';
@@ -37,13 +39,27 @@ export function CompanyOrderDetailsScreen() {
     [orderId],
   );
   const [isConfirmingMeeting, setIsConfirmingMeeting] = useState(false);
+  const [downloadingDocId, setDownloadingDocId] = useState<string | null>(null);
+  const [downloadSuccess, setDownloadSuccess] = useState<{
+    name: string;
+    localUri: string;
+    mimeType: string;
+  } | null>(null);
 
   const handleDownload = async (docId: string, name: string) => {
     try {
+      setDownloadingDocId(docId);
       const url = await getDocumentDownloadUrl(docId);
-      await Linking.openURL(url);
+      const { localUri, mimeType } = await downloadFileToDevice(url, name, 'application/pdf');
+      setDownloadSuccess({ name, localUri, mimeType });
     } catch (error) {
-      Alert.alert('Download failed', 'Could not retrieve download URL for this document.');
+      console.error('Download error:', error);
+      Alert.alert(
+        'Download failed',
+        error instanceof Error ? error.message : 'Could not download or save this document.'
+      );
+    } finally {
+      setDownloadingDocId(null);
     }
   };
 
@@ -156,7 +172,7 @@ export function CompanyOrderDetailsScreen() {
             {order.documents?.length ? (
               order.documents.map((document, index) => (
                 <AppCard key={`${document.name}-${index}`} style={styles.fileCardDetails}>
-                  <View style={styles.fileIconBox}><FileText color="#dc2626" size={20} /></View>
+                  <DocumentIcon fileName={document.name} size={44} iconSize={20} />
                   <View style={{ flex: 1 }}>
                     <AppText weight="bold" numberOfLines={1} ellipsizeMode="middle" style={{ color: '#1e293b' }}>
                       {document.name}
@@ -167,8 +183,13 @@ export function CompanyOrderDetailsScreen() {
                     <Pressable
                       style={styles.downloadBtn}
                       onPress={() => void handleDownload(document.id!, document.name)}
+                      disabled={downloadingDocId !== null}
                     >
-                      <Download color="#2563eb" size={18} />
+                      {downloadingDocId === document.id ? (
+                        <ActivityIndicator color="#2563eb" size="small" />
+                      ) : (
+                        <Download color="#2563eb" size={18} />
+                      )}
                     </Pressable>
                   ) : (
                     <AppText variant="caption" muted>Available in Documents</AppText>
@@ -183,19 +204,56 @@ export function CompanyOrderDetailsScreen() {
           <View style={styles.detailsSection}>
             <AppText weight="bold" style={styles.detailsSectionTitle}>Order Status</AppText>
             <AppCard style={styles.logCard}>
-              {order.timelineSteps.map((step) => (
-                <View key={step.label} style={styles.timelineRow}>
-                  <Badge label={step.done ? 'Done' : 'Pending'} tone={step.done ? 'green' : 'gray'} />
-                  <View style={{ flex: 1 }}>
-                    <AppText weight="bold">{step.label}</AppText>
-                    <AppText variant="caption" muted>{step.time}</AppText>
+              {order.timelineSteps.map((step, index) => {
+                const isLast = index === order.timelineSteps.length - 1;
+                const isCurrent = step.done && (isLast || !order.timelineSteps[index + 1]?.done);
+                
+                return (
+                  <View key={step.label} style={styles.timelineRow}>
+                    <View style={styles.timelineIndicatorColumn}>
+                      <View style={[
+                        styles.timelineDot,
+                        step.done ? styles.timelineDotDone : styles.timelineDotPending,
+                        isCurrent && styles.timelineDotCurrent
+                      ]}>
+                        {step.done ? (
+                          <View style={styles.checkmarkInner} />
+                        ) : null}
+                      </View>
+                      
+                      {!isLast ? (
+                        <View style={[
+                          styles.timelineConnector,
+                          step.done && order.timelineSteps[index + 1]?.done 
+                            ? styles.timelineConnectorDone 
+                            : styles.timelineConnectorPending
+                        ]} />
+                      ) : null}
+                    </View>
+
+                    <View style={styles.timelineContent}>
+                      <AppText weight="bold" style={[styles.timelineLabel, !step.done && styles.timelineLabelPending]}>
+                        {step.label}
+                      </AppText>
+                      <AppText variant="caption" muted style={styles.timelineTime}>
+                        {step.time || (step.done ? 'Completed' : 'Pending')}
+                      </AppText>
+                    </View>
                   </View>
-                </View>
-              ))}
+                );
+              })}
             </AppCard>
           </View>
         </>
       ) : null}
+
+      <DownloadSuccessModal
+        visible={downloadSuccess !== null}
+        fileName={downloadSuccess?.name ?? ''}
+        localUri={downloadSuccess?.localUri}
+        mimeType={downloadSuccess?.mimeType}
+        onClose={() => setDownloadSuccess(null)}
+      />
     </ScreenContainer>
   );
 }
@@ -344,12 +402,81 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logCard: {
-    padding: 16,
-    gap: 12,
+    paddingTop: 20,
+    paddingBottom: 4,
+    paddingHorizontal: 20,
   },
   timelineRow: {
     flexDirection: 'row',
-    gap: 12,
+    minHeight: 56,
+  },
+  timelineIndicatorColumn: {
+    width: 16,
     alignItems: 'center',
+    marginRight: 16,
+  },
+  timelineDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+    backgroundColor: colors.white,
+  },
+  timelineDotDone: {
+    borderColor: '#10b981',
+    backgroundColor: '#10b981',
+  },
+  timelineDotPending: {
+    borderColor: '#cbd5e1',
+    backgroundColor: colors.white,
+  },
+  timelineDotCurrent: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  checkmarkInner: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.white,
+  },
+  timelineConnector: {
+    width: 2,
+    position: 'absolute',
+    top: 16,
+    bottom: -16,
+    zIndex: 1,
+  },
+  timelineConnectorDone: {
+    backgroundColor: '#10b981',
+  },
+  timelineConnectorPending: {
+    backgroundColor: '#e2e8f0',
+  },
+  timelineContent: {
+    flex: 1,
+    paddingBottom: 16,
+  },
+  timelineLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0f172a',
+    lineHeight: 18,
+  },
+  timelineLabelPending: {
+    color: '#64748b',
+  },
+  timelineTime: {
+    fontSize: 12,
+    color: '#64748b',
+    marginTop: 2,
   },
 });

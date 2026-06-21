@@ -1,10 +1,12 @@
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
 import { ArrowRight, Building, Calendar, CheckCircle2, ChevronLeft, CloudUpload, Download, FileText, Info, MapPin, MessageCircle, Send, Trash2, UserRound } from 'lucide-react-native';
-import * as Linking from 'expo-linking';
 import { getDocumentDownloadUrl } from '@/services/documents.service';
+import { downloadFileToDevice } from '@/utils/fileDownload';
+import { DownloadSuccessModal } from '@/components/common/DownloadSuccessModal';
+import { DocumentIcon } from '@/components/common/DocumentIcon';
 import { AppButton } from '@/components/common/AppButton';
 import { AppCard } from '@/components/common/AppCard';
 import { AppText } from '@/components/common/AppText';
@@ -32,13 +34,27 @@ export function NotaryOrderDetailsScreen() {
     size?: number;
   } | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [downloadingDocId, setDownloadingDocId] = useState<string | null>(null);
+  const [downloadSuccess, setDownloadSuccess] = useState<{
+    name: string;
+    localUri: string;
+    mimeType: string;
+  } | null>(null);
 
   const handleDownload = async (docId: string, name: string) => {
     try {
+      setDownloadingDocId(docId);
       const url = await getDocumentDownloadUrl(docId);
-      await Linking.openURL(url);
+      const { localUri, mimeType } = await downloadFileToDevice(url, name, 'application/pdf');
+      setDownloadSuccess({ name, localUri, mimeType });
     } catch (error) {
-      Alert.alert('Download failed', 'Could not retrieve download URL for this document.');
+      console.error('Download error:', error);
+      Alert.alert(
+        'Download failed',
+        error instanceof Error ? error.message : 'Could not download or save this document.'
+      );
+    } finally {
+      setDownloadingDocId(null);
     }
   };
 
@@ -246,9 +262,7 @@ export function NotaryOrderDetailsScreen() {
                 {order.documents?.length ? (
                   order.documents.map((doc, i) => (
                     <View key={`${doc.name}-${i}`} style={[notaryStyles.docItem, i > 0 && { borderTopWidth: 1, borderTopColor: '#f1f5f9' }]}>
-                      <View style={[notaryStyles.iconCircle, { backgroundColor: '#fee2e2' }]}>
-                        <FileText size={18} color="#ef4444" />
-                      </View>
+                      <DocumentIcon fileName={doc.name} size={36} iconSize={18} />
                       <View style={{ flex: 1 }}>
                         <AppText weight="bold" numberOfLines={1} ellipsizeMode="middle" style={{ fontSize: 14, color: '#1e293b' }}>
                           {doc.name}
@@ -259,8 +273,13 @@ export function NotaryOrderDetailsScreen() {
                         <Pressable
                           style={styles.downloadBtn}
                           onPress={() => void handleDownload(doc.id!, doc.name)}
+                          disabled={downloadingDocId !== null}
                         >
-                          <Download color="#2563eb" size={18} />
+                          {downloadingDocId === doc.id ? (
+                            <ActivityIndicator color="#2563eb" size="small" />
+                          ) : (
+                            <Download color="#2563eb" size={18} />
+                          )}
                         </Pressable>
                       ) : (
                         <AppText variant="caption" muted>Documents list</AppText>
@@ -349,6 +368,14 @@ export function NotaryOrderDetailsScreen() {
           <View style={notaryStyles.onlineDotSmall} />
         </Pressable>
       ) : null}
+
+      <DownloadSuccessModal
+        visible={downloadSuccess !== null}
+        fileName={downloadSuccess?.name ?? ''}
+        localUri={downloadSuccess?.localUri}
+        mimeType={downloadSuccess?.mimeType}
+        onClose={() => setDownloadSuccess(null)}
+      />
     </ScreenContainer>
   );
 }

@@ -1,19 +1,18 @@
 import { StyleSheet, View } from 'react-native';
-import { Download, Eye, FileText } from 'lucide-react-native';
+import { Download, Eye } from 'lucide-react-native';
 import { AppButton } from '@/components/common/AppButton';
 import { AppCard } from '@/components/common/AppCard';
 import { AppText } from '@/components/common/AppText';
 import { Badge } from '@/components/common/Badge';
 import { colors, spacing } from '@/theme';
 import { DocumentFile } from '@/types/document';
+import { DocumentIcon } from '@/components/common/DocumentIcon';
 
 export function DocumentCard({ doc, onView }: { doc: DocumentFile; onView?: () => void }) {
   return (
     <AppCard style={styles.card}>
       <View style={styles.top}>
-        <View style={styles.iconContainer}>
-          <FileText color={colors.danger} size={20} />
-        </View>
+        <DocumentIcon fileName={doc.name} size={44} iconSize={20} />
         <View style={styles.nameContainer}>
           <AppText weight="bold" style={styles.fileName}>{doc.name}</AppText>
           <AppText variant="caption" muted style={styles.orderId}>{doc.orderId}</AppText>
