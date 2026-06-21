@@ -48,6 +48,7 @@ export function CompanyOrderDetailsScreen() {
   } | null>(null);
   const [showMeetingConfirmed, setShowMeetingConfirmed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [activityExpanded, setActivityExpanded] = useState(false);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -181,7 +182,9 @@ export function CompanyOrderDetailsScreen() {
               (doc) => doc.uploadedBy?.toLowerCase() === 'title company' || doc.uploadedBy?.toLowerCase() === 'admin' || !doc.uploadedBy
             ) ?? [];
             const notaryDocs = order.documents?.filter(
-              (doc) => doc.uploadedBy?.toLowerCase() === 'notary'
+              (doc) =>
+                doc.uploadedBy?.toLowerCase() === 'notary' &&
+                (doc.status === 'Approved' || doc.status === 'Verified')
             ) ?? [];
 
             return (
@@ -304,41 +307,69 @@ export function CompanyOrderDetailsScreen() {
           <View style={styles.detailsSection}>
             <AppText weight="bold" style={styles.detailsSectionTitle}>Activity Log</AppText>
             <AppCard style={styles.activityCard}>
-              {order.timeline?.length ? (
-                order.timeline.map((event, index, arr) => {
-                  const isLast = index === arr.length - 1;
-                  const toneColors = {
-                    green: { dot: '#10b981', bg: '#dcfce7' },
-                    blue: { dot: '#2563eb', bg: '#dbeafe' },
-                    red: { dot: '#ef4444', bg: '#fee2e2' },
-                    slate: { dot: '#64748b', bg: '#f1f5f9' },
-                  };
-                  const colorsConfig = toneColors[event.tone] || toneColors.slate;
+              {(() => {
+                const timeline = order.timeline ?? [];
+                if (!timeline.length) {
+                  return <EmptyState title="No activity recorded yet" />;
+                }
+                const showLimit = 3;
+                const hasMore = timeline.length > showLimit;
+                const displayEvents = activityExpanded ? timeline : timeline.slice(0, showLimit);
 
-                  return (
-                    <View key={`event-${index}`} style={styles.timelineRow}>
-                      <View style={styles.timelineIndicatorColumn}>
-                        <View style={[styles.activityDot, { backgroundColor: colorsConfig.bg, borderColor: colorsConfig.dot }]}>
-                          <View style={[styles.activityDotInner, { backgroundColor: colorsConfig.dot }]} />
+                return (
+                  <>
+                    {displayEvents.map((event, index, arr) => {
+                      const isLast = index === arr.length - 1;
+                      const toneColors = {
+                        green: { dot: '#10b981', bg: '#dcfce7' },
+                        blue: { dot: '#2563eb', bg: '#dbeafe' },
+                        red: { dot: '#ef4444', bg: '#fee2e2' },
+                        slate: { dot: '#64748b', bg: '#f1f5f9' },
+                      };
+                      const colorsConfig = toneColors[event.tone] || toneColors.slate;
+
+                      return (
+                        <View key={`event-${index}`} style={styles.timelineRow}>
+                          <View style={styles.timelineIndicatorColumn}>
+                            <View style={[styles.activityDot, { backgroundColor: colorsConfig.bg, borderColor: colorsConfig.dot }]}>
+                              <View style={[styles.activityDotInner, { backgroundColor: colorsConfig.dot }]} />
+                            </View>
+                            {!isLast ? (
+                              <View style={[styles.timelineConnector, styles.timelineConnectorPending]} />
+                            ) : null}
+                          </View>
+                          <View style={styles.timelineContent}>
+                            <AppText weight="bold" style={styles.activityEventTitle}>
+                              {event.title}
+                            </AppText>
+                            <AppText variant="caption" muted style={styles.timelineTime}>
+                              {event.date}
+                            </AppText>
+                          </View>
                         </View>
-                        {!isLast ? (
-                          <View style={[styles.timelineConnector, styles.timelineConnectorPending]} />
-                        ) : null}
-                      </View>
-                      <View style={styles.timelineContent}>
-                        <AppText weight="bold" style={styles.activityEventTitle}>
-                          {event.title}
+                      );
+                    })}
+
+                    {hasMore ? (
+                      <Pressable
+                        onPress={() => setActivityExpanded(!activityExpanded)}
+                        style={{
+                          marginTop: 12,
+                          paddingVertical: 10,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderTopWidth: 1,
+                          borderTopColor: '#f1f5f9',
+                        }}
+                      >
+                        <AppText weight="bold" style={{ color: '#2563eb', fontSize: 13 }}>
+                          {activityExpanded ? 'Show Less' : `Show More (${timeline.length - showLimit} more)`}
                         </AppText>
-                        <AppText variant="caption" muted style={styles.timelineTime}>
-                          {event.date}
-                        </AppText>
-                      </View>
-                    </View>
-                  );
-                })
-              ) : (
-                <EmptyState title="No activity recorded yet" />
-              )}
+                      </Pressable>
+                    ) : null}
+                  </>
+                );
+              })()}
             </AppCard>
           </View>
         </>

@@ -25,6 +25,7 @@ export type OrderDocumentSummary = {
   meta: string;
   uploadedBy?: string;
   uploadedAt?: string;
+  status?: string;
 };
 
 export type OrderTimelineEvent = {
