@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native';
-import { Download, Eye } from 'lucide-react-native';
+import { Download, FileSearch } from 'lucide-react-native';
 import { AppButton } from '@/components/common/AppButton';
 import { AppCard } from '@/components/common/AppCard';
 import { AppText } from '@/components/common/AppText';
@@ -37,12 +37,12 @@ export function DocumentCard({ doc, onView }: { doc: DocumentFile; onView?: () =
 
       <View style={styles.actions}>
         <AppButton 
-          title="Preview" 
+          title="Details" 
           variant="secondary" 
           onPress={onView} 
           style={styles.viewBtn}
           textStyle={styles.viewBtnText}
-          icon={<Eye color={colors.primary} size={16} />} 
+          icon={<FileSearch color={colors.primary} size={16} />} 
         />
         <AppButton 
           title="Download" 

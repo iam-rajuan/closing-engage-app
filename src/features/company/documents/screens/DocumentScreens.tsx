@@ -270,7 +270,7 @@ export function DocumentViewScreen() {
   };
 
   return (
-    <ScreenContainer scroll refreshing={refreshing} onRefresh={() => void handleRefresh()}>
+    <ScreenContainer refreshing={refreshing} onRefresh={() => void handleRefresh()}>
       <AppHeader
         back
         centerTitle
@@ -523,13 +523,13 @@ const localStyles = StyleSheet.create({
     fontWeight: '700',
   },
   viewerHero: {
-    marginTop: 14,
-    borderRadius: 24,
+    marginTop: 10,
+    borderRadius: 22,
     backgroundColor: '#f7fbff',
     borderWidth: 1,
     borderColor: '#e3edf8',
-    padding: 16,
-    gap: 16,
+    padding: 14,
+    gap: 12,
   },
   viewerHeroHeader: {
     flexDirection: 'row',
@@ -557,8 +557,8 @@ const localStyles = StyleSheet.create({
     marginLeft: 4,
   },
   viewerStage: {
-    height: 280,
-    borderRadius: 20,
+    height: 210,
+    borderRadius: 18,
     backgroundColor: '#edf4fb',
     borderWidth: 1,
     borderColor: '#dbe7f3',
@@ -569,18 +569,18 @@ const localStyles = StyleSheet.create({
   },
   viewerSheetShadow: {
     position: 'absolute',
-    width: 206,
-    height: 236,
-    borderRadius: 18,
+    width: 166,
+    height: 182,
+    borderRadius: 16,
     backgroundColor: 'rgba(148, 163, 184, 0.16)',
     transform: [{ rotate: '-4deg' }, { translateY: 6 }],
   },
   viewerSheet: {
-    width: 206,
-    height: 236,
-    borderRadius: 18,
+    width: 166,
+    height: 182,
+    borderRadius: 16,
     backgroundColor: colors.white,
-    padding: 18,
+    padding: 14,
     borderWidth: 1,
     borderColor: '#edf2f7',
     shadowColor: '#0f172a',
@@ -592,53 +592,53 @@ const localStyles = StyleSheet.create({
   viewerSheetHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 18,
+    gap: 8,
+    marginBottom: 14,
   },
   viewerSheetAccent: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
+    width: 28,
+    height: 28,
+    borderRadius: 8,
     backgroundColor: '#eff6ff',
     borderWidth: 1,
     borderColor: '#dbeafe',
   },
   viewerSheetTitle: {
     flex: 1,
-    fontSize: 13,
-    lineHeight: 17,
+    fontSize: 12,
+    lineHeight: 15,
     color: '#1e293b',
   },
   viewerSheetBody: {
-    gap: 10,
+    gap: 8,
   },
   viewerLineWide: {
-    height: 10,
+    height: 8,
     width: '74%',
     borderRadius: 999,
     backgroundColor: '#e2e8f0',
   },
   viewerLine: {
-    height: 8,
+    height: 6,
     width: '100%',
     borderRadius: 999,
     backgroundColor: '#eef2f7',
   },
   viewerLineShort: {
-    height: 8,
+    height: 6,
     width: '58%',
     borderRadius: 999,
     backgroundColor: '#eef2f7',
   },
   viewerGridRow: {
     flexDirection: 'row',
-    gap: 10,
-    marginTop: 8,
+    gap: 8,
+    marginTop: 6,
   },
   viewerInfoBox: {
     flex: 1,
-    height: 54,
-    borderRadius: 12,
+    height: 40,
+    borderRadius: 10,
     backgroundColor: '#f8fafc',
     borderWidth: 1,
     borderColor: '#edf2f7',
@@ -649,11 +649,11 @@ const localStyles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     backgroundColor: '#ffffff',
-    borderRadius: 14,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
   },
   viewerHintText: {
     fontSize: 12,
@@ -663,18 +663,18 @@ const localStyles = StyleSheet.create({
   viewerActionRow: {
     flexDirection: 'row',
     gap: 10,
-    marginTop: 14,
+    marginTop: 10,
   },
   viewerPreviewBtn: {
     flex: 1,
-    height: 40,
+    height: 38,
     borderRadius: 12,
     backgroundColor: colors.white,
     borderColor: '#dbe6f2',
   },
   viewerDownloadBtn: {
     flex: 1,
-    height: 40,
+    height: 38,
     borderRadius: 12,
     backgroundColor: '#0a49a8',
   },
@@ -687,10 +687,10 @@ const localStyles = StyleSheet.create({
     fontWeight: '700',
   },
   detailCard: {
-    marginTop: 14,
-    padding: 16,
-    borderRadius: 20,
-    gap: 16,
+    marginTop: 10,
+    padding: 14,
+    borderRadius: 18,
+    gap: 12,
     borderWidth: 1,
     borderColor: '#e8eef7',
   },
@@ -710,7 +710,7 @@ const localStyles = StyleSheet.create({
   detailGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 14,
+    gap: 12,
   },
   detailBlockFull: {
     width: '100%',
@@ -727,13 +727,13 @@ const localStyles = StyleSheet.create({
     color: '#94a3b8',
   },
   detailValuePrimary: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 18,
     color: '#0f172a',
   },
   detailValue: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 17,
     color: '#1e293b',
   },
 });
