@@ -152,6 +152,11 @@ export const normalizeOrderDetail = (detail: BackendOrderDetail): Order & { time
   openForAll: detail.openForAll ?? false,
   meeting: detail.meeting ?? null,
   documents: detail.documents,
+  timeline: detail.timeline.map((event) => ({
+    title: event.title,
+    date: event.date,
+    tone: event.tone as 'blue' | 'slate' | 'green' | 'red',
+  })),
   createdDate: detail.createdDate,
   timelineSteps: toTimelineSteps(detail.timeline, detail.status),
 });

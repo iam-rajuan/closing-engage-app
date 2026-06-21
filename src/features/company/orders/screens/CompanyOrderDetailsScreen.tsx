@@ -176,39 +176,86 @@ export function CompanyOrderDetailsScreen() {
             </AppCard>
           </View>
 
-          <View style={styles.detailsSection}>
-            <AppText weight="bold" style={styles.detailsSectionTitle}>Documents</AppText>
-            {order.documents?.length ? (
-              order.documents.map((document, index) => (
-                <AppCard key={`${document.name}-${index}`} style={styles.fileCardDetails}>
-                  <DocumentIcon fileName={document.name} size={44} iconSize={20} />
-                  <View style={{ flex: 1 }}>
-                    <AppText weight="bold" numberOfLines={1} ellipsizeMode="middle" style={{ color: '#1e293b' }}>
-                      {document.name}
-                    </AppText>
-                    <AppText variant="caption" muted>{document.meta}</AppText>
-                  </View>
-                  {document.id ? (
-                    <Pressable
-                      style={styles.downloadBtn}
-                      onPress={() => void handleDownload(document.id!, document.name)}
-                      disabled={downloadingDocId !== null}
-                    >
-                      {downloadingDocId === document.id ? (
-                        <ActivityIndicator color="#2563eb" size="small" />
-                      ) : (
-                        <Download color="#2563eb" size={18} />
-                      )}
-                    </Pressable>
+          {(() => {
+            const companyDocs = order.documents?.filter(
+              (doc) => doc.uploadedBy?.toLowerCase() === 'title company' || doc.uploadedBy?.toLowerCase() === 'admin' || !doc.uploadedBy
+            ) ?? [];
+            const notaryDocs = order.documents?.filter(
+              (doc) => doc.uploadedBy?.toLowerCase() === 'notary'
+            ) ?? [];
+
+            return (
+              <>
+                <View style={styles.detailsSection}>
+                  <AppText weight="bold" style={styles.detailsSectionTitle}>Title Documents</AppText>
+                  {companyDocs.length ? (
+                    companyDocs.map((document, index) => (
+                      <AppCard key={`company-doc-${index}`} style={styles.fileCardDetails}>
+                        <DocumentIcon fileName={document.name} size={44} iconSize={20} />
+                        <View style={{ flex: 1 }}>
+                          <AppText weight="bold" numberOfLines={1} ellipsizeMode="middle" style={{ color: '#1e293b' }}>
+                            {document.name}
+                          </AppText>
+                          <AppText variant="caption" muted>{document.meta} • Provided by Company</AppText>
+                        </View>
+                        {document.id ? (
+                          <Pressable
+                            style={styles.downloadBtn}
+                            onPress={() => void handleDownload(document.id!, document.name)}
+                            disabled={downloadingDocId !== null}
+                          >
+                            {downloadingDocId === document.id ? (
+                              <ActivityIndicator color="#2563eb" size="small" />
+                            ) : (
+                              <Download color="#2563eb" size={18} />
+                            )}
+                          </Pressable>
+                        ) : (
+                          <AppText variant="caption" muted>Available in Documents</AppText>
+                        )}
+                      </AppCard>
+                    ))
                   ) : (
-                    <AppText variant="caption" muted>Available in Documents</AppText>
+                    <EmptyState title="No title company documents uploaded yet" />
                   )}
-                </AppCard>
-              ))
-            ) : (
-              <EmptyState title="No documents attached yet" />
-            )}
-          </View>
+                </View>
+
+                <View style={styles.detailsSection}>
+                  <AppText weight="bold" style={styles.detailsSectionTitle}>Notary Scanbacks</AppText>
+                  {notaryDocs.length ? (
+                    notaryDocs.map((document, index) => (
+                      <AppCard key={`notary-doc-${index}`} style={styles.fileCardDetails}>
+                        <DocumentIcon fileName={document.name} size={44} iconSize={20} />
+                        <View style={{ flex: 1 }}>
+                          <AppText weight="bold" numberOfLines={1} ellipsizeMode="middle" style={{ color: '#1e293b' }}>
+                            {document.name}
+                          </AppText>
+                          <AppText variant="caption" muted>{document.meta} • Provided by Notary</AppText>
+                        </View>
+                        {document.id ? (
+                          <Pressable
+                            style={styles.downloadBtn}
+                            onPress={() => void handleDownload(document.id!, document.name)}
+                            disabled={downloadingDocId !== null}
+                          >
+                            {downloadingDocId === document.id ? (
+                              <ActivityIndicator color="#2563eb" size="small" />
+                            ) : (
+                              <Download color="#2563eb" size={18} />
+                            )}
+                          </Pressable>
+                        ) : (
+                          <AppText variant="caption" muted>Available in Documents</AppText>
+                        )}
+                      </AppCard>
+                    ))
+                  ) : (
+                    <EmptyState title="No notary scanbacks uploaded yet" />
+                  )}
+                </View>
+              </>
+            );
+          })()}
 
           <View style={styles.detailsSection}>
             <AppText weight="bold" style={styles.detailsSectionTitle}>Order Status</AppText>
@@ -251,6 +298,47 @@ export function CompanyOrderDetailsScreen() {
                   </View>
                 );
               })}
+            </AppCard>
+          </View>
+
+          <View style={styles.detailsSection}>
+            <AppText weight="bold" style={styles.detailsSectionTitle}>Activity Log</AppText>
+            <AppCard style={styles.activityCard}>
+              {order.timeline?.length ? (
+                order.timeline.map((event, index, arr) => {
+                  const isLast = index === arr.length - 1;
+                  const toneColors = {
+                    green: { dot: '#10b981', bg: '#dcfce7' },
+                    blue: { dot: '#2563eb', bg: '#dbeafe' },
+                    red: { dot: '#ef4444', bg: '#fee2e2' },
+                    slate: { dot: '#64748b', bg: '#f1f5f9' },
+                  };
+                  const colorsConfig = toneColors[event.tone] || toneColors.slate;
+
+                  return (
+                    <View key={`event-${index}`} style={styles.timelineRow}>
+                      <View style={styles.timelineIndicatorColumn}>
+                        <View style={[styles.activityDot, { backgroundColor: colorsConfig.bg, borderColor: colorsConfig.dot }]}>
+                          <View style={[styles.activityDotInner, { backgroundColor: colorsConfig.dot }]} />
+                        </View>
+                        {!isLast ? (
+                          <View style={[styles.timelineConnector, styles.timelineConnectorPending]} />
+                        ) : null}
+                      </View>
+                      <View style={styles.timelineContent}>
+                        <AppText weight="bold" style={styles.activityEventTitle}>
+                          {event.title}
+                        </AppText>
+                        <AppText variant="caption" muted style={styles.timelineTime}>
+                          {event.date}
+                        </AppText>
+                      </View>
+                    </View>
+                  );
+                })
+              ) : (
+                <EmptyState title="No activity recorded yet" />
+              )}
             </AppCard>
           </View>
         </>
@@ -495,5 +583,29 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#64748b',
     marginTop: 2,
+  },
+  activityCard: {
+    paddingTop: 20,
+    paddingBottom: 4,
+    paddingHorizontal: 20,
+  },
+  activityDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  activityDotInner: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  activityEventTitle: {
+    fontSize: 14,
+    color: '#334155',
+    lineHeight: 18,
   },
 });

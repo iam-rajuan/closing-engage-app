@@ -173,6 +173,47 @@ export function NotaryOrderDetailsScreen() {
               </AppCard>
             </View>
 
+            <View style={{ marginTop: 16 }}>
+              <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 12 }}>ACTIVITY LOG</AppText>
+              <AppCard style={styles.activityCard}>
+                {order.timeline?.length ? (
+                  order.timeline.map((event, index, arr) => {
+                    const isLast = index === arr.length - 1;
+                    const toneColors = {
+                      green: { dot: '#10b981', bg: '#dcfce7' },
+                      blue: { dot: '#2563eb', bg: '#dbeafe' },
+                      red: { dot: '#ef4444', bg: '#fee2e2' },
+                      slate: { dot: '#64748b', bg: '#f1f5f9' },
+                    };
+                    const colorsConfig = toneColors[event.tone] || toneColors.slate;
+
+                    return (
+                      <View key={`event-${index}`} style={styles.timelineRow}>
+                        <View style={styles.timelineIndicatorColumn}>
+                          <View style={[styles.activityDot, { backgroundColor: colorsConfig.bg, borderColor: colorsConfig.dot }]}>
+                            <View style={[styles.activityDotInner, { backgroundColor: colorsConfig.dot }]} />
+                          </View>
+                          {!isLast ? (
+                            <View style={styles.timelineConnector} />
+                          ) : null}
+                        </View>
+                        <View style={styles.timelineContent}>
+                          <AppText weight="bold" style={styles.activityEventTitle}>
+                            {event.title}
+                          </AppText>
+                          <AppText variant="caption" muted style={styles.timelineTime}>
+                            {event.date}
+                          </AppText>
+                        </View>
+                      </View>
+                    );
+                  })
+                ) : (
+                  <EmptyState title="No activity recorded yet" />
+                )}
+              </AppCard>
+            </View>
+
             <View style={{ marginTop: 16, gap: 10 }}>
               {isOpenOrder ? (
                 <AppCard style={[notaryStyles.infoStrip, { backgroundColor: '#eff6ff', borderColor: '#bfdbfe' }]}>
@@ -262,43 +303,94 @@ export function NotaryOrderDetailsScreen() {
               </AppCard>
             ) : null}
 
-            <View style={{ marginTop: 16 }}>
-              <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 12 }}>PROVIDED DOCUMENTS</AppText>
-              <AppCard style={{ padding: 0 }}>
-                {order.documents?.length ? (
-                  order.documents.map((doc, i) => (
-                    <View key={`${doc.name}-${i}`} style={[notaryStyles.docItem, i > 0 && { borderTopWidth: 1, borderTopColor: '#f1f5f9' }]}>
-                      <DocumentIcon fileName={doc.name} size={36} iconSize={18} />
-                      <View style={{ flex: 1 }}>
-                        <AppText weight="bold" numberOfLines={1} ellipsizeMode="middle" style={{ fontSize: 14, color: '#1e293b' }}>
-                          {doc.name}
-                        </AppText>
-                        <AppText variant="caption" muted>{doc.meta}</AppText>
-                      </View>
-                      {doc.id ? (
-                        <Pressable
-                          style={styles.downloadBtn}
-                          onPress={() => void handleDownload(doc.id!, doc.name)}
-                          disabled={downloadingDocId !== null}
-                        >
-                          {downloadingDocId === doc.id ? (
-                            <ActivityIndicator color="#2563eb" size="small" />
-                          ) : (
-                            <Download color="#2563eb" size={18} />
-                          )}
-                        </Pressable>
+            {(() => {
+              const companyDocs = order.documents?.filter(
+                (doc) => doc.uploadedBy?.toLowerCase() === 'title company' || doc.uploadedBy?.toLowerCase() === 'admin' || !doc.uploadedBy
+              ) ?? [];
+              const notaryDocs = order.documents?.filter(
+                (doc) => doc.uploadedBy?.toLowerCase() === 'notary'
+              ) ?? [];
+
+              return (
+                <>
+                  <View style={{ marginTop: 16 }}>
+                    <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 12 }}>TITLE DOCUMENTS</AppText>
+                    <AppCard style={{ padding: 0 }}>
+                      {companyDocs.length ? (
+                        companyDocs.map((doc, i) => (
+                          <View key={`company-doc-${i}`} style={[notaryStyles.docItem, i > 0 && { borderTopWidth: 1, borderTopColor: '#f1f5f9' }]}>
+                            <DocumentIcon fileName={doc.name} size={36} iconSize={18} />
+                            <View style={{ flex: 1 }}>
+                              <AppText weight="bold" numberOfLines={1} ellipsizeMode="middle" style={{ fontSize: 14, color: '#1e293b' }}>
+                                {doc.name}
+                              </AppText>
+                              <AppText variant="caption" muted>{doc.meta} • Provided by Company</AppText>
+                            </View>
+                            {doc.id ? (
+                              <Pressable
+                                style={styles.downloadBtn}
+                                onPress={() => void handleDownload(doc.id!, doc.name)}
+                                disabled={downloadingDocId !== null}
+                              >
+                                {downloadingDocId === doc.id ? (
+                                  <ActivityIndicator color="#2563eb" size="small" />
+                                ) : (
+                                  <Download color="#2563eb" size={18} />
+                                )}
+                              </Pressable>
+                            ) : (
+                              <AppText variant="caption" muted>Documents list</AppText>
+                            )}
+                          </View>
+                        ))
                       ) : (
-                        <AppText variant="caption" muted>Documents list</AppText>
+                        <View style={{ padding: 16 }}>
+                          <EmptyState title="No title documents uploaded yet" />
+                        </View>
                       )}
-                    </View>
-                  ))
-                ) : (
-                  <View style={{ padding: 16 }}>
-                    <EmptyState title="No order documents yet" />
+                    </AppCard>
                   </View>
-                )}
-              </AppCard>
-            </View>
+
+                  <View style={{ marginTop: 16 }}>
+                    <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 12 }}>NOTARY SCANBACKS</AppText>
+                    <AppCard style={{ padding: 0 }}>
+                      {notaryDocs.length ? (
+                        notaryDocs.map((doc, i) => (
+                          <View key={`notary-doc-${i}`} style={[notaryStyles.docItem, i > 0 && { borderTopWidth: 1, borderTopColor: '#f1f5f9' }]}>
+                            <DocumentIcon fileName={doc.name} size={36} iconSize={18} />
+                            <View style={{ flex: 1 }}>
+                              <AppText weight="bold" numberOfLines={1} ellipsizeMode="middle" style={{ fontSize: 14, color: '#1e293b' }}>
+                                {doc.name}
+                              </AppText>
+                              <AppText variant="caption" muted>{doc.meta} • Provided by Notary</AppText>
+                            </View>
+                            {doc.id ? (
+                              <Pressable
+                                style={styles.downloadBtn}
+                                onPress={() => void handleDownload(doc.id!, doc.name)}
+                                disabled={downloadingDocId !== null}
+                              >
+                                {downloadingDocId === doc.id ? (
+                                  <ActivityIndicator color="#2563eb" size="small" />
+                                ) : (
+                                  <Download color="#2563eb" size={18} />
+                                )}
+                              </Pressable>
+                            ) : (
+                              <AppText variant="caption" muted>Documents list</AppText>
+                            )}
+                          </View>
+                        ))
+                      ) : (
+                        <View style={{ padding: 16 }}>
+                          <EmptyState title="No notary scanbacks uploaded yet" />
+                        </View>
+                      )}
+                    </AppCard>
+                  </View>
+                </>
+              );
+            })()}
 
             {!isOpenOrder ? (
               <View style={{ marginTop: 16 }}>
@@ -525,5 +617,55 @@ const styles = StyleSheet.create({
     backgroundColor: '#f1f5f9',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  activityCard: {
+    paddingTop: 20,
+    paddingBottom: 4,
+    paddingHorizontal: 20,
+  },
+  timelineRow: {
+    flexDirection: 'row',
+    minHeight: 56,
+  },
+  timelineIndicatorColumn: {
+    width: 16,
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  timelineConnector: {
+    width: 2,
+    position: 'absolute',
+    top: 16,
+    bottom: -16,
+    zIndex: 1,
+    backgroundColor: '#e2e8f0',
+  },
+  timelineContent: {
+    flex: 1,
+    paddingBottom: 16,
+  },
+  timelineTime: {
+    fontSize: 12,
+    color: '#64748b',
+    marginTop: 2,
+  },
+  activityDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  activityDotInner: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  activityEventTitle: {
+    fontSize: 14,
+    color: '#334155',
+    lineHeight: 18,
   },
 });

@@ -27,6 +27,12 @@ export type OrderDocumentSummary = {
   uploadedAt?: string;
 };
 
+export type OrderTimelineEvent = {
+  title: string;
+  date: string;
+  tone: 'blue' | 'slate' | 'green' | 'red';
+};
+
 export type Order = {
   id: string;
   orderNumber: string;
@@ -53,6 +59,7 @@ export type Order = {
   openForAll?: boolean;
   meeting?: OrderMeeting | null;
   documents?: OrderDocumentSummary[];
+  timeline?: OrderTimelineEvent[];
   createdDate?: string;
 };
 
