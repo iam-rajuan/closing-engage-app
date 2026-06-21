@@ -105,7 +105,7 @@ export function CompanyOrderDetailsScreen() {
         <>
           <AppCard style={styles.detailsMainCard}>
             <View style={styles.detailsHeader}>
-              <AppText style={styles.detailsOrderNum}>{order.orderNumber}</AppText>
+              <AppText style={styles.detailsOrderNum} numberOfLines={1}>{order.orderNumber}</AppText>
               <Badge label={order.status.toUpperCase()} tone={order.status === 'Completed' ? 'green' : 'blue'} />
             </View>
 

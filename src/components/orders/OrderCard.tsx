@@ -1,6 +1,6 @@
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { router, type Href } from 'expo-router';
-import { ChevronRight, MapPin, UserRound } from 'lucide-react-native';
+import { Calendar, ChevronRight, MapPin, UserRound } from 'lucide-react-native';
 import { AppCard } from '@/components/common/AppCard';
 import { AppText } from '@/components/common/AppText';
 import { Badge } from '@/components/common/Badge';
@@ -24,68 +24,100 @@ export function OrderCard({ order, href }: { order: Order; href: Href }) {
   const displayAddress = order.address || '742 Evergreen Terrace, Springfield';
 
   return (
-    <AppCard style={styles.card}>
-      {/* Row 1: Order # + Status badge */}
-      <View style={styles.topRow}>
-        <AppText style={styles.orderNum}>#{order.orderNumber.replace('#', '')}</AppText>
-        <Badge label={order.status} tone={tone(order.status)} />
-      </View>
+    <Pressable
+      onPress={() => router.push(href)}
+      style={({ pressed }) => [
+        styles.cardPressable,
+        pressed && styles.cardPressed,
+      ]}
+    >
+      <View style={styles.card}>
+        {/* Row 1: Order # + Status badge */}
+        <View style={styles.topRow}>
+          <View style={styles.orderIdWrap}>
+            <AppText style={styles.orderNum} numberOfLines={1}>#{order.orderNumber.replace('#', '')}</AppText>
+          </View>
+          <Badge label={order.status} tone={tone(order.status)} />
+        </View>
 
-      {/* Row 2: Client Name */}
-      <AppText style={styles.clientName}>{order.clientName}</AppText>
+        {/* Row 2: Client Name */}
+        <AppText style={styles.clientName}>{order.clientName}</AppText>
 
-      {/* Row 3: Location */}
-      <View style={styles.locationRow}>
-        <MapPin size={13} color="#94a3b8" />
-        <AppText style={styles.locationText} numberOfLines={1}>{displayAddress}</AppText>
-      </View>
+        {/* Row 3: Location */}
+        <View style={styles.locationRow}>
+          <MapPin size={13} color="#94a3b8" />
+          <AppText style={styles.locationText} numberOfLines={1}>{displayAddress}</AppText>
+        </View>
 
-      {/* Divider */}
-      <View style={styles.divider} />
+        {/* Divider */}
+        <View style={styles.divider} />
 
-      {/* Row 4: Notary + Schedule */}
-      <View style={styles.infoRow}>
-        <View style={styles.notaryCol}>
-          {notaryAvatar ? (
-            <View style={styles.notaryAvatar}>
-              <Image source={{ uri: notaryAvatar }} style={styles.avatarImg} />
+        {/* Row 4: Notary + Schedule */}
+        <View style={styles.infoRow}>
+          <View style={styles.notaryCol}>
+            {notaryAvatar ? (
+              <View style={styles.notaryAvatar}>
+                <Image source={{ uri: notaryAvatar }} style={styles.avatarImg} />
+              </View>
+            ) : (
+              <View style={[styles.notaryAvatar, styles.notaryAvatarPlaceholder]}>
+                <UserRound size={14} color="#94a3b8" />
+              </View>
+            )}
+            <View style={styles.notaryInfo}>
+              <AppText style={styles.notaryLabel}>NOTARY</AppText>
+              <AppText style={styles.notaryName}>
+                {order.notaryName || 'Not Assigned'}
+              </AppText>
             </View>
-          ) : (
-            <View style={[styles.notaryAvatar, styles.notaryAvatarPlaceholder]}>
-              <UserRound size={14} color="#94a3b8" />
+          </View>
+          <View style={styles.scheduleCol}>
+            <View style={styles.scheduleLabelRow}>
+              <Calendar size={10} color="#94a3b8" />
+              <AppText style={styles.scheduleLabel}>SCHEDULED</AppText>
             </View>
-          )}
-          <View style={styles.notaryInfo}>
-            <AppText style={styles.notaryLabel}>NOTARY</AppText>
-            <AppText style={styles.notaryName}>
-              {order.notaryName || 'Not Assigned'}
-            </AppText>
+            <AppText style={styles.scheduleDate}>{order.signingDate}</AppText>
           </View>
         </View>
-        <View style={styles.scheduleCol}>
-          <AppText style={styles.scheduleLabel}>SCHEDULED</AppText>
-          <AppText style={styles.scheduleDate}>{order.signingDate}</AppText>
+
+        {/* View Details Button */}
+        <View style={styles.detailsBtn}>
+          <AppText style={styles.detailsBtnText}>View Details</AppText>
+          <ChevronRight size={15} color={colors.primary} />
         </View>
       </View>
-
-      {/* View Details Button */}
-      <Pressable style={styles.detailsBtn} onPress={() => router.push(href)}>
-        <AppText style={styles.detailsBtnText}>View Details</AppText>
-        <ChevronRight size={15} color="#334155" />
-      </Pressable>
-    </AppCard>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  cardPressable: {
+    borderRadius: 14,
+  },
+  cardPressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.985 }],
+  },
   card: {
+    backgroundColor: '#ffffff',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#e8edf4',
     padding: 12,
-    gap: 8,
+    gap: 6,
+    ...shadows.sm,
   },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  orderIdWrap: {
+    backgroundColor: '#eff6ff',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    flexShrink: 0,
   },
   orderNum: {
     fontSize: 11,
@@ -98,13 +130,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#0f172a',
     lineHeight: 20,
-    marginTop: -2,
   },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginTop: -2,
+    gap: 5,
   },
   locationText: {
     fontSize: 12,
@@ -125,13 +155,13 @@ const styles = StyleSheet.create({
   notaryCol: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
     flex: 1,
   },
   notaryAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     overflow: 'hidden',
   },
   notaryAvatarPlaceholder: {
@@ -162,6 +192,11 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: 2,
   },
+  scheduleLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
   scheduleLabel: {
     fontSize: 9,
     fontWeight: '800',
@@ -174,20 +209,22 @@ const styles = StyleSheet.create({
     color: '#334155',
     lineHeight: 17,
   },
-  // Ghost button — matches Figma exactly
+  // Refined CTA button
   detailsBtn: {
-    backgroundColor: '#f1f5f9',
-    height: 36,
+    backgroundColor: '#f0f5ff',
+    height: 34,
     borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
     marginTop: 2,
+    borderWidth: 1,
+    borderColor: '#dce6f4',
   },
   detailsBtnText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#334155',
+    color: colors.primary,
   },
 });

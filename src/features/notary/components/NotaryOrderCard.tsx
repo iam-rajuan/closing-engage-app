@@ -58,7 +58,7 @@ export function NotaryOrderCard({ order }: { order: Order }) {
         )}
         <View style={{ flex: 1 }}>
           <AppText weight="bold" style={notaryStyles.orderClientName}>{order.clientName}</AppText>
-          <AppText variant="caption" muted weight="semibold" style={{ fontSize: 11, marginTop: 1 }}>#{order.orderNumber.replace('#', '')}</AppText>
+          <AppText variant="caption" muted weight="semibold" numberOfLines={1} style={{ fontSize: 11, marginTop: 1 }}>#{order.orderNumber.replace('#', '')}</AppText>
         </View>
         <Badge label={isOpenOrder ? 'Open for All' : order.status} tone={isOpenOrder ? 'blue' : getStatusTone(order.status)} />
       </View>
