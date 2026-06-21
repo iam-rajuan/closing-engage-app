@@ -17,6 +17,9 @@ type Props = {
   onBackPress?: () => void;
   backHref?: Href;
   centerTitle?: boolean;
+  showLogo?: boolean;
+  showNotifications?: boolean;
+  showProfile?: boolean;
 };
 
 export function AppHeader({
@@ -30,6 +33,9 @@ export function AppHeader({
   onBackPress,
   backHref,
   centerTitle,
+  showLogo = true,
+  showNotifications = true,
+  showProfile = true,
 }: Props) {
   const navigation = useNavigation();
   const user = useAuthStore((state) => state.user);
@@ -100,8 +106,10 @@ export function AppHeader({
           <Pressable onPress={handleBack} style={styles.iconButton}>
             <ChevronLeft color={colors.primary} size={24} strokeWidth={2.5} />
           </Pressable>
-        ) : (
+        ) : showLogo ? (
           <BrandLogo width={124} />
+        ) : (
+          <View style={styles.sideSpacer} />
         )}
         {!centerTitle && (
           <View style={styles.titleGroup}>
@@ -112,12 +120,12 @@ export function AppHeader({
       </View>
 
       <View style={styles.right}>
-        {!back && (
+        {!back && showNotifications && (
           <Pressable onPress={handleNotificationPress} style={styles.bellButton}>
             <Bell color={colors.textMuted} size={22} />
           </Pressable>
         )}
-        {!centerTitle && (
+        {!centerTitle && showProfile && (
           <Pressable onPress={handleProfilePress} style={styles.avatarWrapper}>
             <View style={styles.avatarContainer}>
               {resolvedAvatar ? (
@@ -228,6 +236,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: -4,
+  },
+  sideSpacer: {
+    width: 40,
+    height: 40,
   },
 });
 

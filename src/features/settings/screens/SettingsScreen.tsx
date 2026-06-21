@@ -215,7 +215,13 @@ export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
 
   return (
     <ScreenContainer scroll contentStyle={s.container} refreshing={refreshing} onRefresh={handleRefresh}>
-      <AppHeader onProfilePress={() => {}} name={user?.name} avatar={user?.avatarUrl} />
+      <AppHeader
+        title="Settings"
+        centerTitle
+        showLogo={false}
+        showNotifications={false}
+        showProfile={false}
+      />
 
       <View style={s.profileSection}>
         <View style={s.avatarOuter}>
