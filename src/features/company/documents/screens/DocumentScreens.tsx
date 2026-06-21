@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Modal, Pressable, StyleSheet, View, Alert } from 'react-native';
-import { Calendar, Download, FileText, Search } from 'lucide-react-native';
+import { Calendar, Download, FileText, Search, ShieldCheck } from 'lucide-react-native';
 import * as Linking from 'expo-linking';
 import { downloadFileToDevice } from '@/utils/fileDownload';
 import { DownloadSuccessModal } from '@/components/common/DownloadSuccessModal';
@@ -274,7 +274,7 @@ export function DocumentViewScreen() {
       <AppHeader
         back
         centerTitle
-        title="Document View"
+        title="Document"
         onProfilePress={() => router.push('/company/settings')}
       />
 
@@ -283,54 +283,94 @@ export function DocumentViewScreen() {
 
       {document ? (
         <>
-          <View style={styles.previewContainer}>
-            <View style={styles.previewContent}>
-              <DocumentIcon fileName={document.name} size={140} iconSize={64} />
-              <AppText muted style={{ marginTop: 12, textAlign: 'center' }}>
-                Live document metadata loaded from backend. Tap preview to open the secure file URL.
+          <View style={localStyles.viewerHero}>
+            <View style={localStyles.viewerHeroHeader}>
+              <DocumentIcon fileName={document.name} size={48} iconSize={22} />
+              <View style={localStyles.viewerHeroCopy}>
+                <AppText weight="semibold" style={localStyles.viewerHeroTitle} numberOfLines={2} maxFontSizeMultiplier={1.1}>
+                  {document.name}
+                </AppText>
+                <AppText muted style={localStyles.viewerHeroMeta} numberOfLines={1} maxFontSizeMultiplier={1.05}>
+                  Order #{document.orderId} • {document.size}
+                </AppText>
+              </View>
+              <Badge
+                label={document.status.toUpperCase()}
+                tone={document.status === 'Approved' || document.status === 'Verified' ? 'green' : 'orange'}
+                style={localStyles.viewerStatusBadge}
+              />
+            </View>
+
+            <View style={localStyles.viewerStage}>
+              <View style={localStyles.viewerSheetShadow} />
+              <View style={localStyles.viewerSheet}>
+                <View style={localStyles.viewerSheetHeader}>
+                  <View style={localStyles.viewerSheetAccent} />
+                  <AppText weight="semibold" style={localStyles.viewerSheetTitle} numberOfLines={2} maxFontSizeMultiplier={1.05}>
+                    Secure file preview
+                  </AppText>
+                </View>
+                <View style={localStyles.viewerSheetBody}>
+                  <View style={localStyles.viewerLineWide} />
+                  <View style={localStyles.viewerLine} />
+                  <View style={localStyles.viewerLineShort} />
+                  <View style={localStyles.viewerGridRow}>
+                    <View style={localStyles.viewerInfoBox} />
+                    <View style={localStyles.viewerInfoBox} />
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            <View style={localStyles.viewerHint}>
+              <ShieldCheck color="#2563eb" size={14} />
+              <AppText muted style={localStyles.viewerHintText} maxFontSizeMultiplier={1.05}>
+                Preview opens a secure file URL on your device
               </AppText>
             </View>
           </View>
 
-          <View style={styles.viewActionRow}>
+          <View style={localStyles.viewerActionRow}>
             <AppButton
               title="Preview"
               variant="secondary"
-              icon={<FileText color={colors.primary} size={18} />}
-              style={styles.viewPrintBtn}
+              icon={<FileText color={colors.primary} size={16} />}
+              style={localStyles.viewerPreviewBtn}
+              textStyle={localStyles.viewerPreviewBtnText}
               onPress={() => void openPreview()}
             />
             <AppButton
               title="Download"
               loading={downloading}
-              icon={<Download color={colors.white} size={18} />}
-              style={styles.viewDownloadBtn}
+              icon={<Download color={colors.white} size={16} />}
+              style={localStyles.viewerDownloadBtn}
+              textStyle={localStyles.viewerDownloadBtnText}
               onPress={() => void download()}
             />
           </View>
 
-          <AppCard style={styles.infoCard}>
-            <View style={styles.infoCardHeader}>
-              <AppText weight="bold" style={styles.infoCardTitle}>File Details</AppText>
-              <Badge label={document.status.toUpperCase()} tone={document.status === 'Approved' ? 'green' : 'orange'} />
+          <AppCard style={localStyles.detailCard}>
+            <View style={localStyles.detailCardHeader}>
+              <AppText weight="semibold" style={localStyles.detailCardTitle} maxFontSizeMultiplier={1.05}>File Details</AppText>
+              <AppText muted style={localStyles.detailCardSubtitle} maxFontSizeMultiplier={1.05}>Production-ready notary scanback</AppText>
             </View>
 
-            <View style={styles.fieldGrid}>
-              <View style={styles.fieldFull}>
-                <AppText variant="caption" muted style={styles.fieldLabel}>NAME</AppText>
-                <AppText weight="bold" style={styles.fieldValue}>{document.name}</AppText>
+            <View style={localStyles.detailGrid}>
+              <View style={localStyles.detailBlockFull}>
+                <AppText variant="caption" muted style={localStyles.detailLabel} maxFontSizeMultiplier={1.05}>NAME</AppText>
+                <AppText weight="semibold" style={localStyles.detailValuePrimary} maxFontSizeMultiplier={1.1}>{document.name}</AppText>
               </View>
-              <View style={styles.fieldHalf}>
-                <AppText variant="caption" muted style={styles.fieldLabel}>SIZE</AppText>
-                <AppText weight="bold" style={styles.fieldValue}>{document.size}</AppText>
+              <View style={localStyles.detailBlockHalf}>
+                <AppText variant="caption" muted style={localStyles.detailLabel} maxFontSizeMultiplier={1.05}>SIZE</AppText>
+                <AppText weight="semibold" style={localStyles.detailValue} maxFontSizeMultiplier={1.05}>{document.size}</AppText>
               </View>
-              <View style={styles.fieldHalf}>
-                <AppText variant="caption" muted style={styles.fieldLabel}>ORDER</AppText>
-                <AppText weight="bold" style={styles.fieldValue}>{document.orderId}</AppText>
+              <View style={localStyles.detailBlockHalf}>
+                <AppText variant="caption" muted style={localStyles.detailLabel} maxFontSizeMultiplier={1.05}>ORDER</AppText>
+                <AppText weight="semibold" style={localStyles.detailValue} maxFontSizeMultiplier={1.05}>#{document.orderId}</AppText>
               </View>
-              <View style={styles.fieldFull}>
-                <AppText variant="caption" muted style={styles.fieldLabel}>UPLOADED BY</AppText>
-                <AppText weight="bold" style={styles.fieldValue}>{document.uploadedBy || 'Closing Engage'}</AppText>
+              <View style={localStyles.detailBlockFull}>
+                <AppText variant="caption" muted style={localStyles.detailLabel} maxFontSizeMultiplier={1.05}>UPLOADED BY</AppText>
+                <AppText weight="semibold" style={localStyles.detailValue} maxFontSizeMultiplier={1.05}>{document.uploadedBy || 'Closing Engage'}</AppText>
               </View>
             </View>
           </AppCard>
@@ -481,5 +521,219 @@ const localStyles = StyleSheet.create({
   loadMoreButtonText: {
     fontSize: 12,
     fontWeight: '700',
+  },
+  viewerHero: {
+    marginTop: 14,
+    borderRadius: 24,
+    backgroundColor: '#f7fbff',
+    borderWidth: 1,
+    borderColor: '#e3edf8',
+    padding: 16,
+    gap: 16,
+  },
+  viewerHeroHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  viewerHeroCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 3,
+  },
+  viewerHeroTitle: {
+    fontSize: 16,
+    lineHeight: 21,
+    color: '#0f172a',
+    letterSpacing: -0.2,
+  },
+  viewerHeroMeta: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#64748b',
+  },
+  viewerStatusBadge: {
+    flexShrink: 0,
+    marginLeft: 4,
+  },
+  viewerStage: {
+    height: 280,
+    borderRadius: 20,
+    backgroundColor: '#edf4fb',
+    borderWidth: 1,
+    borderColor: '#dbe7f3',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  viewerSheetShadow: {
+    position: 'absolute',
+    width: 206,
+    height: 236,
+    borderRadius: 18,
+    backgroundColor: 'rgba(148, 163, 184, 0.16)',
+    transform: [{ rotate: '-4deg' }, { translateY: 6 }],
+  },
+  viewerSheet: {
+    width: 206,
+    height: 236,
+    borderRadius: 18,
+    backgroundColor: colors.white,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#edf2f7',
+    shadowColor: '#0f172a',
+    shadowOpacity: 0.06,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 2,
+  },
+  viewerSheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 18,
+  },
+  viewerSheetAccent: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: '#eff6ff',
+    borderWidth: 1,
+    borderColor: '#dbeafe',
+  },
+  viewerSheetTitle: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 17,
+    color: '#1e293b',
+  },
+  viewerSheetBody: {
+    gap: 10,
+  },
+  viewerLineWide: {
+    height: 10,
+    width: '74%',
+    borderRadius: 999,
+    backgroundColor: '#e2e8f0',
+  },
+  viewerLine: {
+    height: 8,
+    width: '100%',
+    borderRadius: 999,
+    backgroundColor: '#eef2f7',
+  },
+  viewerLineShort: {
+    height: 8,
+    width: '58%',
+    borderRadius: 999,
+    backgroundColor: '#eef2f7',
+  },
+  viewerGridRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 8,
+  },
+  viewerInfoBox: {
+    flex: 1,
+    height: 54,
+    borderRadius: 12,
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#edf2f7',
+  },
+  viewerHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#ffffff',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  viewerHintText: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#475569',
+  },
+  viewerActionRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 14,
+  },
+  viewerPreviewBtn: {
+    flex: 1,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: colors.white,
+    borderColor: '#dbe6f2',
+  },
+  viewerDownloadBtn: {
+    flex: 1,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#0a49a8',
+  },
+  viewerPreviewBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  viewerDownloadBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  detailCard: {
+    marginTop: 14,
+    padding: 16,
+    borderRadius: 20,
+    gap: 16,
+    borderWidth: 1,
+    borderColor: '#e8eef7',
+  },
+  detailCardHeader: {
+    gap: 3,
+  },
+  detailCardTitle: {
+    fontSize: 15,
+    lineHeight: 19,
+    color: '#0f172a',
+  },
+  detailCardSubtitle: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#64748b',
+  },
+  detailGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 14,
+  },
+  detailBlockFull: {
+    width: '100%',
+    gap: 4,
+  },
+  detailBlockHalf: {
+    width: '47%',
+    gap: 4,
+  },
+  detailLabel: {
+    fontSize: 10,
+    lineHeight: 14,
+    letterSpacing: 0.8,
+    color: '#94a3b8',
+  },
+  detailValuePrimary: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#0f172a',
+  },
+  detailValue: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#1e293b',
   },
 });
