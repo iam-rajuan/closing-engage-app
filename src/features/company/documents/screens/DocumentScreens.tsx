@@ -148,39 +148,47 @@ export function DocumentsScreen() {
       <AppHeader onProfilePress={() => router.push('/company/settings')} />
 
       <View style={styles.pageHeader}>
-        <AppText style={styles.pageTitle}>Documents</AppText>
-        <AppText muted style={styles.pageSubtitle}>Approved notary scanbacks ready for review and download</AppText>
+        <AppText style={localStyles.pageTitle} maxFontSizeMultiplier={1.1}>Documents</AppText>
+        <AppText muted style={localStyles.pageSubtitle} maxFontSizeMultiplier={1.15}>Approved notary scanbacks ready for review and download</AppText>
       </View>
 
-      <View style={styles.searchContainer}>
-        <Search color="#94a3b8" size={18} style={styles.searchIcon} />
+      <View style={localStyles.searchContainer}>
+        <Search color="#94a3b8" size={16} style={localStyles.searchIcon} />
         <AppInput
-          placeholder="Filter by Order"
-          style={styles.searchInput}
-          containerStyle={styles.searchBox}
+          placeholder="Search by file name or order"
+          style={localStyles.searchInput}
+          containerStyle={localStyles.searchBox}
           value={search}
           onChangeText={setSearch}
         />
       </View>
 
-      <View style={styles.filterRow}>
+      <View style={localStyles.filterRow}>
         <Pressable
           style={[styles.filterBtn, pdfOnly && styles.filterBtnActive, localStyles.documentsFilterBtn]}
           onPress={() => setPdfOnly((current) => !current)}
         >
           <FileText color={pdfOnly ? colors.white : '#64748b'} size={14} />
-          <AppText style={[styles.filterBtnText, pdfOnly && styles.filterBtnTextActive]}>PDF Only</AppText>
+          <AppText style={[localStyles.filterBtnText, pdfOnly && localStyles.filterBtnTextActive]} maxFontSizeMultiplier={1.05}>PDF Only</AppText>
         </Pressable>
         <Pressable style={[styles.filterBtn, localStyles.documentsFilterBtn]} onPress={() => setIsDatePickerOpen(true)}>
           <Calendar color="#64748b" size={14} />
-          <AppText style={styles.filterBtnText}>Filter by Date</AppText>
+          <AppText style={localStyles.filterBtnText} maxFontSizeMultiplier={1.05}>Filter by Date</AppText>
         </Pressable>
         {hasActiveFilters ? (
-          <Pressable onPress={clearFilters} style={styles.clearBtn}>
-            <AppText style={styles.clearBtnText}>Clear</AppText>
+          <Pressable onPress={clearFilters} style={localStyles.clearBtn}>
+            <AppText style={localStyles.clearBtnText} maxFontSizeMultiplier={1.05}>Clear</AppText>
           </Pressable>
         ) : null}
       </View>
+
+      {!loading && !error ? (
+        <View style={localStyles.resultsRow}>
+          <AppText muted style={localStyles.resultsText} maxFontSizeMultiplier={1.05}>
+            {filteredDocuments.length} approved {filteredDocuments.length === 1 ? 'document' : 'documents'}
+          </AppText>
+        </View>
+      ) : null}
 
       {loading && !documents ? <LoadingState /> : null}
       {error ? <ErrorState message={error} /> : null}
@@ -204,6 +212,7 @@ export function DocumentsScreen() {
           variant="secondary"
           onPress={() => setVisibleCount((current) => current + PAGE_SIZE)}
           style={localStyles.loadMoreButton}
+          textStyle={localStyles.loadMoreButtonText}
         />
       ) : null}
       <FilterPickerModal
@@ -285,18 +294,18 @@ export function DocumentViewScreen() {
 
           <View style={styles.viewActionRow}>
             <AppButton
-              title="Download"
-              loading={downloading}
-              icon={<Download color={colors.white} size={18} />}
-              style={styles.viewDownloadBtn}
-              onPress={() => void download()}
-            />
-            <AppButton
               title="Preview"
               variant="secondary"
               icon={<FileText color={colors.primary} size={18} />}
               style={styles.viewPrintBtn}
               onPress={() => void openPreview()}
+            />
+            <AppButton
+              title="Download"
+              loading={downloading}
+              icon={<Download color={colors.white} size={18} />}
+              style={styles.viewDownloadBtn}
+              onPress={() => void download()}
             />
           </View>
 
@@ -340,12 +349,82 @@ export function DocumentViewScreen() {
 }
 
 const localStyles = StyleSheet.create({
+  pageTitle: {
+    fontSize: 19,
+    lineHeight: 24,
+    letterSpacing: -0.25,
+  },
+  pageSubtitle: {
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 4,
+    maxWidth: '92%',
+  },
+  searchContainer: {
+    marginTop: 14,
+    position: 'relative',
+  },
+  searchBox: {
+    marginBottom: 0,
+    gap: 0,
+  },
+  searchInput: {
+    paddingLeft: 28,
+    minHeight: 44,
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#334155',
+  },
+  searchIcon: {
+    position: 'absolute',
+    left: 14,
+    top: 14,
+    zIndex: 1,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 12,
+    gap: 8,
+    alignItems: 'center',
+  },
   documentsFilterBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    minHeight: 40,
+    minHeight: 36,
+    borderRadius: 10,
+  },
+  filterBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748b',
+    lineHeight: 16,
+  },
+  filterBtnTextActive: {
+    color: colors.white,
+  },
+  clearBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    justifyContent: 'center',
+    borderRadius: 10,
+    backgroundColor: '#eff6ff',
+  },
+  clearBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0a49a8',
+    lineHeight: 16,
+  },
+  resultsRow: {
+    marginTop: 14,
+    marginBottom: -2,
+  },
+  resultsText: {
+    fontSize: 12,
+    lineHeight: 16,
   },
   overlay: {
     flex: 1,
@@ -392,7 +471,15 @@ const localStyles = StyleSheet.create({
     marginTop: 16,
   },
   loadMoreButton: {
-    marginTop: 6,
+    marginTop: 8,
     marginBottom: 12,
+    minHeight: 40,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    alignSelf: 'center',
+  },
+  loadMoreButtonText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
 });

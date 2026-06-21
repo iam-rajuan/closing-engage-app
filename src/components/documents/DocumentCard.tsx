@@ -14,34 +14,40 @@ export function DocumentCard({ doc, onView }: { doc: DocumentFile; onView?: () =
       <View style={styles.top}>
         <DocumentIcon fileName={doc.name} size={44} iconSize={20} />
         <View style={styles.nameContainer}>
-          <AppText weight="bold" style={styles.fileName}>{doc.name}</AppText>
-          <AppText variant="caption" muted style={styles.orderId}>{doc.orderId}</AppText>
+          <AppText weight="semibold" style={styles.fileName} numberOfLines={1} ellipsizeMode="middle" maxFontSizeMultiplier={1.1}>
+            {doc.name}
+          </AppText>
+          <AppText variant="caption" muted style={styles.orderId} numberOfLines={1} maxFontSizeMultiplier={1.05}>
+            Order #{doc.orderId}
+          </AppText>
         </View>
-        <Badge label={doc.status || 'Approved'} tone="green" />
+        <Badge label={doc.status || 'Approved'} tone="green" style={styles.badge} />
       </View>
 
       <View style={styles.infoRow}>
         <View style={styles.infoItem}>
-          <AppText variant="caption" muted style={styles.infoLabel}>UPLOADED DATE</AppText>
-          <AppText weight="bold" style={styles.infoValue}>{doc.uploadedDate}</AppText>
+          <AppText variant="caption" muted style={styles.infoLabel} maxFontSizeMultiplier={1.05}>UPLOADED DATE</AppText>
+          <AppText weight="semibold" style={styles.infoValue} numberOfLines={1} maxFontSizeMultiplier={1.05}>{doc.uploadedDate}</AppText>
         </View>
         <View style={styles.infoItem}>
-          <AppText variant="caption" muted style={styles.infoLabel}>FILE SIZE</AppText>
-          <AppText weight="bold" style={styles.infoValue}>{doc.size}</AppText>
+          <AppText variant="caption" muted style={styles.infoLabel} maxFontSizeMultiplier={1.05}>FILE SIZE</AppText>
+          <AppText weight="semibold" style={styles.infoValue} numberOfLines={1} maxFontSizeMultiplier={1.05}>{doc.size}</AppText>
         </View>
       </View>
 
       <View style={styles.actions}>
         <AppButton 
-          title="View" 
+          title="Preview" 
           variant="secondary" 
           onPress={onView} 
           style={styles.viewBtn}
+          textStyle={styles.viewBtnText}
           icon={<Eye color={colors.primary} size={16} />} 
         />
         <AppButton 
           title="Download" 
           style={styles.downloadBtn}
+          textStyle={styles.downloadBtnText}
           icon={<Download color={colors.white} size={16} />} 
         />
       </View>
@@ -51,9 +57,9 @@ export function DocumentCard({ doc, onView }: { doc: DocumentFile; onView?: () =
 
 const styles = StyleSheet.create({
   card: { 
-    padding: 16,
-    gap: 14,
-    borderRadius: 16,
+    padding: 14,
+    gap: 12,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: '#e8eef8',
     shadowColor: '#0f172a',
@@ -64,7 +70,7 @@ const styles = StyleSheet.create({
   },
   top: { 
     flexDirection: 'row', 
-    alignItems: 'center', 
+    alignItems: 'flex-start', 
     gap: 12,
   },
   iconContainer: {
@@ -77,25 +83,35 @@ const styles = StyleSheet.create({
   },
   nameContainer: { 
     flex: 1,
+    minWidth: 0,
     gap: 2,
   },
+  badge: {
+    flexShrink: 0,
+    marginLeft: 6,
+  },
   fileName: {
-    fontSize: 15,
+    fontSize: 14,
+    lineHeight: 18,
     color: '#1e293b',
     letterSpacing: -0.2,
   },
   orderId: {
-    fontSize: 12,
+    fontSize: 11,
+    lineHeight: 16,
     fontWeight: '600',
     color: '#94a3b8',
   },
   infoRow: { 
     flexDirection: 'row', 
-    gap: 32,
+    justifyContent: 'space-between',
+    gap: 18,
     paddingLeft: 2,
   },
   infoItem: {
     gap: 4,
+    flex: 1,
+    minWidth: 0,
   },
   infoLabel: {
     fontSize: 10,
@@ -104,25 +120,34 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   infoValue: {
-    fontSize: 14,
+    fontSize: 13,
+    lineHeight: 18,
     color: '#334155',
   },
   actions: { 
     flexDirection: 'row', 
-    gap: 12,
+    gap: 10,
   },
   viewBtn: {
     flex: 1,
-    height: 42,
+    height: 38,
     backgroundColor: '#f3f6fb',
     borderWidth: 0,
-    borderRadius: 12,
+    borderRadius: 10,
   },
   downloadBtn: {
     flex: 1,
-    height: 42,
+    height: 38,
     backgroundColor: '#0a49a8',
-    borderRadius: 12,
+    borderRadius: 10,
+  },
+  viewBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  downloadBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
 });
 
