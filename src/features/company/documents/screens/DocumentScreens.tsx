@@ -87,7 +87,9 @@ export function DocumentsScreen() {
   const [pdfOnly, setPdfOnly] = useState(true);
   const [dateFilter, setDateFilter] = useState<DateFilter>('All Dates');
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const { data: documents, loading, error, reload } = useAsyncResource(() => getDocuments(), []);
+  const { data: documents, loading, error, reload } = useAsyncResource(() => getDocuments(), [], {
+    cacheKey: 'company-documents',
+  });
 
   const filteredDocuments = useMemo(() => {
     let items = [...(documents ?? [])];
@@ -192,7 +194,9 @@ export function DocumentsScreen() {
 export function DocumentViewScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
   const documentId = params.id ?? '';
-  const { data: document, loading, error, reload } = useAsyncResource(() => getDocumentById(documentId), [documentId]);
+  const { data: document, loading, error, reload } = useAsyncResource(() => getDocumentById(documentId), [documentId], {
+    cacheKey: `document:${documentId}`,
+  });
   const [downloading, setDownloading] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState<{
     name: string;

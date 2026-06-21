@@ -20,7 +20,9 @@ import { colors } from '@/theme';
 export function NotaryHomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const user = useAuthStore((state) => state.user);
-  const { data: orders, loading, error, reload } = useAsyncResource(() => getNotaryOrders(), []);
+  const { data: orders, loading, error, reload } = useAsyncResource(() => getNotaryOrders(), [], {
+    cacheKey: 'notary-orders',
+  });
 
   const handleRefresh = async () => {
     setRefreshing(true);

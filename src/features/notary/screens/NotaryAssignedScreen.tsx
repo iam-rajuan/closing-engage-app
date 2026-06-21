@@ -20,7 +20,9 @@ export function NotaryAssignedScreen() {
   const [activeTab, setActiveTab] = useState<'ALL ORDERS' | 'ASSIGNED' | 'IN PROGRESS'>('ALL ORDERS');
   const [search, setSearch] = useState('');
   const user = useAuthStore((state) => state.user);
-  const { data: orders, loading, error, reload } = useAsyncResource(() => getNotaryOrders(), []);
+  const { data: orders, loading, error, reload } = useAsyncResource(() => getNotaryOrders(), [], {
+    cacheKey: 'notary-orders',
+  });
   const [refreshing, setRefreshing] = useState(false);
 
   const handleRefresh = async () => {

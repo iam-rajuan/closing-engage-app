@@ -40,7 +40,9 @@ export function NotificationsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [markingAll, setMarkingAll] = useState(false);
   const user = useAuthStore((state) => state.user);
-  const { data: notifications, loading, error, reload } = useAsyncResource(() => getNotifications(), []);
+  const { data: notifications, loading, error, reload } = useAsyncResource(() => getNotifications(), [], {
+    cacheKey: `notifications:${user?.role ?? 'guest'}`,
+  });
 
   const unreadCount = useMemo(() => (notifications ?? []).filter((item) => !item.read).length, [notifications]);
 

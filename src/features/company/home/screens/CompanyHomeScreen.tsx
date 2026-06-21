@@ -208,7 +208,9 @@ const pipeStyles = StyleSheet.create({
 export function CompanyHomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const user = useAuthStore((state) => state.user);
-  const { data: orders, loading, error, reload } = useAsyncResource(() => getCompanyOrders(), []);
+  const { data: orders, loading, error, reload } = useAsyncResource(() => getCompanyOrders(), [], {
+    cacheKey: 'company-orders',
+  });
 
   const metrics = useMemo(() => {
     const items = orders ?? [];

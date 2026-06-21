@@ -36,7 +36,9 @@ export function NotaryOrderDetailsScreen() {
   const handleBack = useCallback(() => {
     router.replace(backTarget);
   }, [backTarget]);
-  const { data: order, loading, error, setData, reload } = useAsyncResource(() => getOrderById(orderId), [orderId]);
+  const { data: order, loading, error, setData, reload } = useAsyncResource(() => getOrderById(orderId), [orderId], {
+    cacheKey: `order:${orderId}`,
+  });
   const isOpenOrder = Boolean(order?.openForAll && !order?.assignedNotaryId);
   const [selectedFile, setSelectedFile] = useState<{
     uri: string;
@@ -76,12 +78,6 @@ export function NotaryOrderDetailsScreen() {
       setDownloadingDocId(null);
     }
   };
-
-  useFocusEffect(
-    useCallback(() => {
-      void reload();
-    }, [reload]),
-  );
 
   useFocusEffect(
     useCallback(() => {

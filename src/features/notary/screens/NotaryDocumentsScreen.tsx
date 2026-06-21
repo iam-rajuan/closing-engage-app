@@ -25,7 +25,9 @@ export function UploadDocumentsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedFile, setSelectedFile] = useState<{ uri: string; name: string; mimeType?: string; size?: number } | null>(null);
   const [uploading, setUploading] = useState(false);
-  const { data: orders, loading, error, reload } = useAsyncResource(() => getNotaryOrders(), []);
+  const { data: orders, loading, error, reload } = useAsyncResource(() => getNotaryOrders(), [], {
+    cacheKey: 'notary-orders',
+  });
 
   const selectedOrder = useMemo(() => orders?.[0] ?? null, [orders]);
 

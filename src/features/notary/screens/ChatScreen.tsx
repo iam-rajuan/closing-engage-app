@@ -29,6 +29,7 @@ export function ChatScreen() {
   const { data, loading, error, reload, setData } = useAsyncResource(
     () => getOrderMessages(orderId, 'notary'),
     [orderId],
+    { cacheKey: `order-chat:notary:${orderId}` },
   );
   const [refreshing, setRefreshing] = useState(false);
 

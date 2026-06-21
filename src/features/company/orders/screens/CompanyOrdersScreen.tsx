@@ -20,7 +20,9 @@ export function CompanyOrdersScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'Under Review' | 'Completed'>('all');
-  const { data: orders, loading, error, reload } = useAsyncResource(() => getCompanyOrders(), []);
+  const { data: orders, loading, error, reload } = useAsyncResource(() => getCompanyOrders(), [], {
+    cacheKey: 'company-orders',
+  });
 
   const filteredOrders = useMemo(() => {
     const items = orders ?? [];

@@ -53,6 +53,7 @@ export function CompanyOrderDetailsScreen() {
   const { data: order, loading, error, reload, setData } = useAsyncResource(
     () => getOrderById(orderId),
     [orderId],
+    { cacheKey: `order:${orderId}` },
   );
   const [isConfirmingMeeting, setIsConfirmingMeeting] = useState(false);
   const [downloadingDocId, setDownloadingDocId] = useState<string | null>(null);
@@ -87,12 +88,6 @@ export function CompanyOrderDetailsScreen() {
       setDownloadingDocId(null);
     }
   };
-
-  useFocusEffect(
-    useCallback(() => {
-      void reload();
-    }, [reload]),
-  );
 
   useFocusEffect(
     useCallback(() => {

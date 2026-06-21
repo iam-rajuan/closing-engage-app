@@ -62,7 +62,9 @@ const formatPreviewDate = (date: Date) =>
 export function ScheduleClosingScreen() {
   const params = useLocalSearchParams<{ orderId?: string }>();
   const orderId = params.orderId ?? '';
-  const { data: order, loading, error, reload } = useAsyncResource(() => getOrderById(orderId), [orderId]);
+  const { data: order, loading, error, reload } = useAsyncResource(() => getOrderById(orderId), [orderId], {
+    cacheKey: `order:${orderId}`,
+  });
   const [refreshing, setRefreshing] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
