@@ -2,7 +2,9 @@ import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
-import { ArrowRight, Building, Calendar, CheckCircle2, ChevronLeft, CloudUpload, FileText, Info, MapPin, MessageCircle, Send, Trash2, UserRound } from 'lucide-react-native';
+import { ArrowRight, Building, Calendar, CheckCircle2, ChevronLeft, CloudUpload, Download, FileText, Info, MapPin, MessageCircle, Send, Trash2, UserRound } from 'lucide-react-native';
+import * as Linking from 'expo-linking';
+import { getDocumentDownloadUrl } from '@/services/documents.service';
 import { AppButton } from '@/components/common/AppButton';
 import { AppCard } from '@/components/common/AppCard';
 import { AppText } from '@/components/common/AppText';
@@ -30,6 +32,15 @@ export function NotaryOrderDetailsScreen() {
     size?: number;
   } | null>(null);
   const [uploading, setUploading] = useState(false);
+
+  const handleDownload = async (docId: string, name: string) => {
+    try {
+      const url = await getDocumentDownloadUrl(docId);
+      await Linking.openURL(url);
+    } catch (error) {
+      Alert.alert('Download failed', 'Could not retrieve download URL for this document.');
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -239,10 +250,21 @@ export function NotaryOrderDetailsScreen() {
                         <FileText size={18} color="#ef4444" />
                       </View>
                       <View style={{ flex: 1 }}>
-                        <AppText weight="bold" style={{ fontSize: 14, color: '#1e293b' }}>{doc.name}</AppText>
+                        <AppText weight="bold" numberOfLines={1} ellipsizeMode="middle" style={{ fontSize: 14, color: '#1e293b' }}>
+                          {doc.name}
+                        </AppText>
                         <AppText variant="caption" muted>{doc.meta}</AppText>
                       </View>
-                      <AppText variant="caption" muted>Documents list</AppText>
+                      {doc.id ? (
+                        <Pressable
+                          style={styles.downloadBtn}
+                          onPress={() => void handleDownload(doc.id!, doc.name)}
+                        >
+                          <Download color="#2563eb" size={18} />
+                        </Pressable>
+                      ) : (
+                        <AppText variant="caption" muted>Documents list</AppText>
+                      )}
                     </View>
                   ))
                 ) : (
@@ -460,6 +482,14 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 8,
     backgroundColor: '#f8fafc',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  downloadBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#f1f5f9',
     alignItems: 'center',
     justifyContent: 'center',
   },

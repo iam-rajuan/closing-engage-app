@@ -20,6 +20,7 @@ export type OrderMeeting = {
 };
 
 export type OrderDocumentSummary = {
+  id?: string;
   name: string;
   meta: string;
   uploadedBy?: string;

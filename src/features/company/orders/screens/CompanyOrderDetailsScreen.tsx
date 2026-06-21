@@ -1,8 +1,10 @@
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Image, Pressable, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
-import { Calendar, FileText, Info, MapPin } from 'lucide-react-native';
+import { Calendar, Download, FileText, Info, MapPin, UserRound } from 'lucide-react-native';
+import * as Linking from 'expo-linking';
+import { getDocumentDownloadUrl } from '@/services/documents.service';
 import { AppCard } from '@/components/common/AppCard';
 import { AppHeader } from '@/components/common/AppHeader';
 import { AppText } from '@/components/common/AppText';
@@ -35,6 +37,15 @@ export function CompanyOrderDetailsScreen() {
     [orderId],
   );
   const [isConfirmingMeeting, setIsConfirmingMeeting] = useState(false);
+
+  const handleDownload = async (docId: string, name: string) => {
+    try {
+      const url = await getDocumentDownloadUrl(docId);
+      await Linking.openURL(url);
+    } catch (error) {
+      Alert.alert('Download failed', 'Could not retrieve download URL for this document.');
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -126,9 +137,13 @@ export function CompanyOrderDetailsScreen() {
           <View style={styles.detailsSection}>
             <AppText weight="bold" style={styles.detailsSectionTitle}>Assigned Notary</AppText>
             <AppCard style={styles.fileCardDetails}>
-              <View style={styles.fileIconBox}>
-                <FileText color={colors.primary} size={20} />
-              </View>
+              {order.assignedNotaryId && order.notaryAvatarUrl ? (
+                <Image source={{ uri: order.notaryAvatarUrl }} style={styles.avatarImage} />
+              ) : (
+                <View style={styles.avatarFallback}>
+                  <UserRound color="#2563eb" size={20} />
+                </View>
+              )}
               <View style={{ flex: 1 }}>
                 <AppText weight="bold">{order.notaryName || 'Not assigned yet'}</AppText>
                 <AppText variant="caption" muted>{order.assignedNotaryId ? 'Assigned' : 'Pending assignment'}</AppText>
@@ -143,10 +158,21 @@ export function CompanyOrderDetailsScreen() {
                 <AppCard key={`${document.name}-${index}`} style={styles.fileCardDetails}>
                   <View style={styles.fileIconBox}><FileText color="#dc2626" size={20} /></View>
                   <View style={{ flex: 1 }}>
-                    <AppText weight="bold">{document.name}</AppText>
+                    <AppText weight="bold" numberOfLines={1} ellipsizeMode="middle" style={{ color: '#1e293b' }}>
+                      {document.name}
+                    </AppText>
                     <AppText variant="caption" muted>{document.meta}</AppText>
                   </View>
-                  <AppText variant="caption" muted>Available in Documents</AppText>
+                  {document.id ? (
+                    <Pressable
+                      style={styles.downloadBtn}
+                      onPress={() => void handleDownload(document.id!, document.name)}
+                    >
+                      <Download color="#2563eb" size={18} />
+                    </Pressable>
+                  ) : (
+                    <AppText variant="caption" muted>Available in Documents</AppText>
+                  )}
                 </AppCard>
               ))
             ) : (
@@ -301,6 +327,19 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 10,
     backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
+  avatarFallback: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#eff6ff',
     alignItems: 'center',
     justifyContent: 'center',
   },
