@@ -455,8 +455,10 @@ export function TeamScreen() {
       <AppHeader onProfilePress={() => router.push('/company/settings')} />
 
       <View style={styles.pageHeader}>
-        <AppText style={styles.pageTitle}>Team Management</AppText>
-        <AppText muted style={styles.pageSubtitle}>Manage your company team members and roles</AppText>
+        <AppText style={[styles.pageTitle, localStyles.pageTitle]} maxFontSizeMultiplier={1.1}>Team Management</AppText>
+        <AppText muted style={[styles.pageSubtitle, localStyles.pageSubtitle]} maxFontSizeMultiplier={1.15}>
+          Manage your company team members and roles
+        </AppText>
       </View>
 
       {params.bannerTitle && params.bannerMessage ? (
@@ -479,41 +481,54 @@ export function TeamScreen() {
         title="Add Member"
         icon={<UserPlus color={colors.white} size={18} />}
         onPress={() => router.push('/company/team/add')}
-        style={styles.teamAddBtn}
+        style={[styles.teamAddBtn, localStyles.addMemberButton]}
+        textStyle={localStyles.addMemberButtonText}
       />
 
-      <View style={styles.searchContainer}>
-        <Search color="#94a3b8" size={18} style={styles.searchIcon} />
+      <View style={[styles.searchContainer, localStyles.searchContainer]}>
+        <Search color="#94a3b8" size={16} style={localStyles.searchIcon} />
         <AppInput
           placeholder="Search members..."
-          style={styles.searchInput}
-          containerStyle={styles.searchBox}
+          style={localStyles.searchInput}
+          containerStyle={[styles.searchBox, localStyles.searchBox]}
           value={search}
           onChangeText={setSearch}
         />
       </View>
 
-      <View style={styles.filterRow}>
+      <View style={[styles.filterRow, localStyles.filterRow]}>
         <Pressable
-          style={[styles.dropdownBtn, selectedRole !== 'All' && localStyles.dropdownBtnActive]}
+          style={[styles.dropdownBtn, localStyles.dropdownBtn, selectedRole !== 'All' && localStyles.dropdownBtnActive]}
           onPress={() => setActiveFilter('role')}
         >
-          <AppText style={styles.dropdownText}>Role: {selectedRole}</AppText>
+          <AppText style={[styles.dropdownText, localStyles.dropdownText]} numberOfLines={1}>
+            Role: {selectedRole}
+          </AppText>
           <ChevronDown color="#64748b" size={16} />
         </Pressable>
         <Pressable
-          style={[styles.dropdownBtn, selectedStatus !== 'Mixed' && localStyles.dropdownBtnActive]}
+          style={[styles.dropdownBtn, localStyles.dropdownBtn, selectedStatus !== 'Mixed' && localStyles.dropdownBtnActive]}
           onPress={() => setActiveFilter('status')}
         >
-          <AppText style={styles.dropdownText}>Status: {selectedStatus}</AppText>
+          <AppText style={[styles.dropdownText, localStyles.dropdownText]} numberOfLines={1}>
+            Status: {selectedStatus}
+          </AppText>
           <ChevronDown color="#64748b" size={16} />
         </Pressable>
       </View>
 
+      {!loading && !error ? (
+        <View style={localStyles.resultsRow}>
+          <AppText muted style={localStyles.resultsText} maxFontSizeMultiplier={1.1}>
+            {filteredMembers.length} {filteredMembers.length === 1 ? 'member' : 'members'}
+          </AppText>
+        </View>
+      ) : null}
+
       {loading ? <LoadingState /> : null}
       {!loading && error ? <ErrorState message={error} /> : null}
 
-      <View style={styles.memberList}>
+      <View style={[styles.memberList, localStyles.memberList]}>
         {!loading && !error ? (
           filteredMembers.length ? (
             filteredMembers.map((member) => (
@@ -603,10 +618,22 @@ export function EditMemberScreen() {
 }
 
 const localStyles = StyleSheet.create({
+  pageTitle: {
+    fontSize: 19,
+    lineHeight: 24,
+    letterSpacing: -0.25,
+  },
+  pageSubtitle: {
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 4,
+    maxWidth: '94%',
+  },
   bannerCard: {
     marginTop: spacing.md,
-    padding: spacing.md,
-    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    gap: 4,
     borderWidth: 1,
   },
   bannerSuccess: {
@@ -622,17 +649,81 @@ const localStyles = StyleSheet.create({
     borderColor: '#fecdd3',
   },
   bannerTitle: {
-    fontSize: 14,
+    fontSize: 13,
+    lineHeight: 18,
     color: '#0f172a',
   },
   bannerText: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#475569',
+    lineHeight: 17,
+  },
+  addMemberButton: {
+    height: 42,
+    borderRadius: 10,
+    marginTop: 14,
+  },
+  addMemberButtonText: {
+    fontSize: 13,
     lineHeight: 18,
+  },
+  searchContainer: {
+    marginTop: 14,
+    position: 'relative',
+  },
+  searchBox: {
+    marginBottom: 0,
+    gap: 0,
+  },
+  searchInput: {
+    paddingLeft: 28,
+    minHeight: 44,
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#334155',
+  },
+  searchIcon: {
+    position: 'absolute',
+    left: 14,
+    top: 14,
+    zIndex: 1,
+  },
+  filterRow: {
+    flexWrap: 'wrap',
+    marginTop: 12,
+    gap: 8,
+  },
+  dropdownBtn: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 38,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+  },
+  dropdownText: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '600',
+    color: '#475569',
   },
   dropdownBtnActive: {
     borderColor: '#93c5fd',
     backgroundColor: '#eff6ff',
+  },
+  resultsRow: {
+    marginTop: 14,
+    marginBottom: -2,
+  },
+  resultsText: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#64748b',
+  },
+  memberList: {
+    gap: 10,
+    marginTop: 14,
   },
   overlay: {
     flex: 1,
@@ -663,8 +754,8 @@ const localStyles = StyleSheet.create({
     marginBottom: 8,
   },
   dialogMessage: {
-    fontSize: 14,
-    lineHeight: 21,
+    fontSize: 13,
+    lineHeight: 19,
     color: '#64748b',
   },
   dialogMeta: {
@@ -677,11 +768,11 @@ const localStyles = StyleSheet.create({
     gap: 2,
   },
   dialogMetaName: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#0f172a',
   },
   dialogMetaEmail: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#64748b',
   },
   dialogActions: {
@@ -726,7 +817,7 @@ const localStyles = StyleSheet.create({
     backgroundColor: '#eff6ff',
   },
   filterOptionText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#334155',
   },
   filterOptionTextActive: {
