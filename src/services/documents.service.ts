@@ -15,6 +15,7 @@ type BackendDocument = {
   createdDate?: string;
   uploadedByName?: string;
   uploadedBy?: string;
+  uploaderRole?: DocumentFile['uploaderRole'];
   sizeLabel?: string;
   size?: string;
   mimeType?: string;
@@ -34,6 +35,7 @@ const normalizeDocument = (input: BackendDocument): DocumentFile => ({
   uploadedDate: input.uploadedDate || input.uploadDate || input.createdDate || 'Recently uploaded',
   size: input.sizeLabel || input.size || '0 MB',
   uploadedBy: input.uploadedByName || input.uploadedBy,
+  uploaderRole: input.uploaderRole,
   mimeType: input.mimeType,
   comments: input.comments,
 });

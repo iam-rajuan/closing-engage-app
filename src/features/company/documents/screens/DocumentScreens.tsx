@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Modal, Pressable, StyleSheet, View, Alert } from 'react-native';
 import { Calendar, Download, FileText, Search } from 'lucide-react-native';
@@ -29,6 +29,8 @@ import { colors } from '@/theme';
 import { DocumentFile } from '@/types/document';
 
 type DateFilter = 'All Dates' | 'Newest First' | 'Oldest First';
+
+const PAGE_SIZE = 8;
 
 const parseDocumentTimestamp = (value: string) => {
   const parsed = Date.parse(value);
@@ -87,12 +89,17 @@ export function DocumentsScreen() {
   const [pdfOnly, setPdfOnly] = useState(true);
   const [dateFilter, setDateFilter] = useState<DateFilter>('All Dates');
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const { data: documents, loading, error, reload } = useAsyncResource(() => getDocuments(), [], {
     cacheKey: 'company-documents',
   });
 
   const filteredDocuments = useMemo(() => {
-    let items = [...(documents ?? [])];
+    let items = [...(documents ?? [])].filter(
+      (doc) =>
+        doc.uploaderRole === 'notary' &&
+        (doc.status === 'Approved' || doc.status === 'Verified'),
+    );
 
     items = items.filter((doc) =>
       !search.trim() ||
@@ -111,6 +118,16 @@ export function DocumentsScreen() {
 
     return items;
   }, [dateFilter, documents, pdfOnly, search]);
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [search, pdfOnly, dateFilter]);
+
+  const visibleDocuments = useMemo(
+    () => filteredDocuments.slice(0, visibleCount),
+    [filteredDocuments, visibleCount],
+  );
+  const hasMoreDocuments = visibleCount < filteredDocuments.length;
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -132,7 +149,7 @@ export function DocumentsScreen() {
 
       <View style={styles.pageHeader}>
         <AppText style={styles.pageTitle}>Documents</AppText>
-        <AppText muted style={styles.pageSubtitle}>Access and download your approved files</AppText>
+        <AppText muted style={styles.pageSubtitle}>Approved notary scanbacks ready for review and download</AppText>
       </View>
 
       <View style={styles.searchContainer}>
@@ -169,8 +186,8 @@ export function DocumentsScreen() {
       {error ? <ErrorState message={error} /> : null}
 
       <View style={styles.documentList}>
-        {filteredDocuments.length ? (
-          filteredDocuments.map((doc) => (
+        {visibleDocuments.length ? (
+          visibleDocuments.map((doc) => (
             <DocumentCard
               key={doc.id}
               doc={doc}
@@ -178,9 +195,17 @@ export function DocumentsScreen() {
             />
           ))
         ) : (
-          !loading && <EmptyState title="No documents found" />
+          !loading && <EmptyState title="No approved notary documents found" />
         )}
       </View>
+      {hasMoreDocuments ? (
+        <AppButton
+          title={`Load More (${filteredDocuments.length - visibleCount} remaining)`}
+          variant="secondary"
+          onPress={() => setVisibleCount((current) => current + PAGE_SIZE)}
+          style={localStyles.loadMoreButton}
+        />
+      ) : null}
       <FilterPickerModal
         visible={isDatePickerOpen}
         selectedValue={dateFilter}
@@ -365,5 +390,9 @@ const localStyles = StyleSheet.create({
   },
   dialogCloseButton: {
     marginTop: 16,
+  },
+  loadMoreButton: {
+    marginTop: 6,
+    marginBottom: 12,
   },
 });

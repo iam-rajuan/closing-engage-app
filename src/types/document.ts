@@ -6,12 +6,14 @@ export type DocumentFile = {
     | 'Pending Review'
     | 'Submitted'
     | 'Approved'
+    | 'Verified'
     | 'Rejected'
     | 'Resubmission Requested'
     | 'Archived';
   uploadedDate: string;
   size: string;
   uploadedBy?: string;
+  uploaderRole?: 'admin' | 'company' | 'notary' | 'buyer' | 'title-company';
   orderNumber?: string;
   mimeType?: string;
   comments?: string;
