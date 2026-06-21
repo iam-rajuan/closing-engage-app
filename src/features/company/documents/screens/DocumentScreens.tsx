@@ -192,13 +192,20 @@ export function DocumentsScreen() {
 export function DocumentViewScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
   const documentId = params.id ?? '';
-  const { data: document, loading, error } = useAsyncResource(() => getDocumentById(documentId), [documentId]);
+  const { data: document, loading, error, reload } = useAsyncResource(() => getDocumentById(documentId), [documentId]);
   const [downloading, setDownloading] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState<{
     name: string;
     localUri: string;
     mimeType: string;
   } | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await reload();
+    setRefreshing(false);
+  };
 
   const openPreview = async () => {
     const url = await getDocumentPreviewUrl(documentId);
@@ -225,7 +232,7 @@ export function DocumentViewScreen() {
   };
 
   return (
-    <ScreenContainer>
+    <ScreenContainer scroll refreshing={refreshing} onRefresh={() => void handleRefresh()}>
       <AppHeader
         back
         centerTitle

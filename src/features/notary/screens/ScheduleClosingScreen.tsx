@@ -62,8 +62,15 @@ const formatPreviewDate = (date: Date) =>
 export function ScheduleClosingScreen() {
   const params = useLocalSearchParams<{ orderId?: string }>();
   const orderId = params.orderId ?? '';
-  const { data: order, loading, error } = useAsyncResource(() => getOrderById(orderId), [orderId]);
+  const { data: order, loading, error, reload } = useAsyncResource(() => getOrderById(orderId), [orderId]);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await reload();
+    setRefreshing(false);
+  };
   const [visibleMonth, setVisibleMonth] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState('');
   const [manualTime, setManualTime] = useState('');
@@ -151,7 +158,12 @@ export function ScheduleClosingScreen() {
   };
 
   return (
-    <ScreenContainer scroll contentStyle={{ paddingBottom: 28 }}>
+    <ScreenContainer
+      scroll
+      contentStyle={{ paddingBottom: 28 }}
+      refreshing={refreshing}
+      onRefresh={() => void handleRefresh()}
+    >
       <View style={styles.headerRow}>
         <Pressable onPress={() => router.back()} style={styles.iconButton}>
           <ChevronLeft color="#111827" size={24} />

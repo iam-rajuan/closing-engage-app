@@ -6,6 +6,7 @@ import { Calendar, Download, FileText, Info, MapPin, UserRound } from 'lucide-re
 import { getDocumentDownloadUrl } from '@/services/documents.service';
 import { downloadFileToDevice } from '@/utils/fileDownload';
 import { DownloadSuccessModal } from '@/components/common/DownloadSuccessModal';
+import { SuccessModal } from '@/components/common/SuccessModal';
 import { DocumentIcon } from '@/components/common/DocumentIcon';
 import { AppCard } from '@/components/common/AppCard';
 import { AppHeader } from '@/components/common/AppHeader';
@@ -45,6 +46,14 @@ export function CompanyOrderDetailsScreen() {
     localUri: string;
     mimeType: string;
   } | null>(null);
+  const [showMeetingConfirmed, setShowMeetingConfirmed] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await reload();
+    setRefreshing(false);
+  };
 
   const handleDownload = async (docId: string, name: string) => {
     try {
@@ -75,7 +84,7 @@ export function CompanyOrderDetailsScreen() {
     try {
       const updated = await confirmOrderMeeting(orderId);
       setData(updated);
-      Alert.alert('Meeting confirmed', 'The notary has been notified that this closing is now confirmed.');
+      setShowMeetingConfirmed(true);
     } catch (caught) {
       Alert.alert('Unable to confirm meeting', caught instanceof Error ? caught.message : 'Please try again.');
     } finally {
@@ -84,7 +93,7 @@ export function CompanyOrderDetailsScreen() {
   };
 
   return (
-    <ScreenContainer scroll>
+    <ScreenContainer scroll refreshing={refreshing} onRefresh={() => void handleRefresh()}>
       <AppHeader back title="Order Details" onProfilePress={() => router.push('/company/settings')} />
 
       {loading && !order ? <LoadingState /> : null}
@@ -253,6 +262,14 @@ export function CompanyOrderDetailsScreen() {
         localUri={downloadSuccess?.localUri}
         mimeType={downloadSuccess?.mimeType}
         onClose={() => setDownloadSuccess(null)}
+      />
+
+      <SuccessModal
+        visible={showMeetingConfirmed}
+        title="Meeting Confirmed"
+        description="The notary has been notified that this closing is now confirmed and finalized."
+        buttonTitle="Done"
+        onClose={() => setShowMeetingConfirmed(false)}
       />
     </ScreenContainer>
   );

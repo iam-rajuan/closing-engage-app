@@ -40,6 +40,13 @@ export function NotaryOrderDetailsScreen() {
     localUri: string;
     mimeType: string;
   } | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await reload();
+    setRefreshing(false);
+  };
 
   const handleDownload = async (docId: string, name: string) => {
     try {
@@ -130,8 +137,7 @@ export function NotaryOrderDetailsScreen() {
   };
 
   return (
-    <ScreenContainer scroll={false}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}>
+    <ScreenContainer scroll refreshing={refreshing} onRefresh={() => void handleRefresh()} contentStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}>
         <View style={notaryStyles.detailsHeader}>
           <Pressable onPress={() => router.back()}><ChevronLeft color="#0a49a8" size={24} /></Pressable>
           <AppText weight="bold" style={{ fontSize: 15, color: '#0f172a' }}>Order Details</AppText>
@@ -357,7 +363,7 @@ export function NotaryOrderDetailsScreen() {
             )}
           </>
         ) : null}
-      </ScrollView>
+
 
       {!isOpenOrder ? (
         <Pressable

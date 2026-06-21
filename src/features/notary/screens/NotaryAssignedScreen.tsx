@@ -20,7 +20,14 @@ export function NotaryAssignedScreen() {
   const [activeTab, setActiveTab] = useState<'ALL ORDERS' | 'ASSIGNED' | 'IN PROGRESS'>('ALL ORDERS');
   const [search, setSearch] = useState('');
   const user = useAuthStore((state) => state.user);
-  const { data: orders, loading, error } = useAsyncResource(() => getNotaryOrders(), []);
+  const { data: orders, loading, error, reload } = useAsyncResource(() => getNotaryOrders(), []);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await reload();
+    setRefreshing(false);
+  };
 
   const filteredOrders = useMemo(() => {
     const items = orders ?? [];
@@ -39,7 +46,7 @@ export function NotaryAssignedScreen() {
   }, [orders, activeTab, search]);
 
   return (
-    <ScreenContainer scroll contentStyle={{ paddingBottom: 16 }}>
+    <ScreenContainer scroll refreshing={refreshing} onRefresh={() => void handleRefresh()} contentStyle={{ paddingBottom: 16 }}>
       <View style={notaryStyles.header}>
         <BrandLogo width={140} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>

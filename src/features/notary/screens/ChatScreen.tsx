@@ -1,4 +1,4 @@
-import { ScrollView, TextInput, View, Pressable, Image } from 'react-native';
+import { ScrollView, TextInput, View, Pressable, Image, RefreshControl } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ChevronLeft, Paperclip, Send } from 'lucide-react-native';
 import { useState } from 'react';
@@ -11,6 +11,7 @@ import { NotaryChatBubble } from '@/features/notary/components/NotaryChatBubble'
 import { notaryStyles } from '@/features/notary/styles';
 import { useAsyncResource } from '@/hooks/useAsyncResource';
 import { getOrderMessages, sendOrderMessage } from '@/services/communications.service';
+import { colors } from '@/theme';
 
 const initialsFrom = (value: string) =>
   value
@@ -29,6 +30,13 @@ export function ChatScreen() {
     () => getOrderMessages(orderId, 'notary'),
     [orderId],
   );
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await reload();
+    setRefreshing(false);
+  };
   const messages = data?.messages;
   const adminName = data?.thread.adminName || 'Closing Engage Admin';
   const adminAvatarUrl = data?.thread.adminAvatarUrl;
@@ -80,6 +88,14 @@ export function ChatScreen() {
         contentContainerStyle={{ paddingTop: 20, paddingBottom: 20 }}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => void handleRefresh()}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
       >
         {loading && !messages ? <LoadingState /> : null}
         {error ? <ErrorState message={error} /> : null}
