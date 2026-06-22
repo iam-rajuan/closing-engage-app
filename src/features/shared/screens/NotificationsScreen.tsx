@@ -132,14 +132,16 @@ export function NotificationsScreen() {
       <AppHeader back centerTitle title="Notifications" onProfilePress={() => router.push(user?.role === 'notary' ? '/notary/settings' : '/company/settings')} />
 
       <View style={styles.summaryCard}>
-        <View style={styles.summaryIcon}>
-          <Bell color={colors.primary} size={20} />
-        </View>
-        <View style={styles.summaryContent}>
-          <AppText weight="bold" style={styles.summaryTitle}>Your inbox</AppText>
-          <AppText muted style={styles.summarySubtitle}>
-            {unreadCount ? `${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}` : 'All notifications are read'}
-          </AppText>
+        <View style={styles.summaryHeader}>
+          <View style={styles.summaryIcon}>
+            <Bell color={colors.primary} size={20} />
+          </View>
+          <View style={styles.summaryContent}>
+            <AppText weight="bold" style={styles.summaryTitle}>Your inbox</AppText>
+            <AppText muted style={styles.summarySubtitle}>
+              {unreadCount ? `${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}` : 'All notifications are read'}
+            </AppText>
+          </View>
         </View>
         <View style={styles.summaryActions}>
           <Pressable
@@ -227,6 +229,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: '#e2e8f0',
+    gap: 14,
+  },
+  summaryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
@@ -241,20 +246,25 @@ const styles = StyleSheet.create({
   },
   summaryContent: {
     flex: 1,
+    minWidth: 0,
   },
   summaryTitle: {
     fontSize: 15,
     color: '#0f172a',
+    flexShrink: 1,
   },
   summarySubtitle: {
     marginTop: 2,
     fontSize: 12,
     lineHeight: 17,
+    flexShrink: 1,
   },
   summaryActions: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
     alignItems: 'center',
+    justifyContent: 'flex-start',
   },
   summaryActionButton: {
     minHeight: 38,
@@ -264,6 +274,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
+    flexShrink: 0,
   },
   markAllButton: {
     backgroundColor: '#eff6ff',
