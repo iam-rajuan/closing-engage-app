@@ -28,9 +28,23 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.closingengage.mobile',
+    infoPlist: {
+      NSPhotoLibraryUsageDescription: 'Allow access to your photo library so you can upload profile images and documents.',
+    },
   },
   android: {
     package: 'com.closingengage.mobile',
+    permissions: [
+      'android.permission.INTERNET',
+      'android.permission.READ_EXTERNAL_STORAGE',
+      'android.permission.VIBRATE',
+      'android.permission.POST_NOTIFICATIONS',
+    ],
+    blockedPermissions: [
+      'android.permission.WRITE_EXTERNAL_STORAGE',
+      'android.permission.RECORD_AUDIO',
+      'android.permission.SYSTEM_ALERT_WINDOW',
+    ],
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#f4f8ff',

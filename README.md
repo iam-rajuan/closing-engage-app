@@ -58,6 +58,29 @@ Bundle identifiers are configured in `app.config.ts`:
 - iOS: `com.closingengage.mobile`
 - Android: `com.closingengage.mobile`
 
+## Native Folders
+
+- `android/` and `ios/` are generated native outputs, not source-of-truth folders.
+- They are already ignored in `.gitignore`, so you do not need to upload them to GitHub.
+- If you delete them locally, regenerate with `npx expo prebuild --clean` or through an EAS build.
+
+## Permissions
+
+App permissions are declared in `app.config.ts`, so they stay with the repo even when native folders are regenerated.
+
+Current declarations are:
+
+- Android: `INTERNET`, `READ_EXTERNAL_STORAGE`, `VIBRATE`, and `POST_NOTIFICATIONS`
+- Android blocked: `WRITE_EXTERNAL_STORAGE`, `RECORD_AUDIO`, and `SYSTEM_ALERT_WINDOW`
+- iOS: photo library usage description for image/document uploads
+
+This matches the current code paths:
+
+- Document picking uses `expo-document-picker`
+- Avatar/image picking uses `expo-image-picker`
+- File downloads use `expo-file-system` and Storage Access Framework on Android
+- Download notifications use `expo-notifications`
+
 ## Demo Login Roles
 
 The login screen includes a role selector:
