@@ -2,6 +2,7 @@ import { api, unwrap } from '@/services/api';
 
 export type NotaryScreeningStatus = 'Pending' | 'Verified' | 'Failed';
 export type NotaryCredentialVerification = 'Auto-Verified' | 'Manual Review';
+export type NotaryCredentialStatus = 'Pending' | 'Approved' | 'Rejected';
 
 export type NotaryCredentialRecord = {
   id: string;
@@ -9,6 +10,7 @@ export type NotaryCredentialRecord = {
   issuer: string;
   uploadDate: string;
   verification: NotaryCredentialVerification;
+  status: NotaryCredentialStatus;
 };
 
 export type NotaryCredentials = {

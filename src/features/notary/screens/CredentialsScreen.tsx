@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import {
   BadgeCheck,
@@ -7,22 +8,39 @@ import {
   Filter,
   ShieldCheck,
   Upload,
+  X,
 } from 'lucide-react-native';
+import { AppButton } from '@/components/common/AppButton';
 import { AppCard } from '@/components/common/AppCard';
 import { AppHeader } from '@/components/common/AppHeader';
+import { AppInput } from '@/components/common/AppInput';
 import { AppText } from '@/components/common/AppText';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
 import { LoadingState } from '@/components/common/LoadingState';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
+import { SuccessModal } from '@/components/common/SuccessModal';
 import { useAsyncResource } from '@/hooks/useAsyncResource';
-import { getNotaryCredentials, type NotaryScreeningStatus } from '@/services/notary.service';
+import {
+  addNotaryCredential,
+  getNotaryCredentials,
+  updateNotaryCommission,
+  type NotaryCredentialStatus,
+  type NotaryCredentialVerification,
+  type NotaryScreeningStatus,
+} from '@/services/notary.service';
 import { colors, shadows } from '@/theme';
 
 const SCREENING_TONE: Record<NotaryScreeningStatus, { dot: string; label: string }> = {
   Verified: { dot: '#16a34a', label: 'Verified' },
   Pending: { dot: '#f59e0b', label: 'Pending Review' },
   Failed: { dot: '#dc2626', label: 'Failed' },
+};
+
+const STATUS_TONE: Record<NotaryCredentialStatus, { bg: string; fg: string }> = {
+  Approved: { bg: '#dcfce7', fg: '#16a34a' },
+  Rejected: { bg: '#fee2e2', fg: '#dc2626' },
+  Pending: { bg: '#fef3c7', fg: '#b45309' },
 };
 
 const formatExpiry = (value: string) => {
@@ -33,11 +51,84 @@ const formatExpiry = (value: string) => {
 };
 
 export function CredentialsScreen() {
-  const { data, loading, error, reload } = useAsyncResource(() => getNotaryCredentials(), [], {
+  const { data, loading, error, reload, setData } = useAsyncResource(() => getNotaryCredentials(), [], {
     cacheKey: 'notary-credentials',
   });
 
+  const [updateOpen, setUpdateOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const [updateForm, setUpdateForm] = useState({
+    commissionAuthority: '',
+    licenseNumber: '',
+    commissionExpiry: '',
+    eoCoverage: '',
+    backgroundScreeningDetail: '',
+  });
+  const [uploadForm, setUploadForm] = useState<{
+    documentName: string;
+    issuer: string;
+    verification: NotaryCredentialVerification;
+  }>({ documentName: '', issuer: '', verification: 'Manual Review' });
+
   const screening = data ? SCREENING_TONE[data.backgroundScreeningStatus] : SCREENING_TONE.Pending;
+
+  const openUpdate = () => {
+    if (!data) return;
+    setUpdateForm({
+      commissionAuthority: data.commissionAuthority,
+      licenseNumber: data.licenseNumber,
+      commissionExpiry: data.commissionExpiry,
+      eoCoverage: data.eoCoverage,
+      backgroundScreeningDetail: data.backgroundScreeningDetail,
+    });
+    setUpdateOpen(true);
+  };
+
+  const submitUpdate = async () => {
+    try {
+      setSaving(true);
+      const updated = await updateNotaryCommission({
+        commissionAuthority: updateForm.commissionAuthority.trim(),
+        licenseNumber: updateForm.licenseNumber.trim(),
+        commissionExpiry: updateForm.commissionExpiry.trim(),
+        eoCoverage: updateForm.eoCoverage.trim(),
+        backgroundScreeningDetail: updateForm.backgroundScreeningDetail.trim(),
+      });
+      setData(updated);
+      setUpdateOpen(false);
+      setSuccessMessage('Your commission details were updated successfully.');
+    } catch (err) {
+      Alert.alert('Update failed', err instanceof Error ? err.message : 'Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const submitUpload = async () => {
+    if (!uploadForm.documentName.trim() || !uploadForm.issuer.trim()) {
+      Alert.alert('Missing details', 'Please enter both a document name and issuer.');
+      return;
+    }
+    try {
+      setSaving(true);
+      const updated = await addNotaryCredential({
+        documentName: uploadForm.documentName.trim(),
+        issuer: uploadForm.issuer.trim(),
+        verification: uploadForm.verification,
+      });
+      setData(updated);
+      setUploadOpen(false);
+      setUploadForm({ documentName: '', issuer: '', verification: 'Manual Review' });
+      setSuccessMessage('Your credential was submitted for admin review.');
+    } catch (err) {
+      Alert.alert('Upload failed', err instanceof Error ? err.message : 'Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <ScreenContainer
@@ -96,7 +187,7 @@ export function CredentialsScreen() {
             </View>
 
             {/* Update Button */}
-            <Pressable style={s.updateBtn}>
+            <Pressable style={s.updateBtn} onPress={openUpdate}>
               <Edit2 color="#fff" size={16} />
               <AppText weight="bold" style={s.updateBtnText}>Update information</AppText>
             </Pressable>
@@ -154,6 +245,11 @@ export function CredentialsScreen() {
                         <AppText weight="bold" style={[s.statusLabel, { color: isAuto ? '#16a34a' : '#b96716' }]}>
                           {cred.verification.toUpperCase()}
                         </AppText>
+                        <View style={[s.reviewBadge, { backgroundColor: STATUS_TONE[cred.status].bg }]}>
+                          <AppText weight="bold" style={[s.reviewBadgeText, { color: STATUS_TONE[cred.status].fg }]}>
+                            {cred.status.toUpperCase()}
+                          </AppText>
+                        </View>
                       </View>
                     </View>
                   </View>
@@ -163,13 +259,146 @@ export function CredentialsScreen() {
           )}
 
           {/* ── UPLOAD NEW CREDENTIAL ── */}
-          <Pressable style={s.uploadBtn}>
+          <Pressable style={s.uploadBtn} onPress={() => setUploadOpen(true)}>
             <Upload color="#0a49a8" size={18} />
             <AppText weight="bold" style={s.uploadBtnText}>Upload new credential</AppText>
           </Pressable>
         </>
       ) : null}
+
+      {/* ── UPDATE COMMISSION MODAL ── */}
+      <CredentialFormModal
+        visible={updateOpen}
+        title="Update Commission"
+        onClose={() => setUpdateOpen(false)}
+        onSubmit={() => void submitUpdate()}
+        submitLabel="Save Changes"
+        saving={saving}
+      >
+        <AppInput
+          label="COMMISSION AUTHORITY"
+          placeholder="e.g. California Secretary of State"
+          value={updateForm.commissionAuthority}
+          onChangeText={(v) => setUpdateForm((f) => ({ ...f, commissionAuthority: v }))}
+        />
+        <AppInput
+          label="LICENSE NUMBER"
+          placeholder="e.g. 2348910-CA"
+          value={updateForm.licenseNumber}
+          onChangeText={(v) => setUpdateForm((f) => ({ ...f, licenseNumber: v }))}
+        />
+        <AppInput
+          label="COMMISSION EXPIRY"
+          placeholder="YYYY-MM-DD"
+          value={updateForm.commissionExpiry}
+          onChangeText={(v) => setUpdateForm((f) => ({ ...f, commissionExpiry: v }))}
+        />
+        <AppInput
+          label="E&O COVERAGE"
+          placeholder="e.g. $100,000.00"
+          value={updateForm.eoCoverage}
+          onChangeText={(v) => setUpdateForm((f) => ({ ...f, eoCoverage: v }))}
+        />
+        <AppInput
+          label="BACKGROUND SCREENING DETAIL"
+          placeholder="Notes about your screening status"
+          value={updateForm.backgroundScreeningDetail}
+          onChangeText={(v) => setUpdateForm((f) => ({ ...f, backgroundScreeningDetail: v }))}
+          multiline
+          style={s.multilineInput}
+        />
+      </CredentialFormModal>
+
+      {/* ── UPLOAD CREDENTIAL MODAL ── */}
+      <CredentialFormModal
+        visible={uploadOpen}
+        title="Upload New Credential"
+        onClose={() => setUploadOpen(false)}
+        onSubmit={() => void submitUpload()}
+        submitLabel="Submit for Review"
+        saving={saving}
+      >
+        <AppInput
+          label="DOCUMENT NAME"
+          placeholder="e.g. NNA Certification"
+          value={uploadForm.documentName}
+          onChangeText={(v) => setUploadForm((f) => ({ ...f, documentName: v }))}
+        />
+        <AppInput
+          label="ISSUER"
+          placeholder="e.g. National Notary Association"
+          value={uploadForm.issuer}
+          onChangeText={(v) => setUploadForm((f) => ({ ...f, issuer: v }))}
+        />
+        <View style={s.verificationGroup}>
+          <AppText variant="label" muted>VERIFICATION METHOD</AppText>
+          <View style={s.verificationRow}>
+            {(['Manual Review', 'Auto-Verified'] as NotaryCredentialVerification[]).map((option) => {
+              const active = uploadForm.verification === option;
+              return (
+                <Pressable
+                  key={option}
+                  style={[s.verificationChip, active && s.verificationChipActive]}
+                  onPress={() => setUploadForm((f) => ({ ...f, verification: option }))}
+                >
+                  <AppText weight="bold" style={[s.verificationChipText, active && s.verificationChipTextActive]}>
+                    {option}
+                  </AppText>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      </CredentialFormModal>
+
+      <SuccessModal
+        visible={successMessage !== null}
+        title="Success"
+        description={successMessage ?? ''}
+        onClose={() => setSuccessMessage(null)}
+      />
     </ScreenContainer>
+  );
+}
+
+/* ─── Reusable form modal (bottom sheet) ─── */
+function CredentialFormModal({
+  visible,
+  title,
+  onClose,
+  onSubmit,
+  submitLabel,
+  saving,
+  children,
+}: {
+  visible: boolean;
+  title: string;
+  onClose: () => void;
+  onSubmit: () => void;
+  submitLabel: string;
+  saving: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={s.modalBackdrop} onPress={onClose} />
+      <View style={s.modalSheet}>
+        <View style={s.modalHandle} />
+        <View style={s.modalHeader}>
+          <AppText weight="bold" style={s.modalTitle}>{title}</AppText>
+          <Pressable style={s.modalClose} onPress={onClose} hitSlop={12}>
+            <X color="#64748b" size={20} />
+          </Pressable>
+        </View>
+        <ScrollView contentContainerStyle={s.modalBody} keyboardShouldPersistTaps="handled">
+          {children}
+        </ScrollView>
+        <View style={s.modalFooter}>
+          <AppButton title="Cancel" variant="ghost" onPress={onClose} style={s.modalFooterBtn} />
+          <AppButton title={submitLabel} onPress={onSubmit} loading={saving} style={s.modalFooterBtn} />
+        </View>
+      </View>
+    </Modal>
   );
 }
 
@@ -433,6 +662,80 @@ const s = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.3,
   },
+  reviewBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginLeft: 'auto',
+  },
+  reviewBadgeText: {
+    fontSize: 10,
+    letterSpacing: 0.3,
+  },
+
+  /* Modal */
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(15,23,42,0.45)' },
+  modalSheet: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 8,
+    paddingBottom: 24,
+    maxHeight: '88%',
+    ...shadows.lg,
+  },
+  modalHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#e2e8f0',
+    alignSelf: 'center',
+    marginBottom: 12,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  modalTitle: { fontSize: 17, color: '#0f172a' },
+  modalClose: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalBody: { padding: 20, gap: 14 },
+  multilineInput: { minHeight: 80, textAlignVertical: 'top', paddingTop: 12 },
+  verificationGroup: { gap: 8 },
+  verificationRow: { flexDirection: 'row', gap: 10 },
+  verificationChip: {
+    flex: 1,
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    backgroundColor: '#f8fbff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  verificationChipActive: { borderColor: colors.primary, backgroundColor: '#eff6ff' },
+  verificationChipText: { fontSize: 13, color: '#64748b' },
+  verificationChipTextActive: { color: colors.primary },
+  modalFooter: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+  },
+  modalFooterBtn: { flex: 1 },
 
   /* Upload New Credential */
   uploadBtn: {
