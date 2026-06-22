@@ -8,9 +8,19 @@ type Props = PropsWithChildren<{
   contentStyle?: ViewStyle;
   refreshing?: boolean;
   onRefresh?: () => void;
+  keyboardBehavior?: 'padding' | 'height' | 'position';
+  keyboardVerticalOffset?: number;
 }>;
 
-export function ScreenContainer({ children, scroll = true, contentStyle, refreshing = false, onRefresh }: Props) {
+export function ScreenContainer({
+  children,
+  scroll = true,
+  contentStyle,
+  refreshing = false,
+  onRefresh,
+  keyboardBehavior,
+  keyboardVerticalOffset,
+}: Props) {
   const content = scroll ? (
     <ScrollView 
       contentContainerStyle={[styles.content, contentStyle]} 
@@ -30,7 +40,11 @@ export function ScreenContainer({ children, scroll = true, contentStyle, refresh
   );
   return (
     <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={keyboardBehavior ?? (Platform.OS === 'ios' ? 'padding' : undefined)}
+        keyboardVerticalOffset={keyboardVerticalOffset}
+      >
         {content}
       </KeyboardAvoidingView>
     </SafeAreaView>

@@ -67,13 +67,17 @@ export function UploadDocumentsScreen() {
   return (
     <ScreenContainer scroll contentStyle={s.container} refreshing={refreshing} onRefresh={() => void handleRefresh()}>
       <AppHeader onProfilePress={() => router.push('/notary/settings')} />
-      <AppText weight="bold" style={s.pageTitle}>Upload Documents</AppText>
+
+      <View style={s.pageHeaderBlock}>
+        <AppText style={s.pageTitle} maxFontSizeMultiplier={1.1}>Upload Documents</AppText>
+        <AppText muted style={s.pageSubtitle} maxFontSizeMultiplier={1.15}>Upload your signed scanbacks for review</AppText>
+      </View>
 
       {loading && !orders ? <LoadingState /> : null}
       {error ? <ErrorState message={error} /> : null}
 
       <AppCard style={s.orderCard}>
-        <AppText variant="label" muted style={s.orderLabel}>SELECTED ORDER</AppText>
+        <AppText style={s.orderLabel}>SELECTED ORDER</AppText>
         <Pressable style={s.orderDropdown}>
           <AppText weight="bold" style={s.orderValue}>
             {selectedOrder ? `${selectedOrder.orderNumber} - ${selectedOrder.clientName}` : 'No assigned orders'}
@@ -96,7 +100,7 @@ export function UploadDocumentsScreen() {
         </Pressable>
       </AppCard>
 
-      <AppText weight="bold" style={s.sectionLabel}>UPLOADED FILES</AppText>
+      <AppText style={s.sectionLabel}>UPLOADED FILES</AppText>
       {selectedFile ? (
         <AppCard style={s.fileCard}>
           <View style={s.fileRow}>
@@ -151,16 +155,32 @@ export function NotaryDocumentsScreen() {
 
 const s = StyleSheet.create({
   container: { paddingBottom: 16 },
-  pageTitle: { fontSize: 20, fontWeight: '800', color: '#0a49a8', marginTop: 8, marginBottom: 16, lineHeight: 26 },
-  orderCard: { padding: 14, borderRadius: 12, gap: 8, marginBottom: 12 },
-  orderLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 0.6, color: '#94a3b8' },
+  pageHeaderBlock: {
+    marginTop: 20,
+    gap: 4,
+    marginBottom: 16,
+  },
+  pageTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#0a49a8',
+    lineHeight: 30,
+    letterSpacing: -0.3,
+  },
+  pageSubtitle: {
+    fontSize: 14,
+    color: '#64748b',
+    lineHeight: 20,
+  },
+  orderCard: { padding: 14, borderRadius: 14, gap: 8, marginBottom: 12 },
+  orderLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 0.8, color: '#94a3b8' },
   orderDropdown: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#f8fafc',
     height: 48,
-    borderRadius: 10,
+    borderRadius: 12,
     paddingHorizontal: 14,
     borderWidth: 1,
     borderColor: '#e2e8f0',
@@ -195,14 +215,14 @@ const s = StyleSheet.create({
     width: '100%',
     height: 44,
     backgroundColor: '#0a49a8',
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     ...shadows.button,
   },
   browseBtnText: { color: '#fff', fontSize: 14 },
-  sectionLabel: { fontSize: 12, fontWeight: '700', color: '#64748b', letterSpacing: 0.5, marginBottom: 12 },
-  fileCard: { padding: 14, borderRadius: 12, gap: 12, marginBottom: 16 },
+  sectionLabel: { fontSize: 10, fontWeight: '700', color: '#94a3b8', letterSpacing: 0.8, marginBottom: 12 },
+  fileCard: { padding: 14, borderRadius: 14, gap: 12, marginBottom: 16 },
   fileRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   fileIconBox: {
     width: 44,
@@ -221,7 +241,15 @@ const s = StyleSheet.create({
   verificationPercent: { fontSize: 13, fontWeight: '800', color: '#0a49a8' },
   progressTrack: { height: 6, backgroundColor: '#e2e8f0', borderRadius: 3, overflow: 'hidden' },
   progressFill: { height: '100%', width: '100%', backgroundColor: '#0a49a8', borderRadius: 3 },
-  guideCard: { padding: 16, borderRadius: 14, gap: 12, marginBottom: 20, backgroundColor: '#f8fbff', borderWidth: 1, borderColor: '#e8edf2' },
+  guideCard: {
+    padding: 16,
+    borderRadius: 14,
+    gap: 12,
+    marginBottom: 20,
+    backgroundColor: '#f8fbff',
+    borderWidth: 1,
+    borderColor: '#e8edf4',
+  },
   guideTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
   guideTitle: { fontSize: 13, fontWeight: '800', color: '#0f172a', letterSpacing: 0.5 },
   guideItem: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -233,7 +261,7 @@ const s = StyleSheet.create({
     gap: 8,
     height: 48,
     backgroundColor: '#0a49a8',
-    borderRadius: 10,
+    borderRadius: 12,
     ...shadows.button,
     marginBottom: 8,
   },

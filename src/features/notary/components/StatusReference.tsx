@@ -5,7 +5,7 @@ import { notaryStyles } from '@/features/notary/styles';
 export function StatusReference() {
   return (
     <View style={{ marginTop: 32, marginBottom: 40 }}>
-      <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginBottom: 16 }}>STATUS REFERENCE</AppText>
+      <AppText style={notaryStyles.sectionEyebrow}>STATUS REFERENCE</AppText>
       <View style={notaryStyles.statusRefCard}>
         {[
           { label: 'Status: Assigned', desc: 'Order is confirmed and awaiting notary action.', color: '#2563eb' },
@@ -15,8 +15,8 @@ export function StatusReference() {
           <View key={i} style={notaryStyles.statusRefItem}>
             <View style={[notaryStyles.statusDot, { backgroundColor: item.color }]} />
             <View style={{ flex: 1 }}>
-              <AppText weight="bold" style={{ fontSize: 13, color: '#1e293b' }}>{item.label}</AppText>
-              <AppText variant="caption" muted style={{ fontSize: 12, marginTop: 2 }}>{item.desc}</AppText>
+              <AppText weight="bold" style={{ fontSize: 13, color: '#1e293b', lineHeight: 18 }}>{item.label}</AppText>
+              <AppText variant="caption" muted style={{ fontSize: 12, marginTop: 2, lineHeight: 17 }}>{item.desc}</AppText>
             </View>
           </View>
         ))}

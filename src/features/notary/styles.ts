@@ -2,6 +2,7 @@ import { StyleSheet } from 'react-native';
 import { colors, shadows } from '@/theme';
 
 export const notaryStyles = StyleSheet.create({
+  /* ─── Header (kept for legacy; screens now prefer AppHeader) ─── */
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -33,48 +34,170 @@ export const notaryStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  welcomeContainer: {
-    marginTop: 16,
-    marginBottom: 16,
+
+  /* ─── Hero Banner (mirrored from CompanyHomeScreen) ─── */
+  heroBanner: {
+    borderRadius: 14,
+    marginTop: 8,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    overflow: 'hidden',
+    position: 'relative',
   },
-  welcomeTitle: {
-    fontSize: 22,
-    color: colors.text,
-    letterSpacing: -0.5,
+  heroContent: {
+    zIndex: 2,
+    gap: 4,
   },
-  welcomeSubtitle: {
+  heroGreeting: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#ffffff',
+    letterSpacing: -0.3,
+    lineHeight: 26,
+  },
+  heroSubtext: {
     fontSize: 13,
-    marginTop: 4,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.78)',
     lineHeight: 18,
-    color: colors.textMuted,
+  },
+  heroDecor1: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    top: -30,
+    right: -20,
+  },
+  heroDecor2: {
+    position: 'absolute',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    bottom: -20,
+    right: 40,
+  },
+
+  /* ─── Stats Grid (2×2, mirrored from Company) ─── */
+  statsGrid: {
+    gap: 8,
+    marginTop: 12,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 8,
   },
   statCard: {
     flex: 1,
-    padding: 12,
-    alignItems: 'flex-start',
     backgroundColor: '#ffffff',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#e8edf4',
+    ...shadows.sm,
+  },
+  statCardInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
   },
   iconBox: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   statTextContent: {
-    marginTop: 6,
+    flex: 1,
     gap: 1,
   },
   statLabel: {
-    fontSize: 11,
-    color: '#64748b',
-    fontWeight: '500',
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#94a3b8',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   statValueLarge: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: '800',
     color: '#0f172a',
+    letterSpacing: -0.5,
+    lineHeight: 26,
   },
+
+  /* ─── Pipeline Bar ─── */
+  pipelineCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#e8edf4',
+    padding: 14,
+    gap: 8,
+    ...shadows.sm,
+  },
+  pipelineHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  pipelineTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0f172a',
+    letterSpacing: -0.2,
+  },
+  pipelineItem: {
+    gap: 5,
+  },
+  pipelineLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  pipelineDotAndLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  pipelineDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  pipelineLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  pipelinePct: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#0f172a',
+    minWidth: 32,
+    textAlign: 'right',
+  },
+  pipelineTrack: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#f1f5f9',
+    overflow: 'hidden',
+    marginLeft: 16,
+  },
+  pipelineFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  pipelineWrap: {
+    marginTop: 12,
+  },
+
+  /* ─── Section Headers (matching Company pattern) ─── */
   sectionTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -83,28 +206,64 @@ export const notaryStyles = StyleSheet.create({
     marginBottom: 10,
   },
   sectionTitle: {
-    fontSize: 16,
-    color: colors.text,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0f172a',
+    letterSpacing: -0.2,
   },
-  liveBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f1f5f9',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 20,
-    gap: 5,
+  sectionEyebrow: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1,
+    color: '#94a3b8',
+    marginBottom: 12,
+    lineHeight: 14,
   },
-  dot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: '#ef4444',
+
+  /* ─── Page Layout ─── */
+  pageHeader: {
+    marginTop: 20,
+    gap: 4,
   },
+  pageTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#0a49a8',
+    lineHeight: 30,
+    letterSpacing: -0.3,
+  },
+  pageSubtitle: {
+    fontSize: 14,
+    color: '#64748b',
+    lineHeight: 20,
+  },
+
+  /* ─── Order Card (aligned with Company OrderCard) ─── */
   orderCard: {
     padding: 12,
     marginBottom: 10,
-    gap: 12,
+    gap: 6,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#e8edf4',
+  },
+  orderTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  orderIdWrap: {
+    backgroundColor: '#eff6ff',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    flexShrink: 0,
+  },
+  orderNum: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.primary,
+    letterSpacing: 0.3,
   },
   orderTop: {
     flexDirection: 'row',
@@ -120,7 +279,9 @@ export const notaryStyles = StyleSheet.create({
   },
   orderClientName: {
     fontSize: 15,
+    fontWeight: '700',
     color: '#0f172a',
+    lineHeight: 20,
   },
   orderInfoSection: {
     gap: 10,
@@ -142,18 +303,36 @@ export const notaryStyles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 9,
-    letterSpacing: 0.8,
-    color: '#64748b',
+    fontWeight: '800',
+    letterSpacing: 0.6,
+    color: '#94a3b8',
     marginBottom: 2,
   },
   infoValue: {
     fontSize: 13,
+    fontWeight: '600',
     color: '#334155',
     lineHeight: 18,
   },
   orderInfoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  locationText: {
+    fontSize: 12,
+    color: '#64748b',
+    flex: 1,
+    lineHeight: 16,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#f1f5f9',
+    marginVertical: 2,
   },
   orderFooter: {
     flexDirection: 'row',
@@ -163,151 +342,335 @@ export const notaryStyles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#f1f5f9',
   },
-avatarGroup: {
+  avatarGroup: {
     flexDirection: 'row',
   },
-miniAvatar: {
+  miniAvatar: {
     width: 24,
     height: 24,
     borderRadius: 12,
     borderWidth: 1.5,
     borderColor: '#fff',
   },
-miniAvatarFallback: {
+  miniAvatarFallback: {
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-miniAvatarText: {
+  miniAvatarText: {
     color: '#fff',
     fontSize: 8,
   },
-viewDetailsBtn: {
+  viewDetailsBtn: {
+    backgroundColor: '#f0f5ff',
+    height: 34,
+    borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 4,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#dce6f4',
   },
-viewDetailsText: {
-    fontSize: 11,
-    color: '#0a49a8',
-    letterSpacing: 0.4,
+  viewDetailsText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.primary,
   },
-statusRefCard: {
+
+  /* ─── Live Badge ─── */
+  liveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 20,
+    gap: 5,
+  },
+  dot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: '#ef4444',
+  },
+
+  /* ─── Search & Filters (aligned with Company) ─── */
+  searchContainer: {
+    marginTop: 20,
+    position: 'relative',
+  },
+  searchBox: {
     backgroundColor: '#f8fafc',
-    borderRadius: 16,
-    padding: 20,
-    gap: 20,
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    marginBottom: 0,
   },
-statusRefItem: {
+  searchInput: {
+    paddingLeft: 38,
+    fontSize: 14,
+    color: '#334155',
+  },
+  searchIcon: {
+    position: 'absolute',
+    left: 13,
+    top: 14,
+    zIndex: 1,
+  },
+  filterRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
+    marginTop: 12,
   },
-statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginTop: 6,
-  },
-tabContainer: {
+  filterBtn: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    marginTop: 16,
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  filterBtnActive: {
+    backgroundColor: '#0a49a8',
+    borderColor: '#0a49a8',
+  },
+  filterBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#334155',
+  },
+  filterBtnTextActive: {
+    color: '#ffffff',
+  },
+
+  /* ─── Stat Cards Summary (for Assigned screen) ─── */
+  statsContainer: {
+    gap: 14,
+    marginTop: 20,
+    marginBottom: 4,
+  },
+  statCardLarge: {
+    padding: 16,
+  },
+  statCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  statLabelLarge: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  statIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#eff6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statValueLargeAssigned: {
+    fontSize: 30,
+    fontWeight: '800',
+    color: '#0f172a',
+    marginTop: 10,
+    lineHeight: 36,
+    letterSpacing: -0.5,
+  },
+  statRowSmall: {
+    flexDirection: 'row',
+    gap: 14,
+  },
+  statCardSmall: {
+    flex: 1,
+    padding: 14,
+    gap: 6,
+  },
+  statLabelSmall: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#64748b',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    lineHeight: 14,
+  },
+  statValueSmall: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#0f172a',
+    lineHeight: 28,
+    letterSpacing: -0.3,
+  },
+
+  /* ─── Tab Container (aligned with Company filter chip aesthetics) ─── */
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#f8fafc',
+    marginTop: 12,
     padding: 3,
     borderRadius: 10,
     gap: 3,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
-tabItem: {
+  tabItem: {
     flex: 1,
     paddingVertical: 8,
     alignItems: 'center',
     borderRadius: 7,
   },
-tabItemActive: {
+  tabItemActive: {
     backgroundColor: '#0a49a8',
   },
-tabText: {
+  tabText: {
     fontSize: 11,
+    fontWeight: '600',
     color: '#64748b',
   },
-tabTextActive: {
+  tabTextActive: {
     color: '#fff',
   },
-detailsHeader: {
+
+  /* ─── Order List ─── */
+  orderList: {
+    gap: 8,
+    marginTop: 16,
+    paddingBottom: 40,
+  },
+
+  /* ─── Status Reference ─── */
+  statusRefCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 14,
+    padding: 16,
+    gap: 16,
+    borderWidth: 1,
+    borderColor: '#e8edf4',
+    ...shadows.sm,
+  },
+  statusRefItem: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 6,
+  },
+
+  /* ─── Order Details ─── */
+  detailsHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 12,
   },
-timelineItem: {
+
+  /* ─── Timeline (mirrored from Company) ─── */
+  timelineItem: {
     flexDirection: 'row',
     gap: 16,
   },
-timelineLeft: {
+  timelineLeft: {
     alignItems: 'center',
   },
-timelineDot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#e2e8f0',
+  timelineDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    backgroundColor: '#ffffff',
+    borderColor: '#cbd5e1',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1,
+    zIndex: 2,
   },
-timelineActiveInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#1d4ed8',
+  timelineDotDone: {
+    borderColor: '#10b981',
+    backgroundColor: '#10b981',
   },
-timelineLine: {
+  timelineDotCurrent: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  timelineActiveInner: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#ffffff',
+  },
+  timelineLine: {
     width: 2,
     flex: 1,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#e2e8f0',
     marginVertical: 4,
   },
-infoStrip: {
+  timelineLineDone: {
+    backgroundColor: '#10b981',
+  },
+
+  /* ─── Info Strips ─── */
+  infoStrip: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 14,
     gap: 12,
   },
-iconCircle: {
+  iconCircle: {
     width: 36,
     height: 36,
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
-scheduleLink: {
+
+  /* ─── Schedule Link ─── */
+  scheduleLink: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 24,
     paddingVertical: 4,
   },
-docItem: {
+
+  /* ─── Document Items ─── */
+  docItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
     gap: 16,
   },
-dateCell: {
+
+  /* ─── Date/Time Cells ─── */
+  dateCell: {
     width: 38,
     height: 38,
     borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
   },
-dateCellActive: {
+  dateCellActive: {
     backgroundColor: '#1d4ed8',
     ...shadows.button,
   },
-dateText: {
+  dateText: {
     fontSize: 14,
     color: '#334155',
   },
-timeButton: {
+  timeButton: {
     width: '31%',
     height: 42,
     borderRadius: 8,
@@ -317,15 +680,17 @@ timeButton: {
     justifyContent: 'center',
     backgroundColor: '#fff',
   },
-timeButtonActive: {
+  timeButtonActive: {
     borderColor: '#2563eb',
     backgroundColor: '#eff6ff',
   },
-timeButtonText: {
+  timeButtonText: {
     fontSize: 13,
     color: '#475569',
   },
-floatingChat: {
+
+  /* ─── Floating Chat ─── */
+  floatingChat: {
     position: 'absolute',
     bottom: 24,
     right: 20,
@@ -337,7 +702,7 @@ floatingChat: {
     justifyContent: 'center',
     ...shadows.lg,
   },
-onlineDotSmall: {
+  onlineDotSmall: {
     position: 'absolute',
     top: 0,
     right: 4,
@@ -348,7 +713,9 @@ onlineDotSmall: {
     borderWidth: 2,
     borderColor: '#0a49a8',
   },
-chatHeader: {
+
+  /* ─── Chat ─── */
+  chatHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
@@ -356,7 +723,7 @@ chatHeader: {
     borderBottomColor: '#f1f5f9',
     backgroundColor: '#fff',
   },
-onlineDot: {
+  onlineDot: {
     position: 'absolute',
     bottom: -2,
     right: -2,
@@ -367,55 +734,55 @@ onlineDot: {
     borderWidth: 3,
     borderColor: '#fff',
   },
-phoneCircle: {
+  phoneCircle: {
     width: 40,
     height: 40,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
-chatMsgWrapper: {
+  chatMsgWrapper: {
     marginBottom: 24,
   },
-chatBubble: {
+  chatBubble: {
     maxWidth: '85%',
     padding: 14,
     borderRadius: 14,
   },
-adminBubble: {
+  adminBubble: {
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#f1f5f9',
     borderTopLeftRadius: 4,
   },
-userBubble: {
+  userBubble: {
     backgroundColor: '#0a49a8',
     borderTopRightRadius: 4,
     ...shadows.sm,
   },
-chatText: {
+  chatText: {
     fontSize: 14,
     lineHeight: 20,
     color: '#334155',
   },
-dateDivider: {
+  dateDivider: {
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: 32,
   },
-dividerLine: {
+  dividerLine: {
     flex: 1,
     height: 1,
     backgroundColor: '#f1f5f9',
   },
-chatInputArea: {
+  chatInputArea: {
     padding: 14,
     paddingBottom: 28,
     backgroundColor: '#fff',
     borderTopWidth: 1,
     borderTopColor: '#f1f5f9',
   },
-chatInputContainer: {
+  chatInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f8fafc',
@@ -423,13 +790,13 @@ chatInputContainer: {
     paddingHorizontal: 8,
     height: 48,
   },
-chatTextInput: {
+  chatTextInput: {
     flex: 1,
     fontSize: 14,
     color: '#1e293b',
     paddingHorizontal: 10,
   },
-sendCircle: {
+  sendCircle: {
     width: 36,
     height: 36,
     borderRadius: 9,

@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
-import { Image, Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
-import { Bell, Search } from 'lucide-react-native';
+import { Calendar, FileText, Search, SlidersHorizontal } from 'lucide-react-native';
+import { AppCard } from '@/components/common/AppCard';
+import { AppHeader } from '@/components/common/AppHeader';
 import { AppInput } from '@/components/common/AppInput';
 import { AppText } from '@/components/common/AppText';
-import { BrandLogo } from '@/components/common/BrandLogo';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
 import { LoadingState } from '@/components/common/LoadingState';
@@ -12,14 +13,17 @@ import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { NotaryOrderCard } from '@/features/notary/components/NotaryOrderCard';
 import { StatusReference } from '@/features/notary/components/StatusReference';
 import { notaryStyles } from '@/features/notary/styles';
+import { useNotaryUIStore } from '@/features/notary/notary-ui.store';
 import { useAsyncResource } from '@/hooks/useAsyncResource';
-import { useAuthStore } from '@/features/auth/auth.store';
 import { getNotaryOrders } from '@/services/orders.service';
+import { colors } from '@/theme';
 
 export function NotaryAssignedScreen() {
-  const [activeTab, setActiveTab] = useState<'ALL ORDERS' | 'ASSIGNED' | 'IN PROGRESS'>('ALL ORDERS');
-  const [search, setSearch] = useState('');
-  const user = useAuthStore((state) => state.user);
+  const activeTab = useNotaryUIStore((s) => s.assignedTab);
+  const setActiveTab = useNotaryUIStore((s) => s.setAssignedTab);
+  const search = useNotaryUIStore((s) => s.assignedSearch);
+  const setSearch = useNotaryUIStore((s) => s.setAssignedSearch);
+
   const { data: orders, loading, error, reload } = useAsyncResource(() => getNotaryOrders(), [], {
     cacheKey: 'notary-orders',
   });
@@ -30,6 +34,15 @@ export function NotaryAssignedScreen() {
     await reload();
     setRefreshing(false);
   };
+
+  const stats = useMemo(() => {
+    const items = orders ?? [];
+    return {
+      total: items.length,
+      assigned: items.filter((o) => o.status === 'Assigned' && !(o.openForAll && !o.assignedNotaryId)).length,
+      inProgress: items.filter((o) => o.status === 'In Progress').length,
+    };
+  }, [orders]);
 
   const filteredOrders = useMemo(() => {
     const items = orders ?? [];
@@ -48,62 +61,82 @@ export function NotaryAssignedScreen() {
   }, [orders, activeTab, search]);
 
   return (
-    <ScreenContainer scroll refreshing={refreshing} onRefresh={() => void handleRefresh()} contentStyle={{ paddingBottom: 16 }}>
-      <View style={notaryStyles.header}>
-        <BrandLogo width={140} />
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <Pressable onPress={() => router.push('/notary/notifications')}><Bell color="#334155" size={24} /></Pressable>
-          <Pressable onPress={() => router.push('/notary/settings')}>
-            {user?.avatarUrl ? (
-              <Image
-                source={{ uri: user.avatarUrl }}
-                style={{ width: 36, height: 36, borderRadius: 18 }}
-              />
-            ) : (
-              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#0a49a8', alignItems: 'center', justifyContent: 'center' }}>
-                <AppText weight="bold" style={{ color: '#fff', fontSize: 12 }}>
-                  {user?.avatarInitials || 'NU'}
-                </AppText>
-              </View>
-            )}
-          </Pressable>
+    <ScreenContainer scroll refreshing={refreshing} onRefresh={() => void handleRefresh()}>
+      <AppHeader onProfilePress={() => router.push('/notary/settings')} />
+
+      <View style={notaryStyles.pageHeader}>
+        <AppText style={notaryStyles.pageTitle}>Assigned Orders</AppText>
+        <AppText style={notaryStyles.pageSubtitle}>Manage your active signing appointments</AppText>
+      </View>
+
+      {/* ── Stats Summary ── */}
+      <View style={notaryStyles.statsContainer}>
+        <AppCard style={notaryStyles.statCardLarge}>
+          <View style={notaryStyles.statCardHeader}>
+            <AppText style={notaryStyles.statLabelLarge}>Total Orders</AppText>
+            <View style={notaryStyles.statIconBox}>
+              <FileText color={colors.primary} size={16} />
+            </View>
+          </View>
+          <AppText style={notaryStyles.statValueLargeAssigned}>{stats.total}</AppText>
+        </AppCard>
+
+        <View style={notaryStyles.statRowSmall}>
+          <AppCard style={notaryStyles.statCardSmall}>
+            <AppText style={notaryStyles.statLabelSmall}>ASSIGNED</AppText>
+            <AppText style={notaryStyles.statValueSmall}>{stats.assigned}</AppText>
+          </AppCard>
+          <AppCard style={notaryStyles.statCardSmall}>
+            <AppText style={notaryStyles.statLabelSmall}>IN PROGRESS</AppText>
+            <AppText style={notaryStyles.statValueSmall}>{stats.inProgress}</AppText>
+          </AppCard>
         </View>
       </View>
 
-      <View style={{ marginTop: 20 }}>
+      {/* ── Search ── */}
+      <View style={notaryStyles.searchContainer}>
+        <Search color="#94a3b8" size={16} style={notaryStyles.searchIcon} />
         <AppInput
-          placeholder="Filter by Order"
-          leftIcon={<Search size={18} color="#94a3b8" />}
-          containerStyle={{ backgroundColor: '#f1f5f9', borderWidth: 0 }}
+          placeholder="Search orders..."
+          style={notaryStyles.searchInput}
+          containerStyle={notaryStyles.searchBox}
           value={search}
           onChangeText={setSearch}
         />
       </View>
 
-      <View style={notaryStyles.tabContainer}>
-        {(['ALL ORDERS', 'ASSIGNED', 'IN PROGRESS'] as const).map((tab) => (
-          <Pressable
-            key={tab}
-            onPress={() => setActiveTab(tab)}
-            style={[notaryStyles.tabItem, activeTab === tab && notaryStyles.tabItemActive]}
-          >
-            <AppText
-              weight="bold"
-              style={[notaryStyles.tabText, activeTab === tab && notaryStyles.tabTextActive]}
+      {/* ── Tab Filters ── */}
+      <View style={notaryStyles.filterRow}>
+        {(['ALL ORDERS', 'ASSIGNED', 'IN PROGRESS'] as const).map((tab) => {
+          const active = activeTab === tab;
+          return (
+            <Pressable
+              key={tab}
+              onPress={() => setActiveTab(tab)}
+              style={[notaryStyles.filterBtn, active && notaryStyles.filterBtnActive]}
             >
-              {tab}
-            </AppText>
-          </Pressable>
-        ))}
+              <SlidersHorizontal color={active ? '#ffffff' : '#64748b'} size={13} />
+              <AppText style={[notaryStyles.filterBtnText, active && notaryStyles.filterBtnTextActive]}>
+                {tab === 'ALL ORDERS' ? 'All' : tab === 'ASSIGNED' ? 'Assigned' : 'In Progress'}
+              </AppText>
+            </Pressable>
+          );
+        })}
       </View>
 
-      <AppText variant="caption" muted weight="bold" style={{ letterSpacing: 1, marginTop: 24, marginBottom: 16 }}>
-        LIVE ORDER BOARD
-      </AppText>
-
+      {/* ── Order List ── */}
       {loading && !orders ? <LoadingState /> : null}
       {error ? <ErrorState message={error} /> : null}
-      {filteredOrders.length ? filteredOrders.map((order) => <NotaryOrderCard key={order.id} order={order} origin="assigned" />) : !loading ? <EmptyState title="No orders matched your filters" /> : null}
+
+      <View style={notaryStyles.orderList}>
+        {filteredOrders.length ? (
+          filteredOrders.map((order) => (
+            <NotaryOrderCard key={order.id} order={order} origin="assigned" />
+          ))
+        ) : (
+          !loading && <EmptyState title="No orders matched your filters" />
+        )}
+      </View>
 
       <StatusReference />
     </ScreenContainer>

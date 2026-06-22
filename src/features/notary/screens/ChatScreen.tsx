@@ -1,6 +1,6 @@
-import { ScrollView, TextInput, View, Pressable, Image, RefreshControl } from 'react-native';
+import { ScrollView, TextInput, View, Pressable, Image, RefreshControl, Platform } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ChevronLeft, Paperclip, Send } from 'lucide-react-native';
+import { ChevronLeft, Send } from 'lucide-react-native';
 import { useState } from 'react';
 import { AppText } from '@/components/common/AppText';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -58,7 +58,7 @@ export function ChatScreen() {
   };
 
   return (
-    <ScreenContainer scroll={false}>
+    <ScreenContainer scroll={false} keyboardBehavior={Platform.OS === 'ios' ? 'padding' : 'padding'}>
       <View style={notaryStyles.chatHeader}>
         <Pressable onPress={() => router.back()}><ChevronLeft color="#64748b" size={24} /></Pressable>
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, marginLeft: 8 }}>
@@ -105,7 +105,6 @@ export function ChatScreen() {
 
       <View style={notaryStyles.chatInputArea}>
         <View style={notaryStyles.chatInputContainer}>
-          <Pressable style={{ padding: 8 }} onPress={() => void reload()}><Paperclip size={20} color="#94a3b8" /></Pressable>
           <TextInput
             placeholder="Type a message..."
             style={notaryStyles.chatTextInput}
