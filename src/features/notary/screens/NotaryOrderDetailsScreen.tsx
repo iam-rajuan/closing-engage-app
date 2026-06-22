@@ -42,17 +42,20 @@ function DetailField({ label, value, icon }: { label: string; value: string; ico
 }
 
 const getDocStatusToneAndLabel = (status?: string) => {
-  const s = status?.toLowerCase() || '';
-  if (s.includes('approved') || s.includes('verified')) {
-    return { tone: 'green' as const, label: 'Approved' };
+  const normalized = status?.trim().toLowerCase() ?? '';
+  if (normalized === 'approved' || normalized === 'verified') {
+    return { tone: 'green' as const, label: 'Accepted' };
   }
-  if (s.includes('rejected')) {
+  if (normalized === 'rejected') {
     return { tone: 'red' as const, label: 'Rejected' };
   }
-  if (s.includes('review') || s.includes('submitted')) {
-    return { tone: 'orange' as const, label: 'Under Review' };
+  if (normalized === 'submitted') {
+    return { tone: 'blue' as const, label: 'Submitted' };
   }
-  return { tone: 'blue' as const, label: status || 'Pending' };
+  if (normalized.includes('pending') || normalized.includes('review')) {
+    return { tone: 'orange' as const, label: 'Pending Review' };
+  }
+  return { tone: 'gray' as const, label: status?.trim() || 'Pending' };
 };
 
 const firstParam = (value?: string | string[]) => (Array.isArray(value) ? value[0] : value);
@@ -378,12 +381,6 @@ export function NotaryOrderDetailsScreen() {
                               {doc.name}
                             </AppText>
                             <AppText variant="caption" muted style={styles.documentMeta} numberOfLines={1} maxFontSizeMultiplier={1.05}>{doc.meta} • Provided by Company</AppText>
-                            <Badge
-                              label={getDocStatusToneAndLabel(doc.status).label.toUpperCase()}
-                              tone={getDocStatusToneAndLabel(doc.status).tone}
-                              size="small"
-                              style={styles.docBadge}
-                            />
                           </View>
                           
                           <View style={styles.rightActionContainer}>
@@ -420,13 +417,17 @@ export function NotaryOrderDetailsScreen() {
                             <AppText weight="semibold" numberOfLines={1} ellipsizeMode="middle" style={styles.documentName} maxFontSizeMultiplier={1.1}>
                               {doc.name}
                             </AppText>
-                            <AppText variant="caption" muted style={styles.documentMeta} numberOfLines={1} maxFontSizeMultiplier={1.05}>{doc.meta} • Provided by Notary</AppText>
-                            <Badge
-                              label={getDocStatusToneAndLabel(doc.status).label.toUpperCase()}
-                              tone={getDocStatusToneAndLabel(doc.status).tone}
-                              size="small"
-                              style={styles.docBadge}
-                            />
+                            <AppText variant="caption" muted style={styles.documentMeta} numberOfLines={1} maxFontSizeMultiplier={1.05}>
+                              {doc.meta} • Provided by Notary
+                            </AppText>
+                            <View style={styles.docBadgeRow}>
+                              <Badge
+                                label={getDocStatusToneAndLabel(doc.status).label}
+                                tone={getDocStatusToneAndLabel(doc.status).tone}
+                                size="small"
+                                style={styles.docBadge}
+                              />
+                            </View>
                           </View>
 
                           <View style={styles.rightActionContainer}>
@@ -884,8 +885,11 @@ const styles = StyleSheet.create({
     gap: 8,
     flexShrink: 0,
   },
-  docBadge: {
+  docBadgeRow: {
     marginTop: 6,
+    alignSelf: 'flex-start',
+  },
+  docBadge: {
     alignSelf: 'flex-start',
   },
   headerPadding: {
