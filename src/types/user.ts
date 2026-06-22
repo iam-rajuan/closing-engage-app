@@ -20,4 +20,9 @@ export type User = {
   accountType?: 'owner' | 'team-member';
   memberRole?: 'Admin' | 'Member';
   permissions: UserPermissions;
+  notifications?: {
+    email: boolean;
+    orders: boolean;
+    documents: boolean;
+  };
 };

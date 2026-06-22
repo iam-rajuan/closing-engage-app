@@ -58,6 +58,17 @@ const normalizeCompanyUser = (input: Record<string, unknown>): User => {
       viewOrders: Boolean((input.permissions as User['permissions'] | undefined)?.viewOrders ?? true),
       downloadDocuments: Boolean((input.permissions as User['permissions'] | undefined)?.downloadDocuments ?? true),
     },
+    notifications: input.notifications
+      ? {
+          email: Boolean((input.notifications as any).email ?? true),
+          orders: Boolean((input.notifications as any).orders ?? true),
+          documents: Boolean((input.notifications as any).documents ?? false),
+        }
+      : {
+          email: true,
+          orders: true,
+          documents: false,
+        },
   };
 };
 
@@ -84,6 +95,17 @@ const normalizeNotaryUser = (input: Record<string, unknown>): User => {
       viewOrders: true,
       downloadDocuments: true,
     },
+    notifications: input.notifications
+      ? {
+          email: Boolean((input.notifications as any).email ?? true),
+          orders: Boolean((input.notifications as any).orders ?? true),
+          documents: Boolean((input.notifications as any).documents ?? false),
+        }
+      : {
+          email: true,
+          orders: true,
+          documents: false,
+        },
   };
 };
 
@@ -126,6 +148,11 @@ export async function updateCompanyProfile(input: {
   contactEmail?: string;
   address?: string;
   avatarUrl?: string;
+  notifications?: {
+    email: boolean;
+    orders: boolean;
+    documents: boolean;
+  };
 }) {
   const result = await unwrap<{ company: Record<string, unknown> }>(
     api.patch('/api/v1/auth/company/profile', input),
@@ -142,6 +169,11 @@ export async function updateNotaryProfile(input: {
   expiry?: string;
   serviceArea?: string;
   avatarUrl?: string;
+  notifications?: {
+    email: boolean;
+    orders: boolean;
+    documents: boolean;
+  };
 }) {
   const result = await unwrap<{ notary: Record<string, unknown> }>(
     api.patch('/api/v1/auth/notary/profile', input),

@@ -61,14 +61,24 @@ function InputField({
   );
 }
 
-function ToggleItem({ label, defaultOn = false }: { label: string; defaultOn?: boolean }) {
-  const [enabled, setEnabled] = useState(defaultOn);
+function ToggleItem({
+  label,
+  value,
+  onValueChange,
+  disabled,
+}: {
+  label: string;
+  value: boolean;
+  onValueChange: (val: boolean) => void;
+  disabled?: boolean;
+}) {
   return (
     <View style={s.toggleRow}>
       <AppText weight="bold" style={s.toggleLabel}>{label}</AppText>
       <Switch
-        value={enabled}
-        onValueChange={setEnabled}
+        value={value}
+        onValueChange={onValueChange}
+        disabled={disabled}
         trackColor={{ true: '#0a49a8', false: '#e2e8f0' }}
         thumbColor={Platform.OS === 'ios' ? undefined : '#fff'}
         ios_backgroundColor="#e2e8f0"
@@ -85,6 +95,11 @@ type CompanyForm = {
   contactEmail: string;
   address: string;
   avatarUrl: string;
+  notifications: {
+    email: boolean;
+    orders: boolean;
+    documents: boolean;
+  };
 };
 
 type NotaryForm = {
@@ -96,6 +111,11 @@ type NotaryForm = {
   expiry: string;
   serviceArea: string;
   avatarUrl: string;
+  notifications: {
+    email: boolean;
+    orders: boolean;
+    documents: boolean;
+  };
 };
 
 type PasswordForm = {
@@ -128,6 +148,7 @@ export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
     contactEmail: user?.email || '',
     address: '',
     avatarUrl: user?.avatarUrl || '',
+    notifications: user?.notifications || { email: true, orders: true, documents: false },
   }), [user]);
 
   const initialNotaryForm = useMemo<NotaryForm>(() => ({
@@ -139,6 +160,7 @@ export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
     expiry: '',
     serviceArea: '',
     avatarUrl: user?.avatarUrl || '',
+    notifications: user?.notifications || { email: true, orders: true, documents: false },
   }), [user]);
 
   const [companyForm, setCompanyForm] = useState<CompanyForm>(initialCompanyForm);
@@ -306,11 +328,83 @@ export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
       <View style={s.section}>
         <SectionTitle icon={<Bell color="#0a49a8" size={18} />} title="Notification Preferences" />
         <AppCard style={s.toggleCard}>
-          <ToggleItem label="Email Notifications" defaultOn />
-          <View style={s.divider} />
-          <ToggleItem label="Order Updates" defaultOn />
-          <View style={s.divider} />
-          <ToggleItem label="Document Updates" />
+          {isNotary ? (
+            <>
+              <ToggleItem
+                label="Email Notifications"
+                value={notaryForm.notifications?.email ?? true}
+                onValueChange={(val) =>
+                  setNotaryForm((curr) => ({
+                    ...curr,
+                    notifications: { ...curr.notifications, email: val },
+                  }))
+                }
+                disabled={!isEditing}
+              />
+              <View style={s.divider} />
+              <ToggleItem
+                label="Order Updates"
+                value={notaryForm.notifications?.orders ?? true}
+                onValueChange={(val) =>
+                  setNotaryForm((curr) => ({
+                    ...curr,
+                    notifications: { ...curr.notifications, orders: val },
+                  }))
+                }
+                disabled={!isEditing}
+              />
+              <View style={s.divider} />
+              <ToggleItem
+                label="Document Updates"
+                value={notaryForm.notifications?.documents ?? false}
+                onValueChange={(val) =>
+                  setNotaryForm((curr) => ({
+                    ...curr,
+                    notifications: { ...curr.notifications, documents: val },
+                  }))
+                }
+                disabled={!isEditing}
+              />
+            </>
+          ) : (
+            <>
+              <ToggleItem
+                label="Email Notifications"
+                value={companyForm.notifications?.email ?? true}
+                onValueChange={(val) =>
+                  setCompanyForm((curr) => ({
+                    ...curr,
+                    notifications: { ...curr.notifications, email: val },
+                  }))
+                }
+                disabled={!isEditing}
+              />
+              <View style={s.divider} />
+              <ToggleItem
+                label="Order Updates"
+                value={companyForm.notifications?.orders ?? true}
+                onValueChange={(val) =>
+                  setCompanyForm((curr) => ({
+                    ...curr,
+                    notifications: { ...curr.notifications, orders: val },
+                  }))
+                }
+                disabled={!isEditing}
+              />
+              <View style={s.divider} />
+              <ToggleItem
+                label="Document Updates"
+                value={companyForm.notifications?.documents ?? false}
+                onValueChange={(val) =>
+                  setCompanyForm((curr) => ({
+                    ...curr,
+                    notifications: { ...curr.notifications, documents: val },
+                  }))
+                }
+                disabled={!isEditing}
+              />
+            </>
+          )}
         </AppCard>
       </View>
 

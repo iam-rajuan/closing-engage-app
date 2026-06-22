@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFocusEffect } from '@react-navigation/native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -15,6 +15,7 @@ import { ErrorState } from '@/components/common/ErrorState';
 import { LoadingState } from '@/components/common/LoadingState';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { TeamMemberCard } from '@/components/team/TeamMemberCard';
+import { useAuthStore } from '@/features/auth/auth.store';
 import { createTeamMember, deleteTeamMember, getTeamMembers, updateTeamMember } from '@/services/team.service';
 import { styles } from '@/features/shared/styles/screenStyles';
 import { colors, spacing } from '@/theme';
@@ -40,21 +41,32 @@ const defaultPermissions: MemberPermissions = {
 const roleFilterOptions: RoleFilter[] = ['All', 'Admin', 'Member'];
 const statusFilterOptions: StatusFilter[] = ['Mixed', 'Active', 'Pending Invite', 'Inactive'];
 
+let localTeamMembersCache: TeamMember[] | null = null;
+
 function useTeamMembers() {
-  const [members, setMembers] = useState<TeamMember[]>([]);
-  const [loading, setLoading] = useState(true);
+  const token = useAuthStore((state) => state.token);
+  const [members, setMembers] = useState<TeamMember[]>(localTeamMembersCache || []);
+  const [loading, setLoading] = useState(!localTeamMembersCache);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Clear cache on logout/token change
+  useEffect(() => {
+    if (!token) {
+      localTeamMembersCache = null;
+    }
+  }, [token]);
 
   const load = useCallback(async (isRefresh = false) => {
     if (isRefresh) {
       setRefreshing(true);
-    } else {
+    } else if (!localTeamMembersCache) {
       setLoading(true);
     }
 
     try {
       const result = await getTeamMembers();
+      localTeamMembersCache = result;
       setMembers(result);
       setError(null);
     } catch (loadError) {
@@ -67,7 +79,9 @@ function useTeamMembers() {
 
   useFocusEffect(
     useCallback(() => {
-      void load();
+      if (!localTeamMembersCache) {
+        void load();
+      }
     }, [load]),
   );
 
@@ -128,6 +142,7 @@ function TeamMemberForm({
         });
 
         if (!result.inviteDelivered) {
+          localTeamMembersCache = null;
           router.replace({
             pathname: '/company/team',
             params: {
@@ -140,6 +155,7 @@ function TeamMemberForm({
         }
       }
 
+      localTeamMembersCache = null;
       router.replace({
         pathname: '/company/team',
         params: {
@@ -435,6 +451,9 @@ export function TeamScreen() {
     try {
       await deleteTeamMember(memberToDelete.email);
       setMembers((current) => current.filter((member) => member.email !== memberToDelete.email));
+      if (localTeamMembersCache) {
+        localTeamMembersCache = localTeamMembersCache.filter((member) => member.email !== memberToDelete.email);
+      }
       setMemberToDelete(null);
     } catch (deleteError) {
       router.replace({
