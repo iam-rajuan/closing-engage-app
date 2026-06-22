@@ -1,10 +1,14 @@
+import { useEffect } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { Bell, ChevronLeft, MessageCircle } from 'lucide-react-native';
 import { router, useNavigation, type Href } from 'expo-router';
 import { useAuthStore } from '@/features/auth/auth.store';
+import { useNotificationStore } from '@/features/shared/notifications.store';
 import { colors, spacing } from '@/theme';
 import { BrandLogo } from './BrandLogo';
 import { AppText } from './AppText';
+
+const UNREAD_POLL_INTERVAL = 30000;
 
 type Props = {
   title?: string;
@@ -43,8 +47,21 @@ export function AppHeader({
 }: Props) {
   const navigation = useNavigation();
   const user = useAuthStore((state) => state.user);
+  const unreadCount = useNotificationStore((state) => state.unreadCount);
+  const refreshUnread = useNotificationStore((state) => state.refreshUnread);
   const resolvedName = name === "Alex Thompson" ? user?.fullName || user?.name || name : name;
   const resolvedAvatar = avatar || user?.avatarUrl;
+
+  const showBell = !back && showNotifications;
+
+  useEffect(() => {
+    if (!showBell || !user) return;
+    void refreshUnread();
+    const intervalId = setInterval(() => void refreshUnread(), UNREAD_POLL_INTERVAL);
+    return () => clearInterval(intervalId);
+  }, [showBell, user, refreshUnread]);
+
+  const unreadLabel = unreadCount > 99 ? '99+' : String(unreadCount);
   
   const initials = resolvedName
     .split(' ')
@@ -124,9 +141,14 @@ export function AppHeader({
       </View>
 
       <View style={styles.right}>
-        {!back && showNotifications && (
+        {showBell && (
           <Pressable onPress={handleNotificationPress} style={styles.bellButton}>
             <Bell color={colors.textMuted} size={22} />
+            {unreadCount > 0 ? (
+              <View style={styles.badge}>
+                <AppText weight="bold" style={styles.badgeText} numberOfLines={1}>{unreadLabel}</AppText>
+              </View>
+            ) : null}
           </Pressable>
         )}
         {!centerTitle && showProfile && (
@@ -208,6 +230,25 @@ const styles = StyleSheet.create({
   },
   bellButton: {
     padding: 2,
+  },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -5,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 4,
+    backgroundColor: '#dc2626',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.background,
+  },
+  badgeText: {
+    color: colors.white,
+    fontSize: 10,
+    lineHeight: 12,
   },
   avatarContainer: {
     width: 34,

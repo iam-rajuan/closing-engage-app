@@ -402,8 +402,8 @@ export function NotaryOrderDetailsScreen() {
               </AppCard>
             </View>
 
-            {/* ── Documents ── */}
-            {(() => {
+            {/* ── Documents (hidden in open-order view-only mode) ── */}
+            {!isOpenOrder ? (() => {
               const companyDocs = order.documents?.filter(
                 (doc) => doc.uploadedBy?.toLowerCase() === 'title company' || doc.uploadedBy?.toLowerCase() === 'admin' || !doc.uploadedBy
               ) ?? [];
@@ -557,7 +557,7 @@ export function NotaryOrderDetailsScreen() {
                   </View>
                 </>
               );
-            })()}
+            })() : null}
 
             {/* ── Upload Scanbacks ── */}
             {!isOpenOrder ? (
@@ -659,7 +659,8 @@ export function NotaryOrderDetailsScreen() {
               </View>
             )}
 
-            {/* ── Order Status Timeline (mirrored from Company) ── */}
+            {/* ── Order Status Timeline (hidden in open-order view-only mode) ── */}
+            {!isOpenOrder ? (
             <View style={styles.detailsSection}>
               <AppText weight="semibold" style={styles.detailsSectionTitle} maxFontSizeMultiplier={1.1}>
                 Order Status
@@ -705,8 +706,10 @@ export function NotaryOrderDetailsScreen() {
                 })}
               </AppCard>
             </View>
+            ) : null}
 
-            {/* ── Activity Log (mirrored from Company) ── */}
+            {/* ── Activity Log (hidden in open-order view-only mode) ── */}
+            {!isOpenOrder ? (
             <View style={styles.detailsSection}>
               <AppText weight="semibold" style={styles.detailsSectionTitle} maxFontSizeMultiplier={1.1}>
                 Activity Log
@@ -777,6 +780,7 @@ export function NotaryOrderDetailsScreen() {
                 })()}
               </AppCard>
             </View>
+            ) : null}
           </>
         ) : null}
       </ScrollView>

@@ -1,4 +1,4 @@
-import { ReactNode, useMemo, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { router } from 'expo-router';
 import { Bell, CheckCheck, CircleDot, FileText, ShieldCheck } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -11,6 +11,7 @@ import { ErrorState } from '@/components/common/ErrorState';
 import { LoadingState } from '@/components/common/LoadingState';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { useAuthStore } from '@/features/auth/auth.store';
+import { useNotificationStore } from '@/features/shared/notifications.store';
 import { useAsyncResource } from '@/hooks/useAsyncResource';
 import { getNotifications, markAllNotificationsRead, markNotificationRead } from '@/services/notifications.service';
 import { colors, spacing } from '@/theme';
@@ -45,6 +46,11 @@ export function NotificationsScreen() {
   });
 
   const unreadCount = useMemo(() => (notifications ?? []).filter((item) => !item.read).length, [notifications]);
+  const setUnreadCount = useNotificationStore((state) => state.setUnreadCount);
+
+  useEffect(() => {
+    if (notifications) setUnreadCount(unreadCount);
+  }, [notifications, unreadCount, setUnreadCount]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
