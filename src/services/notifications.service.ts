@@ -13,3 +13,7 @@ export async function markNotificationRead(id: string) {
 export async function markAllNotificationsRead() {
   await unwrap<Record<string, never>>(api.patch('/api/v1/notifications/read-all'));
 }
+
+export async function clearAllNotifications() {
+  await unwrap<Record<string, never>>(api.delete('/api/v1/notifications/clear-all'));
+}

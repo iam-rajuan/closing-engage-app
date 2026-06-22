@@ -83,6 +83,7 @@ export function NotaryOrderDetailsScreen() {
     cacheKey: `order:${orderId}`,
   });
   const isOpenOrder = Boolean(order?.openForAll && !order?.assignedNotaryId);
+  const isOpenOrderPreview = source === 'notifications' && isOpenOrder;
   const [selectedFile, setSelectedFile] = useState<{
     uri: string;
     name: string;
@@ -223,7 +224,6 @@ export function NotaryOrderDetailsScreen() {
           // The order is already assigned, so a fresh detail fetch is optional here.
         }
       }
-      Alert.alert('Order accepted', 'This order is now assigned to you.');
     } catch (caught) {
       Alert.alert(
         'Unable to accept order',
@@ -402,8 +402,8 @@ export function NotaryOrderDetailsScreen() {
               </AppCard>
             </View>
 
-            {/* ── Documents (hidden in open-order view-only mode) ── */}
-            {!isOpenOrder ? (() => {
+            {/* ── Documents ── */}
+            {!isOpenOrderPreview ? (() => {
               const companyDocs = order.documents?.filter(
                 (doc) => doc.uploadedBy?.toLowerCase() === 'title company' || doc.uploadedBy?.toLowerCase() === 'admin' || !doc.uploadedBy
               ) ?? [];
@@ -560,7 +560,7 @@ export function NotaryOrderDetailsScreen() {
             })() : null}
 
             {/* ── Upload Scanbacks ── */}
-            {!isOpenOrder ? (
+            {!isOpenOrderPreview ? (
               <View style={styles.detailsSection}>
                 <AppText weight="semibold" style={styles.detailsSectionTitle} maxFontSizeMultiplier={1.1}>Upload Scanbacks</AppText>
                 
@@ -597,7 +597,7 @@ export function NotaryOrderDetailsScreen() {
             ) : null}
 
             {/* ── Action Buttons ── */}
-            {isOpenOrder ? (
+            {isOpenOrderPreview ? (
               <View style={styles.actionsContainer}>
                 <Pressable
                   style={[styles.btnHalf, styles.btnPrimary, { flex: 1 }]}
@@ -609,7 +609,7 @@ export function NotaryOrderDetailsScreen() {
                   </AppText>
                 </Pressable>
               </View>
-            ) : (
+            ) : !isOpenOrder ? (
               <View style={styles.actionsContainer}>
                 <Pressable
                   style={[
@@ -657,10 +657,10 @@ export function NotaryOrderDetailsScreen() {
                   )}
                 </Pressable>
               </View>
-            )}
+            ) : null}
 
             {/* ── Order Status Timeline (hidden in open-order view-only mode) ── */}
-            {!isOpenOrder ? (
+            {!isOpenOrderPreview ? (
             <View style={styles.detailsSection}>
               <AppText weight="semibold" style={styles.detailsSectionTitle} maxFontSizeMultiplier={1.1}>
                 Order Status
@@ -709,7 +709,7 @@ export function NotaryOrderDetailsScreen() {
             ) : null}
 
             {/* ── Activity Log (hidden in open-order view-only mode) ── */}
-            {!isOpenOrder ? (
+            {!isOpenOrderPreview ? (
             <View style={styles.detailsSection}>
               <AppText weight="semibold" style={styles.detailsSectionTitle} maxFontSizeMultiplier={1.1}>
                 Activity Log
@@ -785,7 +785,7 @@ export function NotaryOrderDetailsScreen() {
         ) : null}
       </ScrollView>
 
-      {!isOpenOrder && order ? (
+      {!isOpenOrderPreview && !isOpenOrder ? (
         <Pressable
           style={notaryStyles.floatingChat}
           onPress={() => router.push(`/notary/assigned/chat?orderId=${encodeURIComponent(orderId)}`)}

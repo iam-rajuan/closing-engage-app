@@ -1,8 +1,7 @@
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { router } from 'expo-router';
-import { Bell, CheckCheck, CircleDot, FileText, ShieldCheck } from 'lucide-react-native';
+import { Bell, CheckCheck, CircleDot, FileText, ShieldCheck, Trash2 } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { AppButton } from '@/components/common/AppButton';
 import { AppCard } from '@/components/common/AppCard';
 import { AppHeader } from '@/components/common/AppHeader';
 import { AppText } from '@/components/common/AppText';
@@ -13,7 +12,12 @@ import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { useNotificationStore } from '@/features/shared/notifications.store';
 import { useAsyncResource } from '@/hooks/useAsyncResource';
-import { getNotifications, markAllNotificationsRead, markNotificationRead } from '@/services/notifications.service';
+import {
+  clearAllNotifications,
+  getNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+} from '@/services/notifications.service';
 import { colors, spacing } from '@/theme';
 import { NotificationItem } from '@/types/notification';
 
@@ -40,12 +44,14 @@ const normalizeLinkId = (linkId?: string) => (linkId || '').replace(/^#/, '');
 export function NotificationsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [markingAll, setMarkingAll] = useState(false);
+  const [clearingAll, setClearingAll] = useState(false);
   const user = useAuthStore((state) => state.user);
   const { data: notifications, loading, error, reload } = useAsyncResource(() => getNotifications(), [], {
     cacheKey: `notifications:${user?.role ?? 'guest'}`,
   });
 
   const unreadCount = useMemo(() => (notifications ?? []).filter((item) => !item.read).length, [notifications]);
+  const hasNotifications = (notifications?.length ?? 0) > 0;
   const setUnreadCount = useNotificationStore((state) => state.setUnreadCount);
 
   useEffect(() => {
@@ -93,7 +99,7 @@ export function NotificationsScreen() {
   };
 
   const handleMarkAll = async () => {
-    if (!unreadCount || markingAll) {
+    if (!unreadCount || markingAll || clearingAll) {
       return;
     }
 
@@ -103,6 +109,21 @@ export function NotificationsScreen() {
       await reload();
     } finally {
       setMarkingAll(false);
+    }
+  };
+
+  const handleClearAll = async () => {
+    if (!notifications?.length || clearingAll || markingAll) {
+      return;
+    }
+
+    setClearingAll(true);
+    try {
+      await clearAllNotifications();
+      await reload();
+      setUnreadCount(0);
+    } finally {
+      setClearingAll(false);
     }
   };
 
@@ -120,15 +141,47 @@ export function NotificationsScreen() {
             {unreadCount ? `${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}` : 'All notifications are read'}
           </AppText>
         </View>
-        <AppButton
-          title={markingAll ? 'Updating...' : 'Mark all read'}
-          variant="secondary"
-          onPress={() => void handleMarkAll()}
-          disabled={!unreadCount || markingAll}
-          icon={<CheckCheck color={colors.primary} size={16} />}
-          style={styles.markAllButton}
-          textStyle={styles.markAllButtonText}
-        />
+        <View style={styles.summaryActions}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.summaryActionButton,
+              styles.markAllButton,
+              (!unreadCount || markingAll || clearingAll) && styles.summaryActionDisabled,
+              pressed && unreadCount > 0 && !markingAll && !clearingAll ? styles.summaryActionPressed : null,
+            ]}
+            onPress={() => void handleMarkAll()}
+            disabled={!unreadCount || markingAll || clearingAll}
+          >
+            {markingAll ? (
+              <AppText weight="bold" style={styles.summaryActionText}>Updating...</AppText>
+            ) : (
+              <>
+                <CheckCheck color={colors.primary} size={16} />
+                <AppText weight="bold" style={styles.summaryActionText}>Mark all read</AppText>
+              </>
+            )}
+          </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.summaryActionButton,
+              styles.clearAllButton,
+              (!hasNotifications || clearingAll || markingAll) && styles.summaryActionDisabled,
+              pressed && hasNotifications && !clearingAll && !markingAll ? styles.summaryActionPressed : null,
+            ]}
+            onPress={() => void handleClearAll()}
+            disabled={!hasNotifications || clearingAll || markingAll}
+          >
+            {clearingAll ? (
+              <AppText weight="bold" style={styles.clearAllButtonText}>Clearing...</AppText>
+            ) : (
+              <>
+                <Trash2 color="#b91c1c" size={16} />
+                <AppText weight="bold" style={styles.clearAllButtonText}>Clear all</AppText>
+              </>
+            )}
+          </Pressable>
+        </View>
       </View>
 
       {loading && !notifications ? <LoadingState /> : null}
@@ -198,14 +251,45 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 17,
   },
-  markAllButton: {
+  summaryActions: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  summaryActionButton: {
     minHeight: 38,
     paddingHorizontal: 12,
-    borderRadius: 10,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
   },
-  markAllButtonText: {
+  markAllButton: {
+    backgroundColor: '#eff6ff',
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+  },
+  clearAllButton: {
+    backgroundColor: '#fff1f2',
+    borderWidth: 1,
+    borderColor: '#fecdd3',
+  },
+  summaryActionText: {
     fontSize: 12,
     fontWeight: '700',
+    color: '#0a49a8',
+  },
+  clearAllButtonText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#b91c1c',
+  },
+  summaryActionDisabled: {
+    opacity: 0.45,
+  },
+  summaryActionPressed: {
+    transform: [{ scale: 0.98 }],
   },
   list: {
     gap: spacing.md,
