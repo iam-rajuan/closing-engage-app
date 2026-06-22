@@ -90,6 +90,7 @@ export function NotaryOrderDetailsScreen() {
     localUri: string;
     mimeType: string;
   } | null>(null);
+  const [resubmitSuccessVisible, setResubmitSuccessVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [activityExpanded, setActivityExpanded] = useState(false);
   const [showUploadSuccess, setShowUploadSuccess] = useState(false);
@@ -122,7 +123,7 @@ export function NotaryOrderDetailsScreen() {
       setResubmittingDocumentId(docId);
       await resubmitDocument(docId);
       await reload();
-      Alert.alert('Scanback resubmitted', 'Your rejected scanback was sent back for admin review.');
+      setResubmitSuccessVisible(true);
     } catch (error) {
       Alert.alert(
         'Unable to resubmit',
@@ -765,6 +766,12 @@ export function NotaryOrderDetailsScreen() {
         title="Upload Complete"
         description="Your scanback documents were uploaded successfully."
         onClose={() => setShowUploadSuccess(false)}
+      />
+      <SuccessModal
+        visible={resubmitSuccessVisible}
+        title="Scanback Resubmitted"
+        description="Your rejected scanback was sent back for admin review."
+        onClose={() => setResubmitSuccessVisible(false)}
       />
     </ScreenContainer>
   );
