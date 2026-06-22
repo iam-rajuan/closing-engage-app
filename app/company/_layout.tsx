@@ -1,10 +1,13 @@
+import { Platform } from 'react-native';
 import { Redirect, Tabs } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BriefcaseBusiness, FileText, Home, Settings, Users } from 'lucide-react-native';
 import { colors } from '@/theme';
 import { useAuthStore } from '@/features/auth/auth.store';
 
 export default function CompanyLayout() {
   const user = useAuthStore((state) => state.user);
+  const insets = useSafeAreaInsets();
   
   if (!user || user.role !== 'company') return <Redirect href="/auth/login" />;
 
@@ -15,8 +18,8 @@ export default function CompanyLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: { 
-          height: 64, 
-          paddingBottom: 8, 
+          height: 64 + (insets.bottom > 0 ? insets.bottom + 4 : 4), 
+          paddingBottom: insets.bottom > 0 ? insets.bottom + 12 : 12, 
           paddingTop: 8, 
           backgroundColor: colors.surface,
           borderTopWidth: 1,

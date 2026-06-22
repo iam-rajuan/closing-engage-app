@@ -1,6 +1,7 @@
 import { PropsWithChildren } from 'react';
 import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, StyleSheet, ViewStyle } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Edge, SafeAreaView } from 'react-native-safe-area-context';
+import { useSegments } from 'expo-router';
 import { colors, spacing } from '@/theme';
 
 type Props = PropsWithChildren<{
@@ -10,6 +11,7 @@ type Props = PropsWithChildren<{
   onRefresh?: () => void;
   keyboardBehavior?: 'padding' | 'height' | 'position';
   keyboardVerticalOffset?: number;
+  excludeBottomSafeArea?: boolean;
 }>;
 
 export function ScreenContainer({
@@ -20,6 +22,7 @@ export function ScreenContainer({
   onRefresh,
   keyboardBehavior,
   keyboardVerticalOffset,
+  excludeBottomSafeArea,
 }: Props) {
   const content = scroll ? (
     <ScrollView 
@@ -38,8 +41,20 @@ export function ScreenContainer({
   ) : (
     children
   );
+
+  const segments = useSegments();
+  const isTabScreen = segments[0] === 'notary' || segments[0] === 'company';
+  
+  const shouldExcludeBottom = excludeBottomSafeArea !== undefined
+    ? excludeBottomSafeArea
+    : isTabScreen;
+
+  const edges: Edge[] = shouldExcludeBottom
+    ? ['top', 'left', 'right']
+    : ['top', 'left', 'right', 'bottom'];
+
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView edges={edges} style={styles.safe}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={keyboardBehavior ?? (Platform.OS === 'ios' ? 'padding' : undefined)}

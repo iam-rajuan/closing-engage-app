@@ -1,4 +1,6 @@
+import { Platform } from 'react-native';
 import { Redirect, Tabs } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   BadgeCheck,
   BriefcaseBusiness,
@@ -11,6 +13,8 @@ import { useAuthStore } from '@/features/auth/auth.store';
 
 export default function NotaryLayout() {
   const user = useAuthStore((state) => state.user);
+  const insets = useSafeAreaInsets();
+
   if (!user || user.role !== 'notary') return <Redirect href="/auth/login" />;
 
   return (
@@ -20,8 +24,8 @@ export default function NotaryLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
-          height: 64,
-          paddingBottom: 8,
+          height: 64 + (insets.bottom > 0 ? insets.bottom + 4 : 4),
+          paddingBottom: insets.bottom > 0 ? insets.bottom + 12 : 12,
           paddingTop: 8,
           backgroundColor: colors.surface,
           borderTopWidth: 1,
