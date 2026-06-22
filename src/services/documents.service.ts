@@ -71,6 +71,13 @@ export async function getDocumentDownloadUrl(documentId: string) {
   return result.url;
 }
 
+export async function resubmitDocument(documentId: string) {
+  const result = await unwrap<BackendDocument>(
+    api.post(`/api/v1/documents/${encodeURIComponent(documentId)}/resubmit`),
+  );
+  return normalizeDocument(result);
+}
+
 export async function uploadDocumentBinary(input: {
   orderNumber: string;
   file: {

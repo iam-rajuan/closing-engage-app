@@ -2,7 +2,7 @@ import { Alert, ActivityIndicator, BackHandler, Pressable, RefreshControl, Scrol
 import { router, useLocalSearchParams } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
-import { ArrowRight, Building, Calendar, CheckCircle2, CloudUpload, Download, FileText, Info, MapPin, MessagesSquare, Send, Trash2, UserRound } from 'lucide-react-native';
+import { ArrowRight, Building, Calendar, CheckCircle2, CloudUpload, Download, FileText, Info, MapPin, MessagesSquare, RefreshCcw, Send, Trash2, UserRound } from 'lucide-react-native';
 import { getDocumentDownloadUrl } from '@/services/documents.service';
 import { downloadFileToDevice } from '@/utils/fileDownload';
 import { DownloadSuccessModal } from '@/components/common/DownloadSuccessModal';
@@ -19,7 +19,7 @@ import { LoadingState } from '@/components/common/LoadingState';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { notaryStyles } from '@/features/notary/styles';
 import { useAsyncResource } from '@/hooks/useAsyncResource';
-import { uploadDocumentBinary } from '@/services/documents.service';
+import { resubmitDocument, uploadDocumentBinary } from '@/services/documents.service';
 import { acceptOpenOrder, confirmPrintedDocuments, getOrderById } from '@/services/orders.service';
 import { colors } from '@/theme';
 import { pickDocument } from '@/utils/fileUpload';
@@ -84,6 +84,7 @@ export function NotaryOrderDetailsScreen() {
   } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [downloadingDocId, setDownloadingDocId] = useState<string | null>(null);
+  const [resubmittingDocumentId, setResubmittingDocumentId] = useState<string | null>(null);
   const [downloadSuccess, setDownloadSuccess] = useState<{
     name: string;
     localUri: string;
@@ -113,6 +114,22 @@ export function NotaryOrderDetailsScreen() {
       );
     } finally {
       setDownloadingDocId(null);
+    }
+  };
+
+  const handleResubmit = async (docId: string) => {
+    try {
+      setResubmittingDocumentId(docId);
+      await resubmitDocument(docId);
+      await reload();
+      Alert.alert('Scanback resubmitted', 'Your rejected scanback was sent back for admin review.');
+    } catch (error) {
+      Alert.alert(
+        'Unable to resubmit',
+        error instanceof Error ? error.message : 'Please try again.'
+      );
+    } finally {
+      setResubmittingDocumentId(null);
     }
   };
 
@@ -384,6 +401,25 @@ export function NotaryOrderDetailsScreen() {
                           </View>
                           
                           <View style={styles.rightActionContainer}>
+                            {doc.status === 'Rejected' && doc.id ? (
+                              <Pressable
+                                style={({ pressed }) => [
+                                  styles.resubmitBtn,
+                                  pressed && resubmittingDocumentId !== doc.id && styles.resubmitBtnPressed,
+                                  resubmittingDocumentId === doc.id && styles.resubmitBtnDisabled,
+                                ]}
+                                onPress={() => void handleResubmit(doc.id!)}
+                                disabled={resubmittingDocumentId !== null}
+                              >
+                                {resubmittingDocumentId === doc.id ? (
+                                  <ActivityIndicator color="#ffffff" size="small" />
+                                ) : (
+                                  <AppText weight="bold" style={styles.resubmitBtnText} maxFontSizeMultiplier={1}>
+                                    Resubmit
+                                  </AppText>
+                                )}
+                              </Pressable>
+                            ) : null}
                             {doc.id ? (
                               <Pressable
                                 style={styles.downloadBtn}
@@ -427,6 +463,28 @@ export function NotaryOrderDetailsScreen() {
                                 size="small"
                                 style={styles.docBadge}
                               />
+                              {doc.status === 'Rejected' && doc.id ? (
+                                <Pressable
+                                  style={({ pressed }) => [
+                                    styles.resubmitBtn,
+                                    pressed && resubmittingDocumentId !== doc.id && styles.resubmitBtnPressed,
+                                    resubmittingDocumentId === doc.id && styles.resubmitBtnDisabled,
+                                  ]}
+                                  onPress={() => void handleResubmit(doc.id!)}
+                                  disabled={resubmittingDocumentId !== null}
+                                >
+                                  {resubmittingDocumentId === doc.id ? (
+                                    <ActivityIndicator color="#ffffff" size="small" />
+                                  ) : (
+                                    <View style={styles.resubmitBtnContent}>
+                                      <RefreshCcw size={10} color="#c2410c" />
+                                      <AppText weight="bold" style={styles.resubmitBtnText} maxFontSizeMultiplier={1}>
+                                        Resubmit
+                                      </AppText>
+                                    </View>
+                                  )}
+                                </Pressable>
+                              ) : null}
                             </View>
                           </View>
 
@@ -885,9 +943,42 @@ const styles = StyleSheet.create({
     gap: 8,
     flexShrink: 0,
   },
+  resubmitBtn: {
+    minHeight: 0,
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 4,
+    backgroundColor: '#fff7ed',
+    borderWidth: 1,
+    borderColor: '#fdba74',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'flex-start',
+  },
+  resubmitBtnContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  resubmitBtnPressed: {
+    backgroundColor: '#ffedd5',
+  },
+  resubmitBtnDisabled: {
+    backgroundColor: '#ffedd5',
+    borderColor: '#fdba74',
+  },
+  resubmitBtnText: {
+    color: '#c2410c',
+    fontSize: 9,
+    lineHeight: 12,
+  },
   docBadgeRow: {
     marginTop: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     alignSelf: 'flex-start',
+    flexWrap: 'wrap',
   },
   docBadge: {
     alignSelf: 'flex-start',
