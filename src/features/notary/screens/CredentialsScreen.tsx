@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import {
   BadgeCheck,
@@ -381,23 +381,33 @@ function CredentialFormModal({
 }) {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={s.modalBackdrop} onPress={onClose} />
-      <View style={s.modalSheet}>
-        <View style={s.modalHandle} />
-        <View style={s.modalHeader}>
-          <AppText weight="bold" style={s.modalTitle}>{title}</AppText>
-          <Pressable style={s.modalClose} onPress={onClose} hitSlop={12}>
-            <X color="#64748b" size={20} />
-          </Pressable>
+      <KeyboardAvoidingView
+        style={s.modalRoot}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <Pressable style={s.modalBackdrop} onPress={onClose} />
+        <View style={s.modalSheet}>
+          <View style={s.modalHandle} />
+          <View style={s.modalHeader}>
+            <AppText weight="bold" style={s.modalTitle}>{title}</AppText>
+            <Pressable style={s.modalClose} onPress={onClose} hitSlop={12}>
+              <X color="#64748b" size={20} />
+            </Pressable>
+          </View>
+          <ScrollView
+            contentContainerStyle={s.modalBody}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="interactive"
+            showsVerticalScrollIndicator={false}
+          >
+            {children}
+          </ScrollView>
+          <View style={s.modalFooter}>
+            <AppButton title="Cancel" variant="ghost" onPress={onClose} style={s.modalFooterBtn} />
+            <AppButton title={submitLabel} onPress={onSubmit} loading={saving} style={s.modalFooterBtn} />
+          </View>
         </View>
-        <ScrollView contentContainerStyle={s.modalBody} keyboardShouldPersistTaps="handled">
-          {children}
-        </ScrollView>
-        <View style={s.modalFooter}>
-          <AppButton title="Cancel" variant="ghost" onPress={onClose} style={s.modalFooterBtn} />
-          <AppButton title={submitLabel} onPress={onSubmit} loading={saving} style={s.modalFooterBtn} />
-        </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -674,7 +684,8 @@ const s = StyleSheet.create({
   },
 
   /* Modal */
-  modalBackdrop: { flex: 1, backgroundColor: 'rgba(15,23,42,0.45)' },
+  modalRoot: { flex: 1, justifyContent: 'flex-end' },
+  modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(15,23,42,0.45)' },
   modalSheet: {
     backgroundColor: '#fff',
     borderTopLeftRadius: 24,
