@@ -4,6 +4,7 @@ import * as SecureStore from 'expo-secure-store';
 import * as Notifications from 'expo-notifications';
 import * as IntentLauncher from 'expo-intent-launcher';
 import { Platform, Alert } from 'react-native';
+import { registerAppNotificationResponseListener } from '@/utils/appNotifications';
 
 const DOWNLOAD_DIR_KEY = 'closing_engage_download_dir_uri';
 
@@ -262,6 +263,7 @@ export async function openDownloadedFile(localUri: string, mimeType: string, fil
 }
 
 export function registerNotificationResponseListener() {
+  const appNotificationSubscription = registerAppNotificationResponseListener();
   const subscription = Notifications.addNotificationResponseReceivedListener(async (response) => {
     const data = response.notification.request.content.data as {
       localUri?: string;
@@ -281,6 +283,10 @@ export function registerNotificationResponseListener() {
       }
     }
   });
-  return subscription;
+  return {
+    remove() {
+      subscription.remove();
+      appNotificationSubscription.remove();
+    },
+  };
 }
-
