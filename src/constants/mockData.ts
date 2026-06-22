@@ -1,4 +1,3 @@
-import { Credential } from '@/types/credential';
 import { DocumentFile } from '@/types/document';
 import { Message } from '@/types/message';
 import { Order, TimelineStep } from '@/types/order';
@@ -170,8 +169,3 @@ export const messages: Message[] = [
   },
 ];
 
-export const credentials: Credential[] = [
-  { id: 'c1', title: 'NNA Certification', issuer: 'National Notary Association', date: 'Apr 20, 2024', status: 'Approved' },
-  { id: 'c2', title: 'Identity Verification', issuer: 'Stripe Identity Services', date: 'Mar 15, 2024', status: 'Approved' },
-  { id: 'c3', title: 'Expired Bond 2022', issuer: 'Merchants Bonding Co.', date: 'Jan 10, 2022', status: 'Archived' },
-];
