@@ -69,7 +69,7 @@ export function NotaryOrderCard({
         {/* Row 1: Order # + Status badge */}
         <View style={notaryStyles.orderTopRow}>
           <View style={notaryStyles.orderIdWrap}>
-            <AppText style={notaryStyles.orderNum}>#{order.orderNumber.replace('#', '')}</AppText>
+            <AppText numberOfLines={1} style={notaryStyles.orderNum}>#{order.orderNumber.replace('#', '')}</AppText>
           </View>
           <Badge
             label={isOpenOrder ? 'Open for All' : order.status}

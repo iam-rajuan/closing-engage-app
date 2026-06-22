@@ -257,7 +257,7 @@ export const notaryStyles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
-    flexShrink: 0,
+    alignSelf: 'flex-start',
   },
   orderNum: {
     fontSize: 11,

@@ -10,6 +10,15 @@ export async function pickDocument() {
   return result.canceled ? null : result.assets[0];
 }
 
+export async function pickDocuments() {
+  const result = await DocumentPicker.getDocumentAsync({
+    type: ['application/pdf', 'image/jpeg', 'image/png'],
+    multiple: true,
+    copyToCacheDirectory: true,
+  });
+  return result.canceled ? [] : result.assets;
+}
+
 export async function pickAvatar() {
   const result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ['images'],
