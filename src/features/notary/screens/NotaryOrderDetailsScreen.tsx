@@ -6,6 +6,7 @@ import { ArrowRight, Building, Calendar, CheckCircle2, CloudUpload, Download, Fi
 import { getDocumentDownloadUrl } from '@/services/documents.service';
 import { downloadFileToDevice } from '@/utils/fileDownload';
 import { DownloadSuccessModal } from '@/components/common/DownloadSuccessModal';
+import { ConfirmationModal } from '@/components/common/ConfirmationModal';
 import { SuccessModal } from '@/components/common/SuccessModal';
 import { DocumentIcon } from '@/components/common/DocumentIcon';
 import { AppButton } from '@/components/common/AppButton';
@@ -19,7 +20,7 @@ import { LoadingState } from '@/components/common/LoadingState';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { notaryStyles } from '@/features/notary/styles';
 import { useAsyncResource } from '@/hooks/useAsyncResource';
-import { resubmitDocument, uploadDocumentBinary } from '@/services/documents.service';
+import { deleteDocument, resubmitDocument, uploadDocumentBinary } from '@/services/documents.service';
 import { acceptOpenOrder, confirmPrintedDocuments, getOrderById } from '@/services/orders.service';
 import { colors } from '@/theme';
 import { pickDocument } from '@/utils/fileUpload';
@@ -58,6 +59,12 @@ const getDocStatusToneAndLabel = (status?: string) => {
   return { tone: 'gray' as const, label: status?.trim() || 'Pending' };
 };
 
+const canDeleteDoc = (status?: string) => {
+  const normalized = status?.trim().toLowerCase() ?? '';
+  // Locked once approved/verified ("Accepted"); deletable while still under review.
+  return !(normalized === 'approved' || normalized === 'verified');
+};
+
 const firstParam = (value?: string | string[]) => (Array.isArray(value) ? value[0] : value);
 
 export function NotaryOrderDetailsScreen() {
@@ -85,6 +92,9 @@ export function NotaryOrderDetailsScreen() {
   const [uploading, setUploading] = useState(false);
   const [downloadingDocId, setDownloadingDocId] = useState<string | null>(null);
   const [resubmittingDocumentId, setResubmittingDocumentId] = useState<string | null>(null);
+  const [deletingDocumentId, setDeletingDocumentId] = useState<string | null>(null);
+  const [documentToDelete, setDocumentToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [deleteSuccessVisible, setDeleteSuccessVisible] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState<{
     name: string;
     localUri: string;
@@ -131,6 +141,23 @@ export function NotaryOrderDetailsScreen() {
       );
     } finally {
       setResubmittingDocumentId(null);
+    }
+  };
+
+  const handleDeleteDocument = async (docId: string) => {
+    try {
+      setDeletingDocumentId(docId);
+      await deleteDocument(docId);
+      await reload();
+      setDeleteSuccessVisible(true);
+      setDocumentToDelete(null);
+    } catch (error) {
+      Alert.alert(
+        'Unable to delete',
+        error instanceof Error ? error.message : 'Please try again.'
+      );
+    } finally {
+      setDeletingDocumentId(null);
     }
   };
 
@@ -495,6 +522,19 @@ export function NotaryOrderDetailsScreen() {
                           </View>
 
                           <View style={styles.rightActionContainer}>
+                            {doc.id && canDeleteDoc(doc.status) ? (
+                              <Pressable
+                                style={({ pressed }) => [styles.deleteIconBtn, pressed && styles.deleteIconBtnPressed]}
+                                onPress={() => setDocumentToDelete({ id: doc.id!, name: doc.name })}
+                                disabled={deletingDocumentId !== null}
+                              >
+                                {deletingDocumentId === doc.id ? (
+                                  <ActivityIndicator color="#dc2626" size="small" />
+                                ) : (
+                                  <Trash2 color="#dc2626" size={18} />
+                                )}
+                              </Pressable>
+                            ) : null}
                             {doc.id ? (
                               <Pressable
                                 style={styles.downloadBtn}
@@ -773,6 +813,29 @@ export function NotaryOrderDetailsScreen() {
         description="Your rejected scanback was sent back for admin review."
         onClose={() => setResubmitSuccessVisible(false)}
       />
+      <SuccessModal
+        visible={deleteSuccessVisible}
+        title="Scanback Deleted"
+        description="Your scanback document was removed successfully."
+        onClose={() => setDeleteSuccessVisible(false)}
+      />
+
+      <ConfirmationModal
+        visible={documentToDelete !== null}
+        title="Delete Scanback"
+        description={
+          documentToDelete
+            ? `Are you sure you want to delete "${documentToDelete.name}"? This action cannot be undone.`
+            : ''
+        }
+        confirmTitle={deletingDocumentId === documentToDelete?.id ? 'Deleting...' : 'Delete'}
+        loading={deletingDocumentId === documentToDelete?.id}
+        onCancel={() => setDocumentToDelete(null)}
+        onConfirm={() => {
+          if (!documentToDelete) return;
+          void handleDeleteDocument(documentToDelete.id);
+        }}
+      />
     </ScreenContainer>
   );
 }
@@ -1027,6 +1090,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#f1f5f9',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  deleteIconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#fef2f2',
+    borderWidth: 1,
+    borderColor: '#fecaca',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteIconBtnPressed: {
+    backgroundColor: '#fee2e2',
   },
   /* ── Timeline (mirrored from Company) ── */
   logCard: {
