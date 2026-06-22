@@ -406,18 +406,22 @@ export function NotaryOrderDetailsScreen() {
                                 style={({ pressed }) => [
                                   styles.resubmitBtn,
                                   pressed && resubmittingDocumentId !== doc.id && styles.resubmitBtnPressed,
-                                  resubmittingDocumentId === doc.id && styles.resubmitBtnDisabled,
                                 ]}
                                 onPress={() => void handleResubmit(doc.id!)}
                                 disabled={resubmittingDocumentId !== null}
                               >
-                                {resubmittingDocumentId === doc.id ? (
-                                  <ActivityIndicator color="#ffffff" size="small" />
-                                ) : (
+                                <View style={styles.resubmitBtnContent}>
+                                  <View style={styles.resubmitBtnIconBox}>
+                                    {resubmittingDocumentId === doc.id ? (
+                                      <ActivityIndicator color="#c2410c" size={8} />
+                                    ) : (
+                                      <RefreshCcw size={8} color="#c2410c" />
+                                    )}
+                                  </View>
                                   <AppText weight="bold" style={styles.resubmitBtnText} maxFontSizeMultiplier={1}>
                                     Resubmit
                                   </AppText>
-                                )}
+                                </View>
                               </Pressable>
                             ) : null}
                             {doc.id ? (
@@ -464,27 +468,28 @@ export function NotaryOrderDetailsScreen() {
                                 style={styles.docBadge}
                               />
                               {doc.status === 'Rejected' && doc.id ? (
-                                <Pressable
-                                  style={({ pressed }) => [
-                                    styles.resubmitBtn,
-                                    pressed && resubmittingDocumentId !== doc.id && styles.resubmitBtnPressed,
-                                    resubmittingDocumentId === doc.id && styles.resubmitBtnDisabled,
-                                  ]}
-                                  onPress={() => void handleResubmit(doc.id!)}
-                                  disabled={resubmittingDocumentId !== null}
-                                >
-                                  {resubmittingDocumentId === doc.id ? (
-                                    <ActivityIndicator color="#ffffff" size="small" />
-                                  ) : (
-                                    <View style={styles.resubmitBtnContent}>
-                                      <RefreshCcw size={10} color="#c2410c" />
-                                      <AppText weight="bold" style={styles.resubmitBtnText} maxFontSizeMultiplier={1}>
-                                        Resubmit
-                                      </AppText>
-                                    </View>
-                                  )}
-                                </Pressable>
-                              ) : null}
+                              <Pressable
+                                style={({ pressed }) => [
+                                  styles.resubmitBtn,
+                                  pressed && resubmittingDocumentId !== doc.id && styles.resubmitBtnPressed,
+                                ]}
+                                onPress={() => void handleResubmit(doc.id!)}
+                                disabled={resubmittingDocumentId !== null}
+                              >
+                                <View style={styles.resubmitBtnContent}>
+                                  <View style={styles.resubmitBtnIconBox}>
+                                    {resubmittingDocumentId === doc.id ? (
+                                      <ActivityIndicator color="#c2410c" size={8} />
+                                    ) : (
+                                      <RefreshCcw size={8} color="#c2410c" />
+                                    )}
+                                  </View>
+                                  <AppText weight="bold" style={styles.resubmitBtnText} maxFontSizeMultiplier={1}>
+                                    Resubmit
+                                  </AppText>
+                                </View>
+                              </Pressable>
+                            ) : null}
                             </View>
                           </View>
 
@@ -945,8 +950,8 @@ const styles = StyleSheet.create({
   },
   resubmitBtn: {
     minHeight: 0,
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
     borderRadius: 4,
     backgroundColor: '#fff7ed',
     borderWidth: 1,
@@ -958,19 +963,22 @@ const styles = StyleSheet.create({
   resubmitBtnContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 2,
+  },
+  resubmitBtnIconBox: {
+    width: 8,
+    height: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
   },
   resubmitBtnPressed: {
     backgroundColor: '#ffedd5',
   },
-  resubmitBtnDisabled: {
-    backgroundColor: '#ffedd5',
-    borderColor: '#fdba74',
-  },
   resubmitBtnText: {
     color: '#c2410c',
-    fontSize: 9,
-    lineHeight: 12,
+    fontSize: 8,
+    lineHeight: 10,
   },
   docBadgeRow: {
     marginTop: 6,
