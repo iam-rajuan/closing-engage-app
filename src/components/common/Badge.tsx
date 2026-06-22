@@ -6,12 +6,20 @@ type Props = {
   label: string;
   tone?: 'blue' | 'green' | 'orange' | 'red' | 'gray';
   style?: StyleProp<ViewStyle>;
+  size?: 'small' | 'medium';
 };
 
-export function Badge({ label, tone = 'blue', style }: Props) {
+export function Badge({ label, tone = 'blue', style, size = 'medium' }: Props) {
+  const isSmall = size === 'small';
   return (
-    <View style={[styles.badge, styles[tone], style]}>
-      <AppText variant="caption" weight="bold" style={styles[`${tone}Text`]}>{label}</AppText>
+    <View style={[styles.badge, isSmall && styles.badgeSmall, styles[tone], style]}>
+      <AppText
+        variant={isSmall ? 'label' : 'caption'}
+        weight="bold"
+        style={[styles[`${tone}Text`], isSmall && styles.textSmall]}
+      >
+        {label}
+      </AppText>
     </View>
   );
 }
@@ -22,6 +30,15 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
+  },
+  badgeSmall: {
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 4,
+  },
+  textSmall: {
+    fontSize: 9,
+    lineHeight: 12,
   },
   blue: { backgroundColor: colors.blueSoft },
   green: { backgroundColor: '#dcfce7' },
@@ -34,3 +51,4 @@ const styles = StyleSheet.create({
   redText: { color: colors.danger },
   grayText: { color: colors.textMuted },
 });
+

@@ -2,7 +2,7 @@ import { Alert, ActivityIndicator, BackHandler, Pressable, RefreshControl, Scrol
 import { router, useLocalSearchParams } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
-import { ArrowRight, Building, Calendar, CheckCircle2, CloudUpload, Download, FileText, Info, MapPin, MessageCircle, Send, Trash2, UserRound } from 'lucide-react-native';
+import { ArrowRight, Building, Calendar, CheckCircle2, CloudUpload, Download, FileText, Info, MapPin, MessagesSquare, Send, Trash2, UserRound } from 'lucide-react-native';
 import { getDocumentDownloadUrl } from '@/services/documents.service';
 import { downloadFileToDevice } from '@/utils/fileDownload';
 import { DownloadSuccessModal } from '@/components/common/DownloadSuccessModal';
@@ -40,6 +40,20 @@ function DetailField({ label, value, icon }: { label: string; value: string; ico
     </View>
   );
 }
+
+const getDocStatusToneAndLabel = (status?: string) => {
+  const s = status?.toLowerCase() || '';
+  if (s.includes('approved') || s.includes('verified')) {
+    return { tone: 'green' as const, label: 'Approved' };
+  }
+  if (s.includes('rejected')) {
+    return { tone: 'red' as const, label: 'Rejected' };
+  }
+  if (s.includes('review') || s.includes('submitted')) {
+    return { tone: 'orange' as const, label: 'Under Review' };
+  }
+  return { tone: 'blue' as const, label: status || 'Pending' };
+};
 
 const firstParam = (value?: string | string[]) => (Array.isArray(value) ? value[0] : value);
 
@@ -177,7 +191,14 @@ export function NotaryOrderDetailsScreen() {
 
   return (
     <ScreenContainer scroll={false}>
-      <AppHeader back title="Order Details" onProfilePress={() => router.push('/notary/settings')} onBackPress={handleBack} />
+      <View style={styles.headerPadding}>
+        <AppHeader 
+          back 
+          title="Order Details" 
+          onProfilePress={() => router.push('/notary/settings')} 
+          onBackPress={handleBack}
+        />
+      </View>
 
       <ScrollView
         style={styles.scrollView}
@@ -357,22 +378,29 @@ export function NotaryOrderDetailsScreen() {
                               {doc.name}
                             </AppText>
                             <AppText variant="caption" muted style={styles.documentMeta} numberOfLines={1} maxFontSizeMultiplier={1.05}>{doc.meta} • Provided by Company</AppText>
+                            <Badge
+                              label={getDocStatusToneAndLabel(doc.status).label.toUpperCase()}
+                              tone={getDocStatusToneAndLabel(doc.status).tone}
+                              size="small"
+                              style={styles.docBadge}
+                            />
                           </View>
-                          {doc.id ? (
-                            <Pressable
-                              style={styles.downloadBtn}
-                              onPress={() => void handleDownload(doc.id!, doc.name)}
-                              disabled={downloadingDocId !== null}
-                            >
-                              {downloadingDocId === doc.id ? (
-                                <ActivityIndicator color="#2563eb" size="small" />
-                              ) : (
-                                <Download color="#2563eb" size={18} />
-                              )}
-                            </Pressable>
-                          ) : (
-                            <AppText variant="caption" muted>Documents list</AppText>
-                          )}
+                          
+                          <View style={styles.rightActionContainer}>
+                            {doc.id ? (
+                              <Pressable
+                                style={styles.downloadBtn}
+                                onPress={() => void handleDownload(doc.id!, doc.name)}
+                                disabled={downloadingDocId !== null}
+                              >
+                                {downloadingDocId === doc.id ? (
+                                  <ActivityIndicator color="#2563eb" size="small" />
+                                ) : (
+                                  <Download color="#2563eb" size={18} />
+                                )}
+                              </Pressable>
+                            ) : null}
+                          </View>
                         </AppCard>
                       ))
                     ) : (
@@ -393,22 +421,29 @@ export function NotaryOrderDetailsScreen() {
                               {doc.name}
                             </AppText>
                             <AppText variant="caption" muted style={styles.documentMeta} numberOfLines={1} maxFontSizeMultiplier={1.05}>{doc.meta} • Provided by Notary</AppText>
+                            <Badge
+                              label={getDocStatusToneAndLabel(doc.status).label.toUpperCase()}
+                              tone={getDocStatusToneAndLabel(doc.status).tone}
+                              size="small"
+                              style={styles.docBadge}
+                            />
                           </View>
-                          {doc.id ? (
-                            <Pressable
-                              style={styles.downloadBtn}
-                              onPress={() => void handleDownload(doc.id!, doc.name)}
-                              disabled={downloadingDocId !== null}
-                            >
-                              {downloadingDocId === doc.id ? (
-                                <ActivityIndicator color="#2563eb" size="small" />
-                              ) : (
-                                <Download color="#2563eb" size={18} />
-                              )}
-                            </Pressable>
-                          ) : (
-                            <AppText variant="caption" muted>Documents list</AppText>
-                          )}
+
+                          <View style={styles.rightActionContainer}>
+                            {doc.id ? (
+                              <Pressable
+                                style={styles.downloadBtn}
+                                onPress={() => void handleDownload(doc.id!, doc.name)}
+                                disabled={downloadingDocId !== null}
+                              >
+                                {downloadingDocId === doc.id ? (
+                                  <ActivityIndicator color="#2563eb" size="small" />
+                                ) : (
+                                  <Download color="#2563eb" size={18} />
+                                )}
+                              </Pressable>
+                            ) : null}
+                          </View>
                         </AppCard>
                       ))
                     ) : (
@@ -646,10 +681,12 @@ export function NotaryOrderDetailsScreen() {
           style={notaryStyles.floatingChat}
           onPress={() => router.push(`/notary/assigned/chat?orderId=${encodeURIComponent(orderId)}`)}
         >
-          <MessageCircle color="#fff" size={24} />
+          <MessagesSquare color="#fff" size={24} />
           <View style={notaryStyles.onlineDotSmall} />
         </Pressable>
       ) : null}
+
+
 
       <DownloadSuccessModal
         visible={downloadSuccess !== null}
@@ -675,7 +712,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: 100,
+    paddingBottom: 120,
   },
   /* ── Main Card ── */
   detailsMainCard: {
@@ -836,10 +873,23 @@ const styles = StyleSheet.create({
   },
   fileCardDetails: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: 12,
     padding: 14,
     marginBottom: 10,
+  },
+  rightActionContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexShrink: 0,
+  },
+  docBadge: {
+    marginTop: 6,
+    alignSelf: 'flex-start',
+  },
+  headerPadding: {
+    paddingHorizontal: 16,
   },
   primaryRowText: {
     fontSize: 14,

@@ -1,5 +1,5 @@
 import { Image, Pressable, StyleSheet, View } from 'react-native';
-import { Bell, ChevronLeft } from 'lucide-react-native';
+import { Bell, ChevronLeft, MessageCircle } from 'lucide-react-native';
 import { router, useNavigation, type Href } from 'expo-router';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { colors, spacing } from '@/theme';
@@ -20,6 +20,8 @@ type Props = {
   showLogo?: boolean;
   showNotifications?: boolean;
   showProfile?: boolean;
+  showChat?: boolean;
+  onChatPress?: () => void;
 };
 
 export function AppHeader({
@@ -36,6 +38,8 @@ export function AppHeader({
   showLogo = true,
   showNotifications = true,
   showProfile = true,
+  showChat = false,
+  onChatPress,
 }: Props) {
   const navigation = useNavigation();
   const user = useAuthStore((state) => state.user);
@@ -200,6 +204,7 @@ const styles = StyleSheet.create({
   },
   avatarWrapper: {
     padding: 2,
+    marginRight: 6, // Give the profile picture good padding from the right border
   },
   bellButton: {
     padding: 2,
@@ -207,7 +212,7 @@ const styles = StyleSheet.create({
   avatarContainer: {
     width: 34,
     height: 34,
-    borderRadius: 10, // More squared/modern look
+    borderRadius: 17, // Circle profile picture matching company app
     overflow: 'hidden',
     backgroundColor: '#eff6ff',
     alignItems: 'center',
@@ -218,6 +223,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: '100%',
     height: '100%',
+    borderRadius: 17, // Enforce circular clip on Android
   },
   initialsContainer: {
     width: '100%',

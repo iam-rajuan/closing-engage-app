@@ -692,7 +692,7 @@ export const notaryStyles = StyleSheet.create({
   /* ─── Floating Chat ─── */
   floatingChat: {
     position: 'absolute',
-    bottom: 24,
+    bottom: 28, // slightly raised above tab bar
     right: 20,
     width: 56,
     height: 56,
@@ -700,18 +700,21 @@ export const notaryStyles = StyleSheet.create({
     backgroundColor: '#0a49a8',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#ffffff', // premium contrast border
     ...shadows.lg,
+    elevation: 6, // strong depth for Android
   },
   onlineDotSmall: {
     position: 'absolute',
-    top: 0,
-    right: 4,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    top: -2,
+    right: -2,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
     backgroundColor: '#22c55e',
     borderWidth: 2,
-    borderColor: '#0a49a8',
+    borderColor: '#ffffff', // clear contrast border
   },
 
   /* ─── Chat ─── */
