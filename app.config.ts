@@ -9,6 +9,15 @@ const readEnv = (key: string) => {
   return value ? value : undefined;
 };
 
+const requireEnv = (key: string) => {
+  const value = readEnv(key);
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${key}`);
+  }
+
+  return value;
+};
+
 const easProjectId = readEnv('EXPO_PUBLIC_EAS_PROJECT_ID') ?? 'a646fa7f-28aa-4974-8d2d-69b7eb09fcce';
 
 const config: ExpoConfig = {
@@ -54,7 +63,7 @@ const config: ExpoConfig = {
   },
   plugins: ['expo-router', 'expo-secure-store', 'expo-document-picker', 'expo-image-picker', 'expo-font'],
   extra: {
-    apiUrl: readEnv('EXPO_PUBLIC_API_URL') ?? 'https://api.closingengage.example',
+    apiUrl: requireEnv('EXPO_PUBLIC_API_URL'),
     environment: readEnv('EXPO_PUBLIC_ENV') ?? 'development',
     eas: {
       projectId: easProjectId,
