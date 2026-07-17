@@ -144,7 +144,7 @@ export function NotaryHomeScreen() {
             {greeting}, {user?.name?.split(' ')[0] ?? 'there'}
           </AppText>
           <AppText style={notaryStyles.heroSubtext}>
-            Here's your signing workload overview
+            Here&apos;s your signing workload overview
           </AppText>
         </View>
         {/* Decorative elements */}

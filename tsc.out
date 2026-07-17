@@ -1,0 +1,1 @@
+app/+not-found.tsx(40,19): error TS2339: Property 'textPrimary' does not exist on type '{ primary: string; primaryDark: string; background: string; surface: string; text: string; textMuted: string; border: string; success: string; warning: string; danger: string; info: string; white: string; black: string; blueSoft: string; graySoft: string; }'.

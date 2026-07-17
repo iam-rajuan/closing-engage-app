@@ -290,7 +290,7 @@ export function CompanyHomeScreen() {
             {greeting}, {user?.name?.split(' ')[0] ?? 'there'}
           </AppText>
           <AppText style={styles.heroSubtext}>
-            Here's your order overview for today
+            Here&apos;s your order overview for today
           </AppText>
         </View>
         {/* Decorative elements */}

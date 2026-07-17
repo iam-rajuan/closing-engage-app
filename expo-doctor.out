@@ -1,0 +1,43 @@
+env: load .env
+env: export EXPO_PUBLIC_API_URL EXPO_PUBLIC_APP_NAME EXPO_PUBLIC_ENV
+Running 18 checks on your project...
+17/18 checks passed. 1 checks failed. Possible issues detected:
+Use the --verbose flag to see more details about passed checks.
+
+✖ Check that packages match versions required by installed Expo SDK
+◇ injected env (0) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+◇ injected env (0) from .env.local // tip: ⌘ override existing { override: true }
+{
+  "dependencies": [
+    {
+      "packageName": "expo",
+      "packageType": "dependencies",
+      "expectedVersionOrRange": "~54.0.36",
+      "actualVersion": "54.0.34"
+    },
+    {
+      "packageName": "expo-file-system",
+      "packageType": "dependencies",
+      "expectedVersionOrRange": "~19.0.23",
+      "actualVersion": "19.0.22"
+    },
+    {
+      "packageName": "expo-font",
+      "packageType": "dependencies",
+      "expectedVersionOrRange": "~14.0.12",
+      "actualVersion": "14.0.11"
+    },
+    {
+      "packageName": "expo-router",
+      "packageType": "dependencies",
+      "expectedVersionOrRange": "~6.0.24",
+      "actualVersion": "6.0.23"
+    }
+  ],
+  "upToDate": false
+}
+Advice:
+Use 'npx expo install --check' to review and upgrade your dependencies.
+To ignore specific packages, add them to "expo.install.exclude" in package.json. Learn more: https://expo.fyi/dependency-validation
+
+1 check failed, indicating possible issues with the project.

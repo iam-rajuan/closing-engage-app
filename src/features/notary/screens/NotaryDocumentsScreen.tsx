@@ -141,7 +141,7 @@ function OrderPickerModal({
           ItemSeparatorComponent={() => <View style={m.separator} />}
           ListEmptyComponent={
             <View style={m.emptySearch}>
-              <AppText muted style={m.emptySearchText}>No orders match "{search}"</AppText>
+              <AppText muted style={m.emptySearchText}>No orders match &quot;{search}&quot;</AppText>
             </View>
           }
           renderItem={({ item }) => {

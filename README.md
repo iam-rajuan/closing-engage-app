@@ -55,14 +55,18 @@ eas build --profile production --platform all
 
 Bundle identifiers are configured in `app.config.ts`:
 
-- iOS: `com.closingengage.mobile`
-- Android: `com.closingengage.mobile`
+- iOS: `com.closingengage.app`
+- Android: `com.closingengage.app`
+
+`app.config.ts` is the authoritative Expo application config for this repository. There is no `app.json`, and none should be created unless the project intentionally changes architecture.
 
 ## Native Folders
 
 - `android/` and `ios/` are generated native outputs, not source-of-truth folders.
-- They are already ignored in `.gitignore`, so you do not need to upload them to GitHub.
+- `android/` exists locally but is not currently tracked by Git.
+- `ios/` is not currently checked in.
 - If you delete them locally, regenerate with `npx expo prebuild --clean` or through an EAS build.
+- Durable native configuration should live in `app.config.ts` or config plugins, not in local native folders.
 
 ## Permissions
 
@@ -80,6 +84,11 @@ This matches the current code paths:
 - Avatar/image picking uses `expo-image-picker`
 - File downloads use `expo-file-system` and Storage Access Framework on Android
 - Download notifications use `expo-notifications`
+
+## Release Policy
+
+- `eas build` is the production build path for iOS and Android.
+- `scripts/assemble-release.ps1` is now explicitly a local testing-only helper because a generated Android release can still inherit debug signing when native folders are unmanaged by Git.
 
 ## Demo Login Roles
 
