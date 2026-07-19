@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   title: {
-    color: colors.textPrimary,
+    color: colors.text,
     fontSize: 24,
     marginBottom: 12,
     textAlign: 'center',

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useFocusEffect } from '@react-navigation/native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { Briefcase, CheckCircle2, ChevronDown, Mail, Search, ShieldAlert, ShieldCheck, UserPlus } from 'lucide-react-native';

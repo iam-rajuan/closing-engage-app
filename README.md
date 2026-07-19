@@ -4,9 +4,9 @@ Production-ready Expo React Native TypeScript app implementing the Closing Engag
 
 ## Requirements
 
-- Node.js 20+
-- npm
-- Expo CLI through `npx expo`
+- Node.js 22.23.x LTS
+- npm 10.x
+- Expo CLI through the local project install
 - Expo Go for device testing, or Android Studio/Xcode for native simulators
 
 ## Installation
@@ -36,6 +36,8 @@ npm run web
 ```
 
 Use Expo Go by scanning the QR code from `npm start`.
+
+On Windows, prefer `npm run android`. This project includes a short-path Android wrapper because native builds can fail from long workspace paths with CMake/Ninja. A local `npx expo run:android` install in this repo is also patched to use the same wrapper.
 
 ## Validation
 

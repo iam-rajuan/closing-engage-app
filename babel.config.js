@@ -10,6 +10,7 @@ module.exports = function (api) {
           alias: {
             '@': './src',
             '@app': './app',
+            'expo-secure-store': './src/utils/secureStoreWebMock.ts',
           },
         },
       ],

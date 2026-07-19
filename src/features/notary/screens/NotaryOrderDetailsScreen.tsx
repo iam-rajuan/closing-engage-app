@@ -1,6 +1,5 @@
 import { Alert, ActivityIndicator, BackHandler, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
+import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ArrowRight, Building, Calendar, CheckCircle2, CloudUpload, Download, FileText, Info, MapPin, MessagesSquare, RefreshCcw, Send, Trash2, UserRound } from 'lucide-react-native';
 import { getDocumentDownloadUrl } from '@/services/documents.service';

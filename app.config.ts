@@ -52,7 +52,6 @@ export default (_context: ConfigContext): ExpoConfig => {
         foregroundImage: './assets/adaptive-icon.png',
         backgroundColor: '#f4f8ff',
       },
-      edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
     },
     plugins: ['expo-router', 'expo-secure-store', 'expo-document-picker', 'expo-image-picker', 'expo-font', 'expo-notifications'],

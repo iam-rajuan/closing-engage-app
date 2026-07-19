@@ -209,30 +209,43 @@ function getMappedProjectRoot() {
     return { cwd: projectRoot, cleanup: () => {} };
   }
 
-  const projectDriveRoot = path.parse(projectRoot).root;
-  const junctionRoot = path.join(projectDriveRoot, 'cea');
-  const currentTarget = fs.existsSync(junctionRoot) ? fs.realpathSync.native(junctionRoot) : null;
+  const driveRoot = path.parse(projectRoot).root;
+  const shortBuildRoot = path.join(driveRoot, 'cea-build');
+  const mirroredProjectRoot = path.join(shortBuildRoot, path.basename(projectRoot));
 
-  if (currentTarget && path.resolve(currentTarget) !== path.resolve(projectRoot)) {
+  fs.mkdirSync(shortBuildRoot, { recursive: true });
+
+  const syncResult = spawnSync(
+    'robocopy',
+    [
+      projectRoot,
+      mirroredProjectRoot,
+      '/MIR',
+      '/R:2',
+      '/W:1',
+      '/NFL',
+      '/NDL',
+      '/NJH',
+      '/NJS',
+      '/NP',
+      '/XD',
+      path.join(projectRoot, 'android', 'build'),
+      path.join(projectRoot, 'android', 'app', 'build'),
+      path.join(projectRoot, 'android', 'app', '.cxx'),
+      path.join(projectRoot, '.expo'),
+      path.join(projectRoot, 'dist'),
+    ],
+    {
+      stdio: 'inherit',
+      env,
+    }
+  );
+
+  if ((syncResult.status ?? 16) >= 8 || !fs.existsSync(path.join(mirroredProjectRoot, 'package.json'))) {
     return { cwd: projectRoot, cleanup: () => {} };
   }
 
-  if (!currentTarget) {
-    const createResult = spawnSync(
-      'cmd',
-      ['/c', 'mklink', '/J', junctionRoot, projectRoot],
-      { stdio: 'inherit', env }
-    );
-
-    if (createResult.status !== 0) {
-      return { cwd: projectRoot, cleanup: () => {} };
-    }
-  }
-
-  return {
-    cwd: junctionRoot,
-    cleanup: () => {},
-  };
+  return { cwd: mirroredProjectRoot, cleanup: () => {} };
 }
 
 const { cwd, cleanup } = getMappedProjectRoot();
