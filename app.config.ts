@@ -34,6 +34,7 @@ export default (_context: ConfigContext): ExpoConfig => {
       bundleIdentifier: 'com.closingengage.app',
       infoPlist: {
         NSPhotoLibraryUsageDescription: 'Allow access to your photo library so you can upload profile images and documents.',
+        ITSAppUsesNonExemptEncryption: false,
       },
     },
     android: {
