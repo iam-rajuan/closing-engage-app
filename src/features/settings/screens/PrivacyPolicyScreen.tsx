@@ -7,6 +7,34 @@ import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { colors } from '@/theme';
 
 export function PrivacyPolicyScreen() {
+  const collectionItems = [
+    'Name, email address, phone number, company details, and professional credentials.',
+    'Order records, uploaded documents, transaction notes, and in-app communications.',
+    'Technical metadata such as app version, device type, operating system, IP address, and security logs.',
+  ];
+
+  const useItems = [
+    {
+      title: 'Identity Verification',
+      body: 'Authenticating users, securing accounts, and protecting access to transaction workspaces.',
+    },
+    {
+      title: 'Service Delivery',
+      body: 'Managing closing orders, document workflows, notifications, and support responses across iOS and Android.',
+    },
+  ];
+
+  const sharingItems = [
+    {
+      title: 'Service Providers',
+      body: 'Hosting, storage, messaging, authentication, and analytics vendors that support platform operations.',
+    },
+    {
+      title: 'Legal Compliance',
+      body: 'Courts, regulators, law enforcement, or counterparties when disclosure is legally required or necessary to protect rights and security.',
+    },
+  ];
+
   return (
     <ScreenContainer scroll>
       <View style={styles.header}>
@@ -23,7 +51,7 @@ export function PrivacyPolicyScreen() {
 
       <AppCard style={styles.introCard}>
         <AppText style={styles.introText}>
-          At Closing Engage, we recognize that your personal information is the foundation of our trust. This Privacy Policy describes how we collect, use, and handle your data when you use our digital closing services and secure vaults. We are committed to maintaining the highest standards of data protection and transparency.
+          Effective July 20, 2026. This policy applies to the Closing Engage mobile apps for iOS and Android, including the production app identifier com.closingengage.app, and explains how we collect, use, disclose, and protect personal information.
         </AppText>
       </AppCard>
 
@@ -34,22 +62,13 @@ export function PrivacyPolicyScreen() {
         </View>
         
         <AppCard style={styles.dataCard}>
-          <AppText weight="bold" style={styles.dataTitle}>Personal Data</AppText>
-          <AppText style={styles.dataText}>
-            Name, email address, phone number, and professional credentials provided during account creation or transaction initiation.
-          </AppText>
-        </AppCard>
-
-        <AppCard style={styles.dataCard}>
           <AppText variant="caption" muted weight="bold" style={styles.copyText}>© 2026 CLOSING ENGAGE INC. ALL RIGHTS RESERVED.</AppText>
-          <View style={styles.bulletRow}>
-            <View style={styles.dot} />
-            <AppText style={styles.bulletText}>Time-stamped interaction logs for audit trails in title processing.</AppText>
-          </View>
-          <View style={styles.bulletRow}>
-            <View style={styles.dot} />
-            <AppText style={styles.bulletText}>Browser type and operating system metadata.</AppText>
-          </View>
+          {collectionItems.map((item) => (
+            <View key={item} style={styles.bulletRow}>
+              <View style={styles.dot} />
+              <AppText style={styles.bulletText}>{item}</AppText>
+            </View>
+          ))}
         </AppCard>
       </View>
 
@@ -62,21 +81,17 @@ export function PrivacyPolicyScreen() {
           We process your information to fulfill our service obligations and ensure a seamless closing experience:
         </AppText>
 
-        <AppCard style={styles.infoRowCard}>
-          <View style={styles.iconBox}><ShieldCheck color="#0a49a8" size={20} /></View>
-          <View style={{ flex: 1 }}>
-            <AppText weight="bold" style={styles.infoRowTitle}>Identity Verification</AppText>
-            <AppText variant="caption" muted>Ensuring all parties in a transaction are authorized and authenticated.</AppText>
-          </View>
-        </AppCard>
-
-        <AppCard style={styles.infoRowCard}>
-          <View style={[styles.iconBox, { backgroundColor: '#eff6ff' }]}><Mail color="#0a49a8" size={20} /></View>
-          <View style={{ flex: 1 }}>
-            <AppText weight="bold" style={styles.infoRowTitle}>Document Generation</AppText>
-            <AppText variant="caption" muted>Automating the creation of legal and title-related documents.</AppText>
-          </View>
-        </AppCard>
+        {useItems.map((item, index) => (
+          <AppCard key={item.title} style={styles.infoRowCard}>
+            <View style={[styles.iconBox, index === 1 ? { backgroundColor: '#eff6ff' } : null]}>
+              {index === 0 ? <ShieldCheck color="#0a49a8" size={20} /> : <Mail color="#0a49a8" size={20} />}
+            </View>
+            <View style={{ flex: 1 }}>
+              <AppText weight="bold" style={styles.infoRowTitle}>{item.title}</AppText>
+              <AppText variant="caption" muted>{item.body}</AppText>
+            </View>
+          </AppCard>
+        ))}
       </View>
 
       <View style={styles.section}>
@@ -87,40 +102,34 @@ export function PrivacyPolicyScreen() {
         
         <AppCard style={styles.sharingCard}>
           <AppText style={styles.sharingIntro}>
-            We do not sell your data. We only share information with:
+            We do not sell personal information. We only share information when needed to run the service or comply with legal obligations:
           </AppText>
-          
-          <View style={styles.shareItem}>
-            <AppText weight="bold" style={styles.shareNum}>01</AppText>
-            <View style={{ flex: 1 }}>
-              <AppText weight="bold">Underwriters & Lenders</AppText>
-              <AppText variant="caption" muted>Strictly for the purpose of facilitating the real estate closing process.</AppText>
-            </View>
-          </View>
 
-          <View style={styles.shareItem}>
-            <AppText weight="bold" style={styles.shareNum}>02</AppText>
-            <View style={{ flex: 1 }}>
-              <AppText weight="bold">Service Providers</AppText>
-              <AppText variant="caption" muted>Cloud infrastructure providers and security auditors under strict NDA.</AppText>
+          {sharingItems.map((item, index) => (
+            <View key={item.title} style={styles.shareItem}>
+              <AppText weight="bold" style={styles.shareNum}>{String(index + 1).padStart(2, '0')}</AppText>
+              <View style={{ flex: 1 }}>
+                <AppText weight="bold">{item.title}</AppText>
+                <AppText variant="caption" muted>{item.body}</AppText>
+              </View>
             </View>
-          </View>
+          ))}
         </AppCard>
       </View>
 
       <View style={[styles.section, { marginBottom: 40 }]}>
         <AppCard style={styles.contactCard}>
-          <AppText weight="bold" style={styles.contactTitle}>4. Policy Updates</AppText>
+          <AppText weight="bold" style={styles.contactTitle}>4. Retention, Updates, and Contact</AppText>
           <AppText style={styles.contactText}>
-            We may update this policy occasionally. Major changes will be communicated via the app dashboard and through email notifications 30 days prior to implementation.
+            We retain information for as long as needed to provide services, maintain security and audit records, and meet legal obligations. Closing Engage is not directed to children under 13. When this policy changes materially, we will post the revised effective date in the app and on the website privacy page.
           </AppText>
           <View style={styles.divider} />
           <View style={styles.contactRow}>
             <View style={styles.contactIcon}><Mail color="#0a49a8" size={16} /></View>
             <View>
               <AppText weight="bold">Contact Us</AppText>
-              <AppText variant="caption">Closing Engage Privacy Team</AppText>
-              <AppText variant="caption" muted>privacy@closingengage.com</AppText>
+              <AppText variant="caption">Closing Engage Privacy & Support</AppText>
+              <AppText variant="caption" muted>admin@closingengage.com</AppText>
             </View>
           </View>
         </AppCard>
