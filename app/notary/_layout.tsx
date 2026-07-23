@@ -13,9 +13,10 @@ import { useAuthStore } from '@/features/auth/auth.store';
 
 export default function NotaryLayout() {
   const user = useAuthStore((state) => state.user);
+  const token = useAuthStore((state) => state.token);
   const insets = useSafeAreaInsets();
 
-  if (!user || user.role !== 'notary') return <Redirect href="/auth/login" />;
+  if (!user || !token || user.role !== 'notary') return <Redirect href="/auth/login" />;
 
   return (
     <Tabs
@@ -24,8 +25,12 @@ export default function NotaryLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
-          height: 64 + (insets.bottom > 0 ? insets.bottom + 4 : 4),
-          paddingBottom: insets.bottom > 0 ? insets.bottom + 12 : 12,
+          height: Platform.OS === 'ios'
+            ? (insets.bottom > 0 ? 56 + insets.bottom : 60)
+            : 64 + (insets.bottom > 0 ? insets.bottom + 4 : 4),
+          paddingBottom: Platform.OS === 'ios'
+            ? (insets.bottom > 0 ? insets.bottom : 8)
+            : (insets.bottom > 0 ? insets.bottom + 12 : 12),
           paddingTop: 8,
           backgroundColor: colors.surface,
           borderTopWidth: 1,

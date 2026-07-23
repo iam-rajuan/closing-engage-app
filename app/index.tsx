@@ -4,7 +4,7 @@ import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { useAuthStore } from '@/features/auth/auth.store';
 
 export default function Index() {
-  const { isHydrated, hasCompletedOnboarding, user } = useAuthStore();
+  const { isHydrated, hasCompletedOnboarding, user, token } = useAuthStore();
 
   if (!isHydrated) {
     return (
@@ -15,6 +15,6 @@ export default function Index() {
   }
 
   if (!hasCompletedOnboarding) return <Redirect href="/onboarding" />;
-  if (!user) return <Redirect href="/auth/login" />;
+  if (!user || !token) return <Redirect href="/auth/login" />;
   return <Redirect href={user.role === 'company' ? '/company/home' : '/notary/home'} />;
 }

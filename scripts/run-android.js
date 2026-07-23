@@ -14,6 +14,7 @@ const buildDirs = [
   'android/app/build/generated/autolinking',
 ];
 
+
 function stopGradleDaemons() {
   const gradleWrapper = path.join(projectRoot, 'android', isWindows ? 'gradlew.bat' : 'gradlew');
 
@@ -29,39 +30,15 @@ function stopGradleDaemons() {
 }
 
 function stopProjectNodeProcesses() {
-  if (!isWindows) {
+  if (!isWindows || env.CLOSING_ENGAGE_KILL_NODE === '1') {
     return;
   }
-
-  const escapedProjectRoot = projectRoot.replace(/\\/g, '\\\\').replace(/'/g, "''");
-  spawnSync(
-    'powershell',
-    [
-      '-NoProfile',
-      '-ExecutionPolicy',
-      'Bypass',
-      '-Command',
-      [
-        `$projectPattern = [Regex]::Escape('${escapedProjectRoot}')`,
-        "$processes = Get-CimInstance Win32_Process | Where-Object { $_.Name -eq 'node.exe' -and $_.CommandLine -match $projectPattern }",
-        "foreach ($process in $processes) {",
-        '  try {',
-        '    Stop-Process -Id $process.ProcessId -Force -ErrorAction Stop',
-        '  } catch {',
-        '  }',
-        '}',
-      ].join('; '),
-    ],
-    {
-      stdio: 'ignore',
-      env,
-    }
-  );
 }
 
 function collectNodeModulesAndroidArtifacts() {
   const nodeModulesRoot = path.join(projectRoot, 'node_modules');
-  const collected = [];
+  const collected = new Set();
+  const androidPathSegment = `${path.sep}android${path.sep}`;
 
   function visit(dir) {
     let entries = [];
@@ -77,11 +54,18 @@ function collectNodeModulesAndroidArtifacts() {
       }
 
       const fullPath = path.join(dir, entry.name);
+      const parentPath = path.dirname(fullPath);
+
+      if (
+        (entry.name === 'build' || entry.name === '.cxx') &&
+        (parentPath.includes(androidPathSegment) || parentPath.toLowerCase().includes('gradle-plugin'))
+      ) {
+        collected.add(fullPath);
+      }
 
       if (entry.name === 'android') {
-        collected.push(path.join(fullPath, 'build'));
-        collected.push(path.join(fullPath, '.cxx'));
-        continue;
+        collected.add(path.join(fullPath, 'build'));
+        collected.add(path.join(fullPath, '.cxx'));
       }
 
       visit(fullPath);
@@ -89,7 +73,7 @@ function collectNodeModulesAndroidArtifacts() {
   }
 
   visit(nodeModulesRoot);
-  return collected;
+  return [...collected];
 }
 
 function removeDirectoryIfPresent(targetPath) {
@@ -149,6 +133,7 @@ const env = { ...process.env };
 if (!env.NODE_ENV) {
   env.NODE_ENV = 'development';
 }
+env.CLOSING_ENGAGE_SKIP_RUN_ANDROID_WRAPPER = '1';
 
 function runAdbCommand(args) {
   const result = spawnSync('adb', args, {
@@ -162,6 +147,15 @@ function runAdbCommand(args) {
   }
 
   return result.stdout.trim();
+}
+
+function runCommand(command, args, options = {}) {
+  return spawnSync(command, args, {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env,
+    ...options,
+  });
 }
 
 function getConnectedDeviceAbi() {
@@ -211,46 +205,65 @@ function getMappedProjectRoot() {
 
   const driveRoot = path.parse(projectRoot).root;
   const shortBuildRoot = path.join(driveRoot, 'cea-build');
-  const mirroredProjectRoot = path.join(shortBuildRoot, path.basename(projectRoot));
-
+  const mirrorRoot = path.join(shortBuildRoot, path.basename(projectRoot));
   fs.mkdirSync(shortBuildRoot, { recursive: true });
 
-  const syncResult = spawnSync(
-    'robocopy',
-    [
-      projectRoot,
-      mirroredProjectRoot,
-      '/MIR',
-      '/R:2',
-      '/W:1',
-      '/NFL',
-      '/NDL',
-      '/NJH',
-      '/NJS',
-      '/NP',
-      '/XD',
-      path.join(projectRoot, 'android', 'build'),
-      path.join(projectRoot, 'android', 'app', 'build'),
-      path.join(projectRoot, 'android', 'app', '.cxx'),
-      path.join(projectRoot, '.expo'),
-      path.join(projectRoot, 'dist'),
-    ],
-    {
-      stdio: 'inherit',
-      env,
-    }
-  );
+  for (const dir of buildDirs) {
+    removeDirectoryIfPresent(path.join(mirrorRoot, dir));
+  }
 
-  if ((syncResult.status ?? 16) >= 8 || !fs.existsSync(path.join(mirroredProjectRoot, 'package.json'))) {
+  const robocopyArgs = [
+    projectRoot,
+    mirrorRoot,
+    '/MIR',
+    '/R:1',
+    '/W:1',
+    '/FFT',
+    '/XJ',
+    '/NFL',
+    '/NDL',
+    '/NJH',
+    '/NJS',
+    '/NP',
+    '/XD',
+    path.join(projectRoot, 'android', 'build'),
+    path.join(projectRoot, 'android', 'app', 'build'),
+    path.join(projectRoot, 'android', 'app', '.cxx'),
+    path.join(projectRoot, '.git'),
+    path.join(projectRoot, '.expo'),
+    path.join(projectRoot, 'dist'),
+  ];
+
+  const syncResult = runCommand('robocopy', robocopyArgs);
+  if ((syncResult.status ?? 16) >= 8) {
+    if (syncResult.stdout) {
+      process.stdout.write(syncResult.stdout);
+    }
+    if (syncResult.stderr) {
+      process.stderr.write(syncResult.stderr);
+    }
     return { cwd: projectRoot, cleanup: () => {} };
   }
 
-  return { cwd: mirroredProjectRoot, cleanup: () => {} };
+  const mappedRoot = mirrorRoot;
+  if (!fs.existsSync(path.join(mappedRoot, 'package.json'))) {
+    return { cwd: projectRoot, cleanup: () => {} };
+  }
+
+  return {
+    cwd: mappedRoot,
+    cleanup: () => {},
+  };
+}
+
+const forwardedArgs = process.argv.slice(2);
+if (forwardedArgs[0] === 'run:android') {
+  forwardedArgs.shift();
 }
 
 const { cwd, cleanup } = getMappedProjectRoot();
-const expoCli = path.join(cwd, 'node_modules', 'expo', 'bin', 'cli');
-const args = [expoCli, 'run:android', '--no-build-cache', ...process.argv.slice(2)];
+const expoCli = path.join(cwd, 'node_modules', '@expo', 'cli', 'main.js');
+const args = [expoCli, 'run:android', '--no-build-cache', ...forwardedArgs];
 
 const result = spawnSync(process.execPath, args, {
   cwd,

@@ -47,7 +47,7 @@ $pathsToRemove = @(
 $androidArtifacts = Get-ChildItem (Join-Path $projectRoot 'node_modules') -Directory -Recurse -ErrorAction SilentlyContinue |
   Where-Object {
     (($_.Name -eq 'build' -or $_.Name -eq '.cxx') -and $_.Parent.Name -eq 'android') -or
-    ($_.Name -eq 'build' -and $_.FullName -match '\\(expo-gradle-plugin|gradle-plugin)\\')
+    (($_.Name -eq 'build' -or $_.Name -eq '.cxx') -and ( $_.FullName -match '\\android\\' -or $_.FullName -match 'gradle-plugin' ))
   } |
   Select-Object -ExpandProperty FullName
 
