@@ -25,6 +25,7 @@ export default (_context: ConfigContext): ExpoConfig => {
     newArchEnabled: true,
     icon: './assets/icon.png',
     splash: {
+      image: './assets/icon.png',
       resizeMode: 'contain',
       backgroundColor: '#f4f8ff',
     },

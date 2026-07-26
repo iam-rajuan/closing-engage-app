@@ -37,7 +37,7 @@ npm run web
 
 Use Expo Go by scanning the QR code from `npm start`.
 
-On Windows, prefer `npm run android`. This project includes a short-path Android wrapper because native builds can fail from long workspace paths with CMake/Ninja. A local `npx expo run:android` install in this repo is also patched to use the same wrapper.
+On Windows, prefer `npm run android`. This project includes a short-path Android wrapper because native builds can fail from long workspace paths with CMake/Ninja. The wrapper starts a standard Metro server so local Android debug builds open directly into the app instead of the Expo development launcher.
 
 ## Validation
 

@@ -2,10 +2,12 @@
 
 const fs = require('fs');
 const path = require('path');
-const { spawnSync } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 
 const projectRoot = path.resolve(__dirname, '..');
 const isWindows = process.platform === 'win32';
+const androidAppId = 'com.closingengage.app';
+const androidMainActivity = `${androidAppId}/.MainActivity`;
 
 const buildDirs = [
   'android/build',
@@ -35,8 +37,8 @@ function stopProjectNodeProcesses() {
   }
 }
 
-function collectNodeModulesAndroidArtifacts() {
-  const nodeModulesRoot = path.join(projectRoot, 'node_modules');
+function collectNodeModulesAndroidArtifacts(root = projectRoot) {
+  const nodeModulesRoot = path.join(root, 'node_modules');
   const collected = new Set();
   const androidPathSegment = `${path.sep}android${path.sep}`;
 
@@ -158,6 +160,16 @@ function runCommand(command, args, options = {}) {
   });
 }
 
+function isPortListening(port) {
+  const result = runCommand('netstat', ['-ano']);
+  if ((result.status ?? 1) !== 0) {
+    return false;
+  }
+
+  const portPattern = new RegExp(`127\\.0\\.0\\.1:${port}\\s+.*LISTENING|0\\.0\\.0\\.0:${port}\\s+.*LISTENING|\\[::\\]:${port}\\s+.*LISTENING`, 'i');
+  return portPattern.test(result.stdout);
+}
+
 function getConnectedDeviceAbi() {
   if (!isWindows) {
     return '';
@@ -212,6 +224,10 @@ function getMappedProjectRoot() {
     removeDirectoryIfPresent(path.join(mirrorRoot, dir));
   }
 
+  for (const dir of collectNodeModulesAndroidArtifacts(mirrorRoot)) {
+    removeDirectoryIfPresent(dir);
+  }
+
   const robocopyArgs = [
     projectRoot,
     mirrorRoot,
@@ -242,7 +258,7 @@ function getMappedProjectRoot() {
     if (syncResult.stderr) {
       process.stderr.write(syncResult.stderr);
     }
-    return { cwd: projectRoot, cleanup: () => {} };
+    console.warn(`robocopy reported a non-fatal sync issue (exit code ${syncResult.status}); continuing with the mirror path.`);
   }
 
   const mappedRoot = mirrorRoot;
@@ -256,25 +272,116 @@ function getMappedProjectRoot() {
   };
 }
 
-const forwardedArgs = process.argv.slice(2);
-if (forwardedArgs[0] === 'run:android') {
-  forwardedArgs.shift();
+function ensureCommandSucceeded(result) {
+  if (result.stdout) {
+    process.stdout.write(result.stdout);
+  }
+  if (result.stderr) {
+    process.stderr.write(result.stderr);
+  }
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  if ((result.status ?? 1) !== 0) {
+    process.exit(result.status ?? 1);
+  }
+}
+
+function getGradleWrapper(root) {
+  return path.join(root, 'android', isWindows ? 'gradlew.bat' : 'gradlew');
+}
+
+function buildDebugApk(root) {
+  const gradleWrapper = getGradleWrapper(root);
+  const gradleArgs = ['app:assembleDebug', '-x', 'lint', '-x', 'test'];
+
+  const devServerPort = env.REACT_NATIVE_DEV_SERVER_PORT || '8081';
+  gradleArgs.push(`-PreactNativeDevServerPort=${devServerPort}`);
+
+  if (env.ORG_GRADLE_PROJECT_reactNativeArchitectures) {
+    gradleArgs.push(`-PreactNativeArchitectures=${env.ORG_GRADLE_PROJECT_reactNativeArchitectures}`);
+  }
+
+  const result = isWindows
+    ? spawnSync(gradleWrapper, gradleArgs, {
+        cwd: path.join(root, 'android'),
+        stdio: 'inherit',
+        env,
+        shell: true,
+      })
+    : spawnSync(gradleWrapper, gradleArgs, {
+        cwd: path.join(root, 'android'),
+        stdio: 'inherit',
+        env,
+      });
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  if ((result.status ?? 1) !== 0) {
+    process.exit(result.status ?? 1);
+  }
+}
+
+function ensureMetroServer(root) {
+  const port = env.REACT_NATIVE_DEV_SERVER_PORT || '8081';
+  if (isPortListening(port)) {
+    return;
+  }
+
+  const expoCli = path.join(root, 'node_modules', '@expo', 'cli', 'main.js');
+  const child = spawn(process.execPath, [expoCli, 'start', '--port', port, '--no-interactive'], {
+    cwd: root,
+    detached: true,
+    stdio: 'ignore',
+    env,
+    windowsHide: true,
+  });
+
+  child.unref();
+  console.log(`Started Metro in the background on port ${port}.`);
+}
+
+function ensureAdbReverse() {
+  const reversePorts = ['8081', '19000', '19001', '19002'];
+  for (const port of reversePorts) {
+    runCommand('adb', ['reverse', `tcp:${port}`, `tcp:${port}`]);
+  }
+}
+
+function installAndLaunchDebugApk(root) {
+  const apkPath = path.join(root, 'android', 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk');
+
+  if (!fs.existsSync(apkPath)) {
+    console.warn(`Debug APK was not found at ${apkPath}`);
+    return;
+  }
+
+  const adbDevices = runCommand('adb', ['devices']);
+  if ((adbDevices.status ?? 1) !== 0 || !/\tdevice\r?$/m.test(adbDevices.stdout)) {
+    if (adbDevices.stdout) {
+      process.stdout.write(adbDevices.stdout);
+    }
+    if (adbDevices.stderr) {
+      process.stderr.write(adbDevices.stderr);
+    }
+    console.warn('Skipping APK install because no connected Android device was detected.');
+    return;
+  }
+
+  ensureAdbReverse();
+  ensureCommandSucceeded(runCommand('adb', ['install', '-r', apkPath]));
+  ensureCommandSucceeded(runCommand('adb', ['shell', 'am', 'start', '-n', androidMainActivity]));
 }
 
 const { cwd, cleanup } = getMappedProjectRoot();
-const expoCli = path.join(cwd, 'node_modules', '@expo', 'cli', 'main.js');
-const args = [expoCli, 'run:android', '--no-build-cache', ...forwardedArgs];
-
-const result = spawnSync(process.execPath, args, {
-  cwd,
-  stdio: 'inherit',
-  env,
-});
-
-cleanup();
-
-if (result.error) {
-  throw result.error;
+try {
+  ensureMetroServer(cwd);
+  buildDebugApk(cwd);
+  installAndLaunchDebugApk(cwd);
+} finally {
+  cleanup();
 }
-
-process.exit(result.status ?? 1);
