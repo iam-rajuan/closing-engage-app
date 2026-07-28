@@ -29,12 +29,14 @@ import { AppHeader } from '@/components/common/AppHeader';
 import { AppInput } from '@/components/common/AppInput';
 import { AppButton } from '@/components/common/AppButton';
 import { AppCard } from '@/components/common/AppCard';
+import { FeedbackModal } from '@/components/common/FeedbackModal';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { LoginForm, loginSchema } from '@/utils/validation';
 import { colors, shadows } from '@/theme';
 import { styles as sharedStyles } from '@/features/shared/styles/screenStyles';
 import { requestPasswordReset } from '@/services/auth.service';
+import { describeApiError } from '@/services/api';
 
 /* ─── Role Selector Card ─── */
 function RoleCard({
@@ -77,7 +79,7 @@ function RoleCard({
 export function LoginScreen() {
   const login = useAuthStore((state) => state.login);
   const [showPassword, setShowPassword] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitFeedback, setSubmitFeedback] = useState<{ title: string; description: string } | null>(null);
 
   const {
     control,
@@ -93,12 +95,18 @@ export function LoginScreen() {
   const role = watch('role');
 
   const submit = handleSubmit(async (values) => {
-    setSubmitError(null);
+    setSubmitFeedback(null);
     try {
       const user = await login(values.role, values.email, values.password);
       router.replace(user.role === 'company' ? '/company/home' : '/notary/home');
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'Unable to sign in');
+      setSubmitFeedback(
+        describeApiError(
+          error,
+          'Unable to sign in',
+          'We could not sign you in right now. Please try again.',
+        ),
+      );
     }
   });
 
@@ -233,8 +241,6 @@ export function LoginScreen() {
               </AppText>
               {!isSubmitting && <ArrowRight color="#fff" size={20} />}
             </Pressable>
-            {submitError ? <AppText style={s.submitErrorText}>{submitError}</AppText> : null}
-
             {/* ── Security Notice ── */}
             <View style={s.securityRow}>
               <Shield color="#94a3b8" size={14} />
@@ -252,6 +258,15 @@ export function LoginScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <FeedbackModal
+        visible={submitFeedback !== null}
+        variant="error"
+        title={submitFeedback?.title ?? ''}
+        description={submitFeedback?.description ?? ''}
+        buttonTitle="Try Again"
+        onClose={() => setSubmitFeedback(null)}
+      />
     </SafeAreaView>
   );
 }
@@ -261,16 +276,24 @@ export function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<'company' | 'notary'>('company');
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [errorFeedback, setErrorFeedback] = useState<{ title: string; description: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const submitReset = async () => {
     setSubmitting(true);
     setFeedback(null);
+    setErrorFeedback(null);
     try {
       await requestPasswordReset(email, role);
       setFeedback('If your account exists, a verification code has been sent to your email.');
     } catch (error) {
-      setFeedback(error instanceof Error ? error.message : 'Unable to send verification code');
+      setErrorFeedback(
+        describeApiError(
+          error,
+          'Unable to send verification code',
+          'Please try again in a moment.',
+        ),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -305,6 +328,15 @@ export function ForgotPasswordScreen() {
         <AppButton title={submitting ? 'Sending...' : 'Send Verification Code'} onPress={() => void submitReset()} />
         {feedback ? <AppText style={s.resetInfoText}>{feedback}</AppText> : null}
       </AppCard>
+
+      <FeedbackModal
+        visible={errorFeedback !== null}
+        variant="error"
+        title={errorFeedback?.title ?? ''}
+        description={errorFeedback?.description ?? ''}
+        buttonTitle="Try Again"
+        onClose={() => setErrorFeedback(null)}
+      />
     </ScreenContainer>
   );
 }
@@ -398,12 +430,6 @@ const s = StyleSheet.create({
   errorText: {
     fontSize: 12,
     color: '#ef4444',
-    marginTop: -4,
-  },
-  submitErrorText: {
-    fontSize: 12,
-    color: '#ef4444',
-    textAlign: 'center',
     marginTop: -4,
   },
   resetInfoText: {

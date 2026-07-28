@@ -58,15 +58,110 @@ export type ApiEnvelope<T> = {
   data: T;
 };
 
+export type ApiErrorKind = 'network' | 'timeout' | 'server' | 'auth' | 'validation' | 'unknown';
+
 export class ApiClientError extends Error {
   statusCode?: number;
+  kind: ApiErrorKind;
 
-  constructor(message: string, statusCode?: number) {
+  constructor(message: string, statusCode?: number, kind: ApiErrorKind = 'unknown') {
     super(message);
     this.name = 'ApiClientError';
     this.statusCode = statusCode;
+    this.kind = kind;
   }
 }
+
+const normalizeApiErrorMessage = (
+  statusCode: number | undefined,
+  axiosMessage: string | undefined,
+  responseMessage: string | undefined,
+): { message: string; kind: ApiErrorKind } => {
+  if (axiosMessage?.toLowerCase().includes('timeout')) {
+    return {
+      kind: 'timeout',
+      message: 'Closing Engage is taking longer than expected to respond. Please try again in a moment.',
+    };
+  }
+
+  if (!statusCode) {
+    return {
+      kind: 'network',
+      message: 'Unable to connect to Closing Engage right now. Check your internet connection and try again.',
+    };
+  }
+
+  if (statusCode >= 500) {
+    return {
+      kind: 'server',
+      message: 'Closing Engage is temporarily unavailable. Please try again in a moment.',
+    };
+  }
+
+  if (statusCode === 401) {
+    return {
+      kind: 'auth',
+      message: responseMessage || 'Your session could not be verified. Please sign in again.',
+    };
+  }
+
+  if (statusCode === 400 || statusCode === 403 || statusCode === 404 || statusCode === 409 || statusCode === 422) {
+    return {
+      kind: 'validation',
+      message: responseMessage || 'We could not complete your request. Please review your details and try again.',
+    };
+  }
+
+  return {
+    kind: 'unknown',
+    message: responseMessage || 'Something went wrong while talking to Closing Engage. Please try again.',
+  };
+};
+
+export const describeApiError = (
+  error: unknown,
+  fallbackTitle = 'Something went wrong',
+  fallbackDescription = 'Please try again.',
+) => {
+  if (error instanceof ApiClientError) {
+    switch (error.kind) {
+      case 'timeout':
+      case 'network':
+      case 'server':
+        return {
+          title: 'Connection Issue',
+          description: error.message,
+        };
+      case 'auth':
+        return {
+          title: 'Sign-In Issue',
+          description: error.message,
+        };
+      case 'validation':
+        return {
+          title: 'Action Needed',
+          description: error.message,
+        };
+      default:
+        return {
+          title: fallbackTitle,
+          description: error.message || fallbackDescription,
+        };
+    }
+  }
+
+  if (error instanceof Error) {
+    return {
+      title: fallbackTitle,
+      description: error.message || fallbackDescription,
+    };
+  }
+
+  return {
+    title: fallbackTitle,
+    description: fallbackDescription,
+  };
+};
 
 export const registerUnauthorizedHandler = (handler: (() => void | Promise<void>) | null) => {
   unauthorizedHandler = handler;
@@ -180,17 +275,16 @@ api.interceptors.response.use(
           });
       }
 
-      const message =
-        (!axiosError.response && axiosError.message === 'Network Error'
-          ? `Network Error. Mobile app could not reach ${baseURL}. Check that the backend is running and this device can access your development machine.`
-          : undefined) ||
-        axiosError.response?.data?.message ||
-        axiosError.message ||
-        'Something went wrong while talking to the server';
-      return Promise.reject(new ApiClientError(message, statusCode));
+      const normalized = normalizeApiErrorMessage(
+        statusCode,
+        axiosError.message,
+        axiosError.response?.data?.message,
+      );
+
+      return Promise.reject(new ApiClientError(normalized.message, statusCode, normalized.kind));
     }
 
-    return Promise.reject(new ApiClientError('Unexpected API error'));
+    return Promise.reject(new ApiClientError('Something went wrong while talking to Closing Engage. Please try again.', undefined, 'unknown'));
   },
 );
 
