@@ -36,7 +36,7 @@ function ensureAdbReverse() {
 
 function startExpoDevClient() {
   const expoCli = path.join(projectRoot, 'node_modules', '@expo', 'cli', 'main.js');
-  const child = spawn(process.execPath, [expoCli, 'start', '--dev-client', '--lan', '--android'], {
+  const child = spawn(process.execPath, [expoCli, 'start', '--dev-client', '--localhost', '--android'], {
     cwd: projectRoot,
     stdio: 'inherit',
     env,

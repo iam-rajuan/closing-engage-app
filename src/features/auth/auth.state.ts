@@ -57,8 +57,13 @@ export const authStore = createStore<AuthState>((set) => ({
       SecureStore.getItemAsync(AUTH_ONBOARDING_KEY),
       SecureStore.getItemAsync(AUTH_USER_KEY),
     ]);
+    const hasCompletedOnboarding = onboarded === 'true' || Boolean(token);
     const storedUser = parseStoredUser(storedUserValue);
     const role = token ? decodeTokenRole(token) ?? storedUser?.role ?? null : null;
+
+    if (token && onboarded !== 'true') {
+      await SecureStore.setItemAsync(AUTH_ONBOARDING_KEY, 'true');
+    }
 
     if (token && role) {
       try {
@@ -68,7 +73,7 @@ export const authStore = createStore<AuthState>((set) => ({
         set({
           token,
           user: freshUser,
-          hasCompletedOnboarding: onboarded === 'true',
+          hasCompletedOnboarding,
           isHydrated: true,
         });
         return;
@@ -77,7 +82,7 @@ export const authStore = createStore<AuthState>((set) => ({
           set({
             token,
             user: storedUser,
-            hasCompletedOnboarding: onboarded === 'true',
+            hasCompletedOnboarding,
             isHydrated: true,
           });
           return;
@@ -92,7 +97,7 @@ export const authStore = createStore<AuthState>((set) => ({
     set({
       token: null,
       user: null,
-      hasCompletedOnboarding: onboarded === 'true',
+      hasCompletedOnboarding,
       isHydrated: true,
     });
   },
@@ -103,8 +108,12 @@ export const authStore = createStore<AuthState>((set) => ({
   login: async (role, email, password) => {
     const session = await loginPortal(role, email, password);
     setAuthToken(session.token);
-    await Promise.all([SecureStore.setItemAsync(AUTH_TOKEN_KEY, session.token), persistUser(session.user)]);
-    set({ token: session.token, user: session.user });
+    await Promise.all([
+      SecureStore.setItemAsync(AUTH_TOKEN_KEY, session.token),
+      SecureStore.setItemAsync(AUTH_ONBOARDING_KEY, 'true'),
+      persistUser(session.user),
+    ]);
+    set({ token: session.token, user: session.user, hasCompletedOnboarding: true });
     return session.user;
   },
   setUser: async (user) => {
@@ -117,6 +126,6 @@ export const authStore = createStore<AuthState>((set) => ({
     });
     setAuthToken(null);
     await Promise.all([SecureStore.deleteItemAsync(AUTH_TOKEN_KEY), SecureStore.deleteItemAsync(AUTH_USER_KEY)]);
-    set({ token: null, user: null });
+    set((state) => ({ token: null, user: null, hasCompletedOnboarding: state.hasCompletedOnboarding }));
   },
 }));

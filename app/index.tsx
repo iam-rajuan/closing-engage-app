@@ -14,6 +14,10 @@ export default function Index() {
     );
   }
 
+  if (user && token) {
+    return <Redirect href={user.role === 'company' ? '/company/home' : '/notary/home'} />;
+  }
+
   if (!hasCompletedOnboarding) return <Redirect href="/onboarding" />;
   if (!user || !token) return <Redirect href="/auth/login" />;
   return <Redirect href={user.role === 'company' ? '/company/home' : '/notary/home'} />;

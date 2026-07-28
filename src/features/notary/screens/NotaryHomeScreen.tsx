@@ -72,6 +72,10 @@ export function NotaryHomeScreen() {
   const { data: orders, loading, error, reload } = useAsyncResource(() => getNotaryOrders(), [], {
     cacheKey: 'notary-orders',
   });
+  const assignedOrders = useMemo(
+    () => (orders ?? []).filter((order) => !order.openForAll || Boolean(order.assignedNotaryId)),
+    [orders],
+  );
 
   const metrics = useMemo(() => {
     const items = orders ?? [];
@@ -204,19 +208,19 @@ export function NotaryHomeScreen() {
 
       {/* ── Order Opportunities ── */}
       <SectionHeader
-        title="Order Opportunities"
+        title="Assigned Orders"
         action="View All"
         style={styles.sectionHeader}
         onActionPress={() => router.push('/notary/assigned')}
       />
 
       <View style={styles.orderList}>
-        {orders?.length ? (
-          orders.slice(0, 3).map((order) => (
+        {assignedOrders.length ? (
+          assignedOrders.slice(0, 3).map((order) => (
             <NotaryOrderCard key={order.id} order={order} origin="home" />
           ))
         ) : (
-          !loading && <EmptyState title="No assigned or open orders yet" />
+          !loading && <EmptyState title="No assigned orders yet" />
         )}
       </View>
 

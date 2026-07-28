@@ -2,13 +2,24 @@ import { Platform } from 'react-native';
 import { Redirect, Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BriefcaseBusiness, FileText, Home, Settings, Users } from 'lucide-react-native';
+import { LoadingState } from '@/components/common/LoadingState';
+import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { colors } from '@/theme';
 import { useAuthStore } from '@/features/auth/auth.store';
 
 export default function CompanyLayout() {
+  const isHydrated = useAuthStore((state) => state.isHydrated);
   const user = useAuthStore((state) => state.user);
   const token = useAuthStore((state) => state.token);
   const insets = useSafeAreaInsets();
+
+  if (!isHydrated) {
+    return (
+      <ScreenContainer>
+        <LoadingState />
+      </ScreenContainer>
+    );
+  }
   
   if (!user || !token || user.role !== 'company') return <Redirect href="/auth/login" />;
 
