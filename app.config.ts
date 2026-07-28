@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
-import { ConfigContext, ExpoConfig } from 'expo/config';
+import { ConfigContext } from 'expo/config';
+import { ExpoConfig } from '@expo/config-types';
 
 dotenv.config({ path: '.env' });
 dotenv.config({ path: '.env.local', override: true });
@@ -15,14 +16,13 @@ export default (_context: ConfigContext): ExpoConfig => {
   const environment = readEnv('EXPO_PUBLIC_ENV') ?? 'development';
   const easProjectId = readEnv('EXPO_PUBLIC_EAS_PROJECT_ID') ?? 'a646fa7f-28aa-4974-8d2d-69b7eb09fcce';
 
-  return {
+  const config = {
     name: appName,
     slug: 'closing-engage-mobile',
     version: '1.0.0',
     orientation: 'portrait',
     scheme: 'closingengage',
     userInterfaceStyle: 'light',
-    newArchEnabled: true,
     icon: './assets/icon.png',
     splash: {
       image: './assets/icon.png',
@@ -63,5 +63,7 @@ export default (_context: ConfigContext): ExpoConfig => {
         projectId: easProjectId,
       },
     },
-  };
+  } as ExpoConfig & { newArchEnabled?: boolean };
+
+  return config;
 };

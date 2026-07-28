@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export const allowedLoanTypes = ['Refinance', 'Purchase', 'HELOC', 'Other'] as const;
+
 export const loginSchema = z.object({
   email: z.string().trim().min(1, 'Enter your email or username'),
   password: z.string().trim().min(1, 'Enter your password'),
@@ -14,7 +16,7 @@ export const orderSchema = z.object({
   state: z.string().min(2, 'State is required'),
   zip: z.string().min(5, 'Zip is required'),
   signingDate: z.string().min(1, 'Signing date is required'),
-  loanType: z.string().min(1, 'Loan type is required'),
+  loanType: z.enum(allowedLoanTypes, { message: 'Select a valid loan type' }),
   requirements: z.string().optional(),
   preferredNotary: z.string().optional(),
   instructions: z.string().optional(),

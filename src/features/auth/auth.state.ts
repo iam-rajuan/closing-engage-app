@@ -1,7 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 import { createStore } from 'zustand/vanilla';
 import { fetchPortalSession, loginPortal } from '@/services/auth.service';
-import { AUTH_ONBOARDING_KEY, AUTH_TOKEN_KEY, AUTH_USER_KEY } from '@/services/api';
+import { AUTH_ONBOARDING_KEY, AUTH_TOKEN_KEY, AUTH_USER_KEY, setAuthToken } from '@/services/api';
 import { AuthState } from './auth.types';
 import { User } from '@/types/user';
 
@@ -61,6 +61,7 @@ export const authStore = createStore<AuthState>((set) => ({
 
     if (token && role) {
       try {
+        setAuthToken(token);
         const freshUser = await fetchPortalSession(role);
         await persistUser(freshUser);
         set({
@@ -81,10 +82,12 @@ export const authStore = createStore<AuthState>((set) => ({
           return;
         }
 
+        setAuthToken(null);
         await Promise.all([SecureStore.deleteItemAsync(AUTH_TOKEN_KEY), SecureStore.deleteItemAsync(AUTH_USER_KEY)]);
       }
     }
 
+    setAuthToken(null);
     set({
       token: null,
       user: null,
@@ -98,6 +101,7 @@ export const authStore = createStore<AuthState>((set) => ({
   },
   login: async (role, email, password) => {
     const session = await loginPortal(role, email, password);
+    setAuthToken(session.token);
     await Promise.all([SecureStore.setItemAsync(AUTH_TOKEN_KEY, session.token), persistUser(session.user)]);
     set({ token: session.token, user: session.user });
     return session.user;
@@ -107,6 +111,7 @@ export const authStore = createStore<AuthState>((set) => ({
     set({ user });
   },
   logout: async () => {
+    setAuthToken(null);
     await Promise.all([SecureStore.deleteItemAsync(AUTH_TOKEN_KEY), SecureStore.deleteItemAsync(AUTH_USER_KEY)]);
     set({ token: null, user: null });
   },

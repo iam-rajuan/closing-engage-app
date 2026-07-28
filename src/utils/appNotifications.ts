@@ -1,14 +1,33 @@
-import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
 import { Platform } from 'react-native';
 import { NotificationItem } from '@/types/notification';
 import { UserRole } from '@/types/user';
 
 const DEFAULT_CHANNEL_ID = 'default';
+let notificationsUnavailableLogged = false;
+
+type NotificationsModule = typeof import('expo-notifications');
 
 const normalizeOrderId = (linkId?: string) => (linkId || '').replace(/^#/, '');
 
+async function getNotificationsModule(): Promise<NotificationsModule | null> {
+  try {
+    return await import('expo-notifications');
+  } catch (error) {
+    if (__DEV__ && !notificationsUnavailableLogged) {
+      notificationsUnavailableLogged = true;
+      console.warn('expo-notifications is unavailable in the current runtime; notification features are disabled.', error);
+    }
+    return null;
+  }
+}
+
 export async function ensureAppNotificationPermission() {
+  const Notifications = await getNotificationsModule();
+  if (!Notifications) {
+    return false;
+  }
+
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   let finalStatus = existingStatus;
 
@@ -43,6 +62,11 @@ export async function showOrderSystemNotification(notification: NotificationItem
     return;
   }
 
+  const Notifications = await getNotificationsModule();
+  if (!Notifications) {
+    return;
+  }
+
   await Notifications.scheduleNotificationAsync({
     content: {
       title: notification.title,
@@ -59,28 +83,44 @@ export async function showOrderSystemNotification(notification: NotificationItem
 }
 
 export function registerAppNotificationResponseListener() {
-  return Notifications.addNotificationResponseReceivedListener((response) => {
-    const data = response.notification.request.content.data as {
-      localUri?: string;
-      mimeType?: string;
-      fileName?: string;
-      notificationType?: string;
-      role?: UserRole;
-      linkId?: string;
-    };
+  let removed = false;
+  let subscription: { remove(): void } | null = null;
 
-    if (data && typeof data.localUri === 'string') {
+  void getNotificationsModule().then((Notifications) => {
+    if (!Notifications || removed) {
       return;
     }
 
-    if (data.notificationType === 'order' && typeof data.linkId === 'string') {
-      const orderId = normalizeOrderId(data.linkId);
-      if (data.role === 'notary') {
-        router.push({ pathname: '/notary/assigned/[id]', params: { id: orderId, from: 'notifications' } });
+    subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data as {
+        localUri?: string;
+        mimeType?: string;
+        fileName?: string;
+        notificationType?: string;
+        role?: UserRole;
+        linkId?: string;
+      };
+
+      if (data && typeof data.localUri === 'string') {
         return;
       }
 
-      router.push({ pathname: '/company/orders/[id]', params: { id: orderId, from: 'notifications' } });
-    }
+      if (data.notificationType === 'order' && typeof data.linkId === 'string') {
+        const orderId = normalizeOrderId(data.linkId);
+        if (data.role === 'notary') {
+          router.push({ pathname: '/notary/assigned/[id]', params: { id: orderId, from: 'notifications' } });
+          return;
+        }
+
+        router.push({ pathname: '/company/orders/[id]', params: { id: orderId, from: 'notifications' } });
+      }
+    });
   });
+
+  return {
+    remove() {
+      removed = true;
+      subscription?.remove();
+    },
+  };
 }

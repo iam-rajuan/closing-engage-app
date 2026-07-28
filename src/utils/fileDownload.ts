@@ -1,25 +1,49 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as SecureStore from 'expo-secure-store';
-import * as Notifications from 'expo-notifications';
 import * as IntentLauncher from 'expo-intent-launcher';
 import { Platform, Alert } from 'react-native';
 import { registerAppNotificationResponseListener } from '@/utils/appNotifications';
 
 const DOWNLOAD_DIR_KEY = 'closing_engage_download_dir_uri';
+let notificationsUnavailableLogged = false;
+let notificationHandlerConfigured = false;
 
-// Set notification handler to display notifications even when the app is in the foreground
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+type NotificationsModule = typeof import('expo-notifications');
+
+async function getNotificationsModule(): Promise<NotificationsModule | null> {
+  try {
+    const Notifications = await import('expo-notifications');
+
+    if (!notificationHandlerConfigured) {
+      Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldPlaySound: true,
+          shouldSetBadge: false,
+          shouldShowBanner: true,
+          shouldShowList: true,
+        }),
+      });
+      notificationHandlerConfigured = true;
+    }
+
+    return Notifications;
+  } catch (error) {
+    if (__DEV__ && !notificationsUnavailableLogged) {
+      notificationsUnavailableLogged = true;
+      console.warn('expo-notifications is unavailable in the current runtime; download notifications are disabled.', error);
+    }
+    return null;
+  }
+}
 
 async function requestNotificationPermission() {
   try {
+    const Notifications = await getNotificationsModule();
+    if (!Notifications) {
+      return false;
+    }
+
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
     if (existingStatus !== 'granted') {
@@ -35,6 +59,11 @@ async function requestNotificationPermission() {
 
 async function triggerDownloadNotification(fileName: string, localUri: string, mimeType: string) {
   try {
+    const Notifications = await getNotificationsModule();
+    if (!Notifications) {
+      return;
+    }
+
     const hasPermission = await requestNotificationPermission();
     if (!hasPermission) {
       console.warn('Notification permission not granted');
@@ -264,28 +293,39 @@ export async function openDownloadedFile(localUri: string, mimeType: string, fil
 
 export function registerNotificationResponseListener() {
   const appNotificationSubscription = registerAppNotificationResponseListener();
-  const subscription = Notifications.addNotificationResponseReceivedListener(async (response) => {
-    const data = response.notification.request.content.data as {
-      localUri?: string;
-      mimeType?: string;
-      fileName?: string;
-    };
-    if (data && typeof data.localUri === 'string') {
-      try {
-        const fileInfo = await FileSystem.getInfoAsync(data.localUri);
-        if (fileInfo.exists) {
-          await openDownloadedFile(data.localUri, data.mimeType || 'application/octet-stream', data.fileName || 'document');
-        } else {
-          Alert.alert('File not found', 'The cached downloaded file could not be located.');
-        }
-      } catch (error) {
-        console.error('Error opening file from notification response:', error);
-      }
+  let removed = false;
+  let subscription: { remove(): void } | null = null;
+
+  void getNotificationsModule().then((Notifications) => {
+    if (!Notifications || removed) {
+      return;
     }
+
+    subscription = Notifications.addNotificationResponseReceivedListener(async (response) => {
+      const data = response.notification.request.content.data as {
+        localUri?: string;
+        mimeType?: string;
+        fileName?: string;
+      };
+      if (data && typeof data.localUri === 'string') {
+        try {
+          const fileInfo = await FileSystem.getInfoAsync(data.localUri);
+          if (fileInfo.exists) {
+            await openDownloadedFile(data.localUri, data.mimeType || 'application/octet-stream', data.fileName || 'document');
+          } else {
+            Alert.alert('File not found', 'The cached downloaded file could not be located.');
+          }
+        } catch (error) {
+          console.error('Error opening file from notification response:', error);
+        }
+      }
+    });
   });
+
   return {
     remove() {
-      subscription.remove();
+      removed = true;
+      subscription?.remove();
       appNotificationSubscription.remove();
     },
   };

@@ -3,21 +3,25 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
-import { Building, Calendar, ChevronDown, Clock, FileText, Info, Plus, Zap } from 'lucide-react-native';
+import { Building, Calendar, ChevronDown, Clock, FileText, Info, Plus, Trash2, Zap } from 'lucide-react-native';
 import { AppButton } from '@/components/common/AppButton';
 import { AppCard } from '@/components/common/AppCard';
 import { AppHeader } from '@/components/common/AppHeader';
 import { AppInput } from '@/components/common/AppInput';
 import { AppText } from '@/components/common/AppText';
+import { DatePickerModal } from '@/components/common/DatePickerModal';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { UploadBox } from '@/components/documents/UploadBox';
+import { uploadDocumentBinary } from '@/services/documents.service';
 import { createOrder } from '@/services/orders.service';
 import { colors } from '@/theme';
-import { OrderForm, orderSchema } from '@/utils/validation';
+import { allowedLoanTypes, OrderForm, orderSchema } from '@/utils/validation';
 
 export function CreateOrderScreen() {
   const [priority, setPriority] = useState<'normal' | 'urgent'>('normal');
   const [scanBacks, setScanBacks] = useState<'yes' | 'no'>('no');
+  const [datePickerVisible, setDatePickerVisible] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<{ uri: string; name: string; size?: number; mimeType?: string } | null>(null);
 
   const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<OrderForm>({
     resolver: zodResolver(orderSchema),
@@ -38,7 +42,7 @@ export function CreateOrderScreen() {
 
   const submit = handleSubmit(async (values) => {
     try {
-      await createOrder({
+      const order = await createOrder({
         title: values.title,
         clientName: values.clientName,
         propertyAddress: values.propertyAddress,
@@ -52,6 +56,16 @@ export function CreateOrderScreen() {
         scanbacksRequired: scanBacks === 'yes',
         priority: priority === 'urgent' ? 'Rush' : 'Standard',
       });
+
+      if (selectedFile) {
+        await uploadDocumentBinary({
+          orderNumber: order.orderNumber,
+          file: selectedFile,
+          uploaderRole: 'company',
+          uploadedByName: 'Title Company',
+        });
+      }
+
       router.replace('/company/orders');
     } catch (error) {
       Alert.alert('Unable to create order', error instanceof Error ? error.message : 'Please try again.');
@@ -92,7 +106,32 @@ export function CreateOrderScreen() {
           <View style={{ flex: 1 }}>{input('state', 'STATE')}</View>
           <View style={{ flex: 1 }}>{input('zip', 'ZIP')}</View>
         </View>
-        {input('signingDate', 'SIGNING DATE', 'May 31, 2026')}
+        <Controller
+          control={control}
+          name="signingDate"
+          render={({ field }) => (
+            <>
+              <Pressable onPress={() => setDatePickerVisible(true)}>
+                <View pointerEvents="none">
+                  <AppInput
+                    label="SIGNING DATE"
+                    value={field.value ? String(field.value) : ''}
+                    placeholder="May 31, 2026"
+                    editable={false}
+                    error={errors.signingDate?.message}
+                    rightElement={<Calendar color={colors.primary} size={20} />}
+                  />
+                </View>
+              </Pressable>
+              <DatePickerModal
+                visible={datePickerVisible}
+                value={field.value}
+                onClose={() => setDatePickerVisible(false)}
+                onChange={field.onChange}
+              />
+            </>
+          )}
+        />
       </AppCard>
 
       <AppCard style={styles.formCard}>
@@ -101,7 +140,35 @@ export function CreateOrderScreen() {
           <AppText weight="bold" style={styles.sectionTitle}>Loan Details</AppText>
         </View>
 
-        {input('loanType', 'LOAN TYPE', 'Refinance')}
+        <Controller
+          control={control}
+          name="loanType"
+          render={({ field }) => (
+            <View style={styles.loanTypeSection}>
+              <AppText variant="label" muted>LOAN TYPE</AppText>
+              <View style={styles.loanTypeGrid}>
+                {allowedLoanTypes.map((loanType) => {
+                  const active = field.value === loanType;
+                  return (
+                    <Pressable
+                      key={loanType}
+                      style={[styles.loanTypeChip, active && styles.loanTypeChipActive]}
+                      onPress={() => field.onChange(loanType)}
+                    >
+                      <AppText
+                        weight="semibold"
+                        style={[styles.loanTypeChipText, active && styles.loanTypeChipTextActive]}
+                      >
+                        {loanType}
+                      </AppText>
+                    </Pressable>
+                  );
+                })}
+              </View>
+              {errors.loanType ? <AppText style={styles.fieldErrorText}>{errors.loanType.message}</AppText> : null}
+            </View>
+          )}
+        />
 
         <View style={styles.subSection}>
           <AppText weight="bold">Requirements</AppText>
@@ -154,7 +221,31 @@ export function CreateOrderScreen() {
           <Plus color={colors.primary} size={18} />
           <AppText weight="bold" style={styles.sectionTitle}>Supporting Documents</AppText>
         </View>
-        <UploadBox title="Attach documents later if needed" subtitle="Order creation is already connected to the live backend" />
+        <UploadBox
+          title="Attach documents later if needed"
+          subtitle="Order creation is already connected to the live backend"
+          onFileSelect={setSelectedFile}
+        />
+        {selectedFile ? (
+          <AppCard style={styles.selectedFileCard}>
+            <View style={styles.selectedFileRow}>
+              <View style={styles.selectedFileIconBox}>
+                <FileText color="#dc2626" size={20} />
+              </View>
+              <View style={styles.selectedFileInfo}>
+                <AppText weight="semibold" style={styles.selectedFileName} numberOfLines={1}>
+                  {selectedFile.name}
+                </AppText>
+                <AppText muted style={styles.selectedFileSize}>
+                  {selectedFile.size ? `${(selectedFile.size / 1024 / 1024).toFixed(1)} MB` : 'Unknown size'}
+                </AppText>
+              </View>
+              <Pressable style={styles.selectedFileDeleteButton} onPress={() => setSelectedFile(null)}>
+                <Trash2 color="#94a3b8" size={20} />
+              </Pressable>
+            </View>
+          </AppCard>
+        ) : null}
       </AppCard>
 
       <View style={styles.actionRow}>
@@ -188,6 +279,40 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   subSection: { marginTop: 20 },
+  loanTypeSection: {
+    gap: 8,
+  },
+  loanTypeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  loanTypeChip: {
+    minWidth: 96,
+    paddingHorizontal: 14,
+    height: 42,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#dbe6f3',
+    backgroundColor: '#f8fbff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loanTypeChipActive: {
+    borderColor: '#0a49a8',
+    backgroundColor: '#eff6ff',
+  },
+  loanTypeChipText: {
+    fontSize: 13,
+    color: '#475569',
+  },
+  loanTypeChipTextActive: {
+    color: '#0a49a8',
+  },
+  fieldErrorText: {
+    fontSize: 12,
+    color: '#ef4444',
+  },
   requirementLabel: {
     marginTop: 16,
     marginBottom: 12,
@@ -251,5 +376,48 @@ const styles = StyleSheet.create({
     gap: 16,
     paddingBottom: 40,
     marginTop: 32,
+  },
+  selectedFileCard: {
+    marginTop: 12,
+    padding: 14,
+    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  selectedFileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  selectedFileIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: '#fef2f2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectedFileInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  selectedFileName: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#0f172a',
+  },
+  selectedFileSize: {
+    fontSize: 11,
+    lineHeight: 16,
+    color: '#94a3b8',
+  },
+  selectedFileDeleteButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#f8fafc',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

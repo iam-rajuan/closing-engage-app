@@ -7,7 +7,7 @@ Production-ready Expo React Native TypeScript app implementing the Closing Engag
 - Node.js 22.23.x LTS
 - npm 10.x
 - Expo CLI through the local project install
-- Expo Go for device testing, or Android Studio/Xcode for native simulators
+- A local development build for device testing, or Android Studio/Xcode for native simulators
 
 ## Installation
 
@@ -30,12 +30,15 @@ Set `EXPO_PUBLIC_API_URL` in `.env.local` to your backend URL when the API is av
 
 ```bash
 npm start
+npm run start:go
 npm run android
 npm run ios
 npm run web
 ```
 
-Use Expo Go by scanning the QR code from `npm start`.
+`npm start` now launches Metro in development-build mode over `localhost` and applies `adb reverse` for the common Android ports when a USB-connected device is present. This is the default path for the installed development build and works with native modules like `expo-notifications`.
+
+Use `npm run start:go` only when you explicitly want Expo Go and you are not relying on native modules that Expo Go does not support.
 
 On Windows, prefer `npm run android`. This project includes a short-path Android wrapper because native builds can fail from long workspace paths with CMake/Ninja. The wrapper starts a standard Metro server so local Android debug builds open directly into the app instead of the Expo development launcher.
 

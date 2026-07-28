@@ -1,7 +1,7 @@
 import { api, unwrap } from '@/services/api';
 import { DocumentFile } from '@/types/document';
-import * as SecureStore from 'expo-secure-store';
-import { AUTH_TOKEN_KEY } from '@/services/api';
+import * as FileSystem from 'expo-file-system/legacy';
+import { getAuthToken } from '@/services/api';
 
 type BackendDocument = {
   id: string;
@@ -39,6 +39,17 @@ const normalizeDocument = (input: BackendDocument): DocumentFile => ({
   mimeType: input.mimeType,
   comments: input.comments,
 });
+
+const base64ToBytes = (value: string) => {
+  const binary = globalThis.atob(value);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+
+  return bytes;
+};
 
 export async function getDocuments(search?: string) {
   const result = await unwrap<BackendDocument[]>(
@@ -90,15 +101,19 @@ export async function uploadDocumentBinary(input: {
     mimeType?: string;
     size?: number;
   };
+  uploaderRole?: string;
+  uploadedByName?: string;
 }) {
-  const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
-  const fileResponse = await fetch(input.file.uri);
-  const blob = await fileResponse.blob();
+  const token = await getAuthToken();
+  const base64Content = await FileSystem.readAsStringAsync(input.file.uri, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+  const fileBytes = base64ToBytes(base64Content);
   const query = new URLSearchParams({
     orderNumber: input.orderNumber,
     fileName: input.file.name,
-    uploaderRole: 'notary',
-    uploadedByName: 'Notary',
+    uploaderRole: input.uploaderRole || 'notary',
+    uploadedByName: input.uploadedByName || 'Notary',
     ...(input.file.mimeType ? { mimeType: input.file.mimeType } : {}),
     ...(typeof input.file.size === 'number' ? { fileSize: String(input.file.size) } : {}),
   }).toString();
@@ -109,7 +124,7 @@ export async function uploadDocumentBinary(input: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       'Content-Type': input.file.mimeType || 'application/octet-stream',
     },
-    body: blob,
+    body: fileBytes,
   });
 
   if (!response.ok) {

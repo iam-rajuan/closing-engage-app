@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "scripts": {
-    "start": "expo start",
+    "start": "node ./scripts/start-dev-client.js",
+    "start:go": "expo start",
     "android": "node ./scripts/run-android.js",
     "clean:android": "powershell -ExecutionPolicy Bypass -File ./scripts/clean-android.ps1",
     "android:release": "powershell -ExecutionPolicy Bypass -File ./scripts/assemble-release.ps1",

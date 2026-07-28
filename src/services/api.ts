@@ -39,6 +39,7 @@ export const AUTH_ONBOARDING_KEY = 'closing_engage_onboarding';
 
 let unauthorizedHandler: (() => void | Promise<void>) | null = null;
 let unauthorizedHandled = false;
+let authTokenCache: string | null = null;
 
 export type ApiEnvelope<T> = {
   success: boolean;
@@ -60,13 +61,30 @@ export const registerUnauthorizedHandler = (handler: (() => void | Promise<void>
   unauthorizedHandler = handler;
 };
 
+export const setAuthToken = (token: string | null) => {
+  authTokenCache = token;
+};
+
+export const getAuthToken = async () => {
+  if (authTokenCache) {
+    return authTokenCache;
+  }
+
+  const storedToken = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+  if (storedToken) {
+    authTokenCache = storedToken;
+  }
+
+  return storedToken;
+};
+
 export const api = axios.create({
   baseURL,
   timeout: 20000,
 });
 
 api.interceptors.request.use(async (config) => {
-  const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+  const token = await getAuthToken();
   console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url} (Token present: ${!!token})`);
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;

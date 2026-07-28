@@ -118,7 +118,7 @@ export function LoginScreen() {
             <View style={s.logoContainer}>
               <BrandLogo width={140} />
             </View>
-            <AppText weight="bold" style={s.welcomeTitle}>
+            <AppText weight="bold" style={s.welcomeTitle} numberOfLines={1} adjustsFontSizeToFit>
               Welcome back
             </AppText>
             <AppText style={s.welcomeSubtitle}>
@@ -279,7 +279,7 @@ export function ForgotPasswordScreen() {
   return (
     <ScreenContainer>
       <AppHeader back title="Forgot Password" />
-      <AppCard style={sharedStyles.formCard}>
+      <AppCard style={[sharedStyles.formCard, { padding: 20, gap: 20 }]}>
         <AppInput
           label="Email"
           placeholder="your@email.com"
