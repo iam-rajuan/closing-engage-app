@@ -10,8 +10,10 @@ import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { shadows } from '@/theme';
 import {
+  updateCompanyNotificationPreferences,
   updateCompanyPassword,
   updateCompanyProfile,
+  updateNotaryNotificationPreferences,
   updateNotaryPassword,
   updateNotaryProfile,
 } from '@/services/auth.service';
@@ -138,6 +140,7 @@ export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
   const [refreshing, setRefreshing] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [savingPreferences, setSavingPreferences] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | undefined>(user?.avatarUrl);
   const [feedback, setFeedback] = useState<SettingsFeedback | null>(null);
   const [passwordForm, setPasswordForm] = useState<PasswordForm>({
@@ -156,7 +159,7 @@ export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
     contactEmail: user?.email || '',
     address: '',
     avatarUrl: user?.avatarUrl || '',
-    notifications: user?.notifications || { email: true, orders: true, documents: false },
+    notifications: user?.notifications || { email: true, orders: true, documents: true },
   }), [user]);
 
   const initialNotaryForm = useMemo<NotaryForm>(() => ({
@@ -168,7 +171,7 @@ export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
     expiry: '',
     serviceArea: '',
     avatarUrl: user?.avatarUrl || '',
-    notifications: user?.notifications || { email: true, orders: true, documents: false },
+    notifications: user?.notifications || { email: true, orders: true, documents: true },
   }), [user]);
 
   const [companyForm, setCompanyForm] = useState<CompanyForm>(initialCompanyForm);
@@ -247,6 +250,60 @@ export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
     } finally {
       setSaving(false);
     }
+  };
+
+  const saveNotificationPreferences = async (nextNotifications: {
+    email: boolean;
+    orders: boolean;
+    documents: boolean;
+  }) => {
+    setSavingPreferences(true);
+    try {
+      const updatedUser = isNotary
+        ? await updateNotaryNotificationPreferences(nextNotifications)
+        : await updateCompanyNotificationPreferences(nextNotifications);
+
+      await setUser(updatedUser);
+    } catch (error) {
+      if (isNotary) {
+        setNotaryForm((current) => ({
+          ...current,
+          notifications: user?.notifications || { email: true, orders: true, documents: true },
+        }));
+      } else {
+        setCompanyForm((current) => ({
+          ...current,
+          notifications: user?.notifications || { email: true, orders: true, documents: true },
+        }));
+      }
+
+      setFeedback({
+        variant: 'error',
+        title: 'Unable to update preferences',
+        description: error instanceof Error ? error.message : 'Please try again.',
+      });
+    } finally {
+      setSavingPreferences(false);
+    }
+  };
+
+  const handleNotificationToggle = (key: 'email' | 'orders' | 'documents', value: boolean) => {
+    if (isNotary) {
+      const nextNotifications = {
+        ...(notaryForm.notifications || { email: true, orders: true, documents: true }),
+        [key]: value,
+      };
+      setNotaryForm((current) => ({ ...current, notifications: nextNotifications }));
+      void saveNotificationPreferences(nextNotifications);
+      return;
+    }
+
+    const nextNotifications = {
+      ...(companyForm.notifications || { email: true, orders: true, documents: true }),
+      [key]: value,
+    };
+    setCompanyForm((current) => ({ ...current, notifications: nextNotifications }));
+    void saveNotificationPreferences(nextNotifications);
   };
 
   const avatarUri = avatarPreview || user?.avatarUrl || 'https://ui-avatars.com/api/?name=Closing+Engage&background=eff6ff&color=0a49a8&bold=true';
@@ -349,37 +406,22 @@ export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
               <ToggleItem
                 label="Email Notifications"
                 value={notaryForm.notifications?.email ?? true}
-                onValueChange={(val) =>
-                  setNotaryForm((curr) => ({
-                    ...curr,
-                    notifications: { ...curr.notifications, email: val },
-                  }))
-                }
-                disabled={!isEditing}
+                onValueChange={(val) => handleNotificationToggle('email', val)}
+                disabled={savingPreferences}
               />
               <View style={s.divider} />
               <ToggleItem
                 label="Order Updates"
                 value={notaryForm.notifications?.orders ?? true}
-                onValueChange={(val) =>
-                  setNotaryForm((curr) => ({
-                    ...curr,
-                    notifications: { ...curr.notifications, orders: val },
-                  }))
-                }
-                disabled={!isEditing}
+                onValueChange={(val) => handleNotificationToggle('orders', val)}
+                disabled={savingPreferences}
               />
               <View style={s.divider} />
               <ToggleItem
                 label="Document Updates"
-                value={notaryForm.notifications?.documents ?? false}
-                onValueChange={(val) =>
-                  setNotaryForm((curr) => ({
-                    ...curr,
-                    notifications: { ...curr.notifications, documents: val },
-                  }))
-                }
-                disabled={!isEditing}
+                value={notaryForm.notifications?.documents ?? true}
+                onValueChange={(val) => handleNotificationToggle('documents', val)}
+                disabled={savingPreferences}
               />
             </>
           ) : (
@@ -387,37 +429,22 @@ export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
               <ToggleItem
                 label="Email Notifications"
                 value={companyForm.notifications?.email ?? true}
-                onValueChange={(val) =>
-                  setCompanyForm((curr) => ({
-                    ...curr,
-                    notifications: { ...curr.notifications, email: val },
-                  }))
-                }
-                disabled={!isEditing}
+                onValueChange={(val) => handleNotificationToggle('email', val)}
+                disabled={savingPreferences}
               />
               <View style={s.divider} />
               <ToggleItem
                 label="Order Updates"
                 value={companyForm.notifications?.orders ?? true}
-                onValueChange={(val) =>
-                  setCompanyForm((curr) => ({
-                    ...curr,
-                    notifications: { ...curr.notifications, orders: val },
-                  }))
-                }
-                disabled={!isEditing}
+                onValueChange={(val) => handleNotificationToggle('orders', val)}
+                disabled={savingPreferences}
               />
               <View style={s.divider} />
               <ToggleItem
                 label="Document Updates"
-                value={companyForm.notifications?.documents ?? false}
-                onValueChange={(val) =>
-                  setCompanyForm((curr) => ({
-                    ...curr,
-                    notifications: { ...curr.notifications, documents: val },
-                  }))
-                }
-                disabled={!isEditing}
+                value={companyForm.notifications?.documents ?? true}
+                onValueChange={(val) => handleNotificationToggle('documents', val)}
+                disabled={savingPreferences}
               />
             </>
           )}

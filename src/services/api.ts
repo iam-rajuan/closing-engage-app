@@ -39,12 +39,18 @@ const rawBaseURL =
 const baseURL = resolveDevelopmentHost(normalizeBaseURL(rawBaseURL));
 
 export const AUTH_TOKEN_KEY = 'closing_engage_token';
+export const AUTH_REFRESH_TOKEN_KEY = 'closing_engage_refresh_token';
 export const AUTH_USER_KEY = 'closing_engage_user';
 export const AUTH_ONBOARDING_KEY = 'closing_engage_onboarding';
 
 let unauthorizedHandler: (() => void | Promise<void>) | null = null;
 let unauthorizedHandled = false;
 let authTokenCache: string | null = null;
+let refreshTokenCache: string | null = null;
+let refreshSessionHandler:
+  | null
+  | (() => Promise<{ accessToken: string; refreshToken: string } | null>) = null;
+let refreshPromise: Promise<{ accessToken: string; refreshToken: string } | null> | null = null;
 
 export type ApiEnvelope<T> = {
   success: boolean;
@@ -66,8 +72,15 @@ export const registerUnauthorizedHandler = (handler: (() => void | Promise<void>
   unauthorizedHandler = handler;
 };
 
-export const setAuthToken = (token: string | null) => {
-  authTokenCache = token;
+export const registerRefreshSessionHandler = (
+  handler: (() => Promise<{ accessToken: string; refreshToken: string } | null>) | null,
+) => {
+  refreshSessionHandler = handler;
+};
+
+export const setAuthSessionTokens = (accessToken: string | null, refreshToken: string | null) => {
+  authTokenCache = accessToken;
+  refreshTokenCache = refreshToken;
 };
 
 export const getAuthToken = async () => {
@@ -81,6 +94,33 @@ export const getAuthToken = async () => {
   }
 
   return storedToken;
+};
+
+export const getRefreshToken = async () => {
+  if (refreshTokenCache) {
+    return refreshTokenCache;
+  }
+
+  const storedRefreshToken = await SecureStore.getItemAsync(AUTH_REFRESH_TOKEN_KEY);
+  if (storedRefreshToken) {
+    refreshTokenCache = storedRefreshToken;
+  }
+
+  return storedRefreshToken;
+};
+
+const tryRefreshSession = async () => {
+  if (!refreshSessionHandler) {
+    return null;
+  }
+
+  if (!refreshPromise) {
+    refreshPromise = refreshSessionHandler().finally(() => {
+      refreshPromise = null;
+    });
+  }
+
+  return refreshPromise;
 };
 
 export const api = axios.create({
@@ -103,14 +143,30 @@ api.interceptors.response.use(
     console.log(`[API Response Success] ${response.config.method?.toUpperCase()} ${response.config.url} Status: ${response.status}`);
     return response;
   },
-  (error: unknown) => {
+  async (error: unknown) => {
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<{ message?: string }>;
       const statusCode = axiosError.response?.status;
       const url = axiosError.config?.url;
       const method = axiosError.config?.method?.toUpperCase();
+      const originalRequest = axiosError.config as (typeof axiosError.config & { _retry?: boolean }) | undefined;
 
       console.log(`[API Response Error] ${method} ${url} Status: ${statusCode} Message: ${axiosError.response?.data?.message || axiosError.message}`);
+
+      if (statusCode === 401 && originalRequest && !originalRequest._retry && !String(url || '').includes('/auth/portal/refresh')) {
+        originalRequest._retry = true;
+
+        try {
+          const refreshedTokens = await tryRefreshSession();
+          if (refreshedTokens?.accessToken) {
+            originalRequest.headers = AxiosHeaders.from(originalRequest.headers ?? {});
+            originalRequest.headers.set('Authorization', `Bearer ${refreshedTokens.accessToken}`);
+            return api.request(originalRequest);
+          }
+        } catch {
+          // Fall through to the unauthorized handler.
+        }
+      }
 
       if (statusCode === 401 && !unauthorizedHandled) {
         unauthorizedHandled = true;

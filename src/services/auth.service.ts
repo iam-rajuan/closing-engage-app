@@ -2,6 +2,8 @@ import { api, unwrap } from '@/services/api';
 import { User, UserRole } from '@/types/user';
 
 type PortalLoginResponse = {
+  accessToken: string;
+  refreshToken: string;
   token: string;
   role: UserRole;
   redirectTo: string;
@@ -62,12 +64,12 @@ const normalizeCompanyUser = (input: Record<string, unknown>): User => {
       ? {
           email: Boolean((input.notifications as any).email ?? true),
           orders: Boolean((input.notifications as any).orders ?? true),
-          documents: Boolean((input.notifications as any).documents ?? false),
+          documents: Boolean((input.notifications as any).documents ?? true),
         }
       : {
           email: true,
           orders: true,
-          documents: false,
+          documents: true,
         },
   };
 };
@@ -99,12 +101,12 @@ const normalizeNotaryUser = (input: Record<string, unknown>): User => {
       ? {
           email: Boolean((input.notifications as any).email ?? true),
           orders: Boolean((input.notifications as any).orders ?? true),
-          documents: Boolean((input.notifications as any).documents ?? false),
+          documents: Boolean((input.notifications as any).documents ?? true),
         }
       : {
           email: true,
           orders: true,
-          documents: false,
+          documents: true,
         },
   };
 };
@@ -121,9 +123,31 @@ export async function loginPortal(_role: UserRole | undefined, email: string, pa
   );
 
   return {
-    token: result.token,
+    accessToken: result.accessToken || result.token,
+    refreshToken: result.refreshToken,
     user: normalizePortalUser(result.role, result.user),
   };
+}
+
+export async function refreshPortalSession(refreshToken: string) {
+  const result = await unwrap<PortalLoginResponse>(
+    api.post('/api/v1/auth/portal/refresh', {
+      refreshToken,
+    }),
+  );
+
+  return {
+    accessToken: result.accessToken || result.token,
+    refreshToken: result.refreshToken,
+  };
+}
+
+export async function logoutPortalSession(refreshToken: string) {
+  await unwrap(
+    api.post('/api/v1/auth/portal/logout', {
+      refreshToken,
+    }),
+  );
 }
 
 export async function fetchPortalSession(role: UserRole): Promise<User> {
@@ -171,6 +195,17 @@ export async function updateCompanyProfile(input: {
   return normalizeCompanyUser(result.company);
 }
 
+export async function updateCompanyNotificationPreferences(notifications: {
+  email: boolean;
+  orders: boolean;
+  documents: boolean;
+}) {
+  const result = await unwrap<{ company: Record<string, unknown> }>(
+    api.patch('/api/v1/auth/company/profile', { notifications }),
+  );
+  return normalizeCompanyUser(result.company);
+}
+
 export async function updateNotaryProfile(input: {
   fullName: string;
   specialty: string;
@@ -200,6 +235,17 @@ export async function updateNotaryProfile(input: {
 
   const result = await unwrap<{ notary: Record<string, unknown> }>(
     api.patch('/api/v1/auth/notary/profile', payload),
+  );
+  return normalizeNotaryUser(result.notary);
+}
+
+export async function updateNotaryNotificationPreferences(notifications: {
+  email: boolean;
+  orders: boolean;
+  documents: boolean;
+}) {
+  const result = await unwrap<{ notary: Record<string, unknown> }>(
+    api.patch('/api/v1/auth/notary/profile', { notifications }),
   );
   return normalizeNotaryUser(result.notary);
 }

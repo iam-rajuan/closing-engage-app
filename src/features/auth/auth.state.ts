@@ -1,7 +1,14 @@
 import * as SecureStore from 'expo-secure-store';
 import { createStore } from 'zustand/vanilla';
-import { fetchPortalSession, loginPortal } from '@/services/auth.service';
-import { AUTH_ONBOARDING_KEY, AUTH_TOKEN_KEY, AUTH_USER_KEY, setAuthToken } from '@/services/api';
+import { fetchPortalSession, loginPortal, logoutPortalSession, refreshPortalSession } from '@/services/auth.service';
+import {
+  AUTH_ONBOARDING_KEY,
+  AUTH_REFRESH_TOKEN_KEY,
+  AUTH_TOKEN_KEY,
+  AUTH_USER_KEY,
+  registerRefreshSessionHandler,
+  setAuthSessionTokens,
+} from '@/services/api';
 import { unregisterCurrentDevicePushToken } from '@/services/push-devices.service';
 import { AuthState } from './auth.types';
 import { User } from '@/types/user';
@@ -46,18 +53,49 @@ const persistUser = async (user: User | null) => {
   await SecureStore.setItemAsync(AUTH_USER_KEY, JSON.stringify(user));
 };
 
+const persistSessionTokens = async (accessToken: string | null, refreshToken: string | null) => {
+  const writes: Promise<void>[] = [];
+
+  if (accessToken) {
+    writes.push(SecureStore.setItemAsync(AUTH_TOKEN_KEY, accessToken));
+  } else {
+    writes.push(SecureStore.deleteItemAsync(AUTH_TOKEN_KEY));
+  }
+
+  if (refreshToken) {
+    writes.push(SecureStore.setItemAsync(AUTH_REFRESH_TOKEN_KEY, refreshToken));
+  } else {
+    writes.push(SecureStore.deleteItemAsync(AUTH_REFRESH_TOKEN_KEY));
+  }
+
+  await Promise.all(writes);
+};
+
+const refreshStoredPortalSession = async () => {
+  const refreshToken = await SecureStore.getItemAsync(AUTH_REFRESH_TOKEN_KEY);
+  if (!refreshToken) {
+    return null;
+  }
+
+  const session = await refreshPortalSession(refreshToken);
+  setAuthSessionTokens(session.accessToken, session.refreshToken);
+  await persistSessionTokens(session.accessToken, session.refreshToken);
+  return session;
+};
+
 export const authStore = createStore<AuthState>((set) => ({
   user: null,
   token: null,
   hasCompletedOnboarding: false,
   isHydrated: false,
   hydrate: async () => {
-    const [token, onboarded, storedUserValue] = await Promise.all([
+    const [token, onboarded, storedUserValue, storedRefreshToken] = await Promise.all([
       SecureStore.getItemAsync(AUTH_TOKEN_KEY),
       SecureStore.getItemAsync(AUTH_ONBOARDING_KEY),
       SecureStore.getItemAsync(AUTH_USER_KEY),
+      SecureStore.getItemAsync(AUTH_REFRESH_TOKEN_KEY),
     ]);
-    const hasCompletedOnboarding = onboarded === 'true' || Boolean(token);
+    const hasCompletedOnboarding = onboarded === 'true' || Boolean(token) || Boolean(storedRefreshToken);
     const storedUser = parseStoredUser(storedUserValue);
     const role = token ? decodeTokenRole(token) ?? storedUser?.role ?? null : null;
 
@@ -65,13 +103,18 @@ export const authStore = createStore<AuthState>((set) => ({
       await SecureStore.setItemAsync(AUTH_ONBOARDING_KEY, 'true');
     }
 
-    if (token && role) {
+    if ((token || storedRefreshToken) && (role || storedUser?.role)) {
       try {
-        setAuthToken(token);
-        const freshUser = await fetchPortalSession(role);
+        if (token) {
+          setAuthSessionTokens(token, storedRefreshToken);
+        } else {
+          await refreshStoredPortalSession();
+        }
+
+        const freshUser = await fetchPortalSession(role ?? storedUser!.role);
         await persistUser(freshUser);
         set({
-          token,
+          token: await SecureStore.getItemAsync(AUTH_TOKEN_KEY),
           user: freshUser,
           hasCompletedOnboarding,
           isHydrated: true,
@@ -88,12 +131,16 @@ export const authStore = createStore<AuthState>((set) => ({
           return;
         }
 
-        setAuthToken(null);
-        await Promise.all([SecureStore.deleteItemAsync(AUTH_TOKEN_KEY), SecureStore.deleteItemAsync(AUTH_USER_KEY)]);
+        setAuthSessionTokens(null, null);
+        await Promise.all([
+          SecureStore.deleteItemAsync(AUTH_TOKEN_KEY),
+          SecureStore.deleteItemAsync(AUTH_REFRESH_TOKEN_KEY),
+          SecureStore.deleteItemAsync(AUTH_USER_KEY),
+        ]);
       }
     }
 
-    setAuthToken(null);
+    setAuthSessionTokens(null, null);
     set({
       token: null,
       user: null,
@@ -107,13 +154,13 @@ export const authStore = createStore<AuthState>((set) => ({
   },
   login: async (role, email, password) => {
     const session = await loginPortal(role, email, password);
-    setAuthToken(session.token);
+    setAuthSessionTokens(session.accessToken, session.refreshToken);
     await Promise.all([
-      SecureStore.setItemAsync(AUTH_TOKEN_KEY, session.token),
+      persistSessionTokens(session.accessToken, session.refreshToken),
       SecureStore.setItemAsync(AUTH_ONBOARDING_KEY, 'true'),
       persistUser(session.user),
     ]);
-    set({ token: session.token, user: session.user, hasCompletedOnboarding: true });
+    set({ token: session.accessToken, user: session.user, hasCompletedOnboarding: true });
     return session.user;
   },
   setUser: async (user) => {
@@ -121,11 +168,29 @@ export const authStore = createStore<AuthState>((set) => ({
     set({ user });
   },
   logout: async () => {
+    const refreshToken = await SecureStore.getItemAsync(AUTH_REFRESH_TOKEN_KEY);
     await unregisterCurrentDevicePushToken().catch(() => {
       // Best-effort cleanup. Session teardown should still complete locally.
     });
-    setAuthToken(null);
-    await Promise.all([SecureStore.deleteItemAsync(AUTH_TOKEN_KEY), SecureStore.deleteItemAsync(AUTH_USER_KEY)]);
+    if (refreshToken) {
+      await logoutPortalSession(refreshToken).catch(() => {
+        // Local session teardown still proceeds if the server-side revoke fails.
+      });
+    }
+    setAuthSessionTokens(null, null);
+    await Promise.all([
+      SecureStore.deleteItemAsync(AUTH_TOKEN_KEY),
+      SecureStore.deleteItemAsync(AUTH_REFRESH_TOKEN_KEY),
+      SecureStore.deleteItemAsync(AUTH_USER_KEY),
+    ]);
     set((state) => ({ token: null, user: null, hasCompletedOnboarding: state.hasCompletedOnboarding }));
   },
 }));
+
+registerRefreshSessionHandler(async () => {
+  try {
+    return await refreshStoredPortalSession();
+  } catch {
+    return null;
+  }
+});

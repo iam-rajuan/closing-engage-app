@@ -7,7 +7,6 @@ import { scheduleServerNotification } from '@/utils/appNotifications';
 import { registerNotificationResponseListener } from '@/utils/fileDownload';
 
 export function useNotificationBootstrap() {
-  const hydrate = useAuthStore((state) => state.hydrate);
   const user = useAuthStore((state) => state.user);
   const isHydrated = useAuthStore((state) => state.isHydrated);
   const setUnreadCount = useNotificationStore((state) => state.setUnreadCount);
@@ -16,13 +15,11 @@ export function useNotificationBootstrap() {
   const shouldMirrorServerNotificationsRef = useRef(false);
 
   useEffect(() => {
-    void hydrate();
-
     const subscription = registerNotificationResponseListener();
     return () => {
       subscription.remove();
     };
-  }, [hydrate]);
+  }, []);
 
   useEffect(() => {
     pushRegistrationAttemptedRef.current = null;
