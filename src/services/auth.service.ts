@@ -154,8 +154,19 @@ export async function updateCompanyProfile(input: {
     documents: boolean;
   };
 }) {
+  const payload = {
+    contactPerson: input.contactPerson.trim() || undefined,
+    businessEmail: input.businessEmail.trim() || undefined,
+    phone: input.phone.trim() || undefined,
+    companyName: input.companyName.trim() || undefined,
+    contactEmail: input.contactEmail?.trim() || undefined,
+    address: input.address?.trim() || undefined,
+    avatarUrl: input.avatarUrl?.trim() || undefined,
+    notifications: input.notifications,
+  };
+
   const result = await unwrap<{ company: Record<string, unknown> }>(
-    api.patch('/api/v1/auth/company/profile', input),
+    api.patch('/api/v1/auth/company/profile', payload),
   );
   return normalizeCompanyUser(result.company);
 }
@@ -175,8 +186,20 @@ export async function updateNotaryProfile(input: {
     documents: boolean;
   };
 }) {
+  const payload = {
+    fullName: input.fullName.trim() || undefined,
+    specialty: input.specialty.trim() || undefined,
+    email: input.email.trim() || undefined,
+    phone: input.phone.trim() || undefined,
+    license: input.license.trim() || undefined,
+    expiry: input.expiry?.trim() || undefined,
+    serviceArea: input.serviceArea?.trim() || undefined,
+    avatarUrl: input.avatarUrl?.trim() || undefined,
+    notifications: input.notifications,
+  };
+
   const result = await unwrap<{ notary: Record<string, unknown> }>(
-    api.patch('/api/v1/auth/notary/profile', input),
+    api.patch('/api/v1/auth/notary/profile', payload),
   );
   return normalizeNotaryUser(result.notary);
 }

@@ -1,10 +1,9 @@
-import { Redirect } from 'expo-router';
+import { Redirect, Stack } from 'expo-router';
 import { LoadingState } from '@/components/common/LoadingState';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { useAuthStore } from '@/features/auth/auth.store';
-import { OnboardingScreen } from '@/features/onboarding/screens/OnboardingScreen';
 
-export default function OnboardingRoute() {
+export default function AuthLayout() {
   const { isHydrated, hasCompletedOnboarding, user, token } = useAuthStore();
 
   if (!isHydrated) {
@@ -19,9 +18,9 @@ export default function OnboardingRoute() {
     return <Redirect href={user.role === 'company' ? '/company/home' : '/notary/home'} />;
   }
 
-  if (hasCompletedOnboarding) {
-    return <Redirect href="/auth/login" />;
+  if (!hasCompletedOnboarding) {
+    return <Redirect href="/onboarding" />;
   }
 
-  return <OnboardingScreen />;
+  return <Stack screenOptions={{ headerShown: false, animation: 'none' }} />;
 }

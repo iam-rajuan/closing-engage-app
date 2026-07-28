@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "31279800495",
+    "project_id": "closing-engage",
+    "storage_bucket": "closing-engage.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:31279800495:android:057af0073c4c8f427a345a",
+        "android_client_info": {
+          "package_name": "com.closingengage.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCUoIMBj4Ip2gXNb08fPTnc3zZZHOaQ84k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

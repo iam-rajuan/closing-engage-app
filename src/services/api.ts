@@ -1,4 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
+import * as Device from 'expo-device';
 import axios, { AxiosError, AxiosHeaders } from 'axios';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
@@ -12,12 +13,13 @@ const normalizeBaseURL = (value: string) => {
 
 const debuggerHost = (Constants as unknown as { expoGoConfig?: { debuggerHost?: string } }).expoGoConfig?.debuggerHost;
 const expoHost = debuggerHost ? debuggerHost.split(':')[0]?.trim() || undefined : undefined;
+const isAndroidEmulator = Platform.OS === 'android' && !Device.isDevice;
 
 const resolveDevelopmentHost = (url: string) => {
   try {
     const parsed = new URL(url);
     if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
-      if (Platform.OS === 'android') {
+      if (isAndroidEmulator) {
         parsed.hostname = '10.0.2.2';
       } else if (expoHost) {
         parsed.hostname = expoHost;
@@ -30,7 +32,10 @@ const resolveDevelopmentHost = (url: string) => {
   }
 };
 
-const rawBaseURL = (Constants.expoConfig?.extra?.apiUrl as string | undefined) ?? 'http://localhost:5000';
+const rawBaseURL =
+  process.env.EXPO_PUBLIC_API_URL ??
+  (Constants.expoConfig?.extra?.apiUrl as string | undefined) ??
+  'http://localhost:8000';
 const baseURL = resolveDevelopmentHost(normalizeBaseURL(rawBaseURL));
 
 export const AUTH_TOKEN_KEY = 'closing_engage_token';
@@ -121,7 +126,7 @@ api.interceptors.response.use(
 
       const message =
         (!axiosError.response && axiosError.message === 'Network Error'
-          ? `Network Error. Mobile app could not reach ${baseURL}. Check that the backend is running and the emulator can access this host.`
+          ? `Network Error. Mobile app could not reach ${baseURL}. Check that the backend is running and this device can access your development machine.`
           : undefined) ||
         axiosError.response?.data?.message ||
         axiosError.message ||

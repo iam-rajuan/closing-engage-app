@@ -2,6 +2,7 @@ import * as SecureStore from 'expo-secure-store';
 import { createStore } from 'zustand/vanilla';
 import { fetchPortalSession, loginPortal } from '@/services/auth.service';
 import { AUTH_ONBOARDING_KEY, AUTH_TOKEN_KEY, AUTH_USER_KEY, setAuthToken } from '@/services/api';
+import { unregisterCurrentDevicePushToken } from '@/services/push-devices.service';
 import { AuthState } from './auth.types';
 import { User } from '@/types/user';
 
@@ -111,6 +112,9 @@ export const authStore = createStore<AuthState>((set) => ({
     set({ user });
   },
   logout: async () => {
+    await unregisterCurrentDevicePushToken().catch(() => {
+      // Best-effort cleanup. Session teardown should still complete locally.
+    });
     setAuthToken(null);
     await Promise.all([SecureStore.deleteItemAsync(AUTH_TOKEN_KEY), SecureStore.deleteItemAsync(AUTH_USER_KEY)]);
     set({ token: null, user: null });

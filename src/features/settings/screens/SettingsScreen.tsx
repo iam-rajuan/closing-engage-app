@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Image, Platform, Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { Image, Platform, Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 import { Bell, Calendar, ChevronRight, Edit2, KeyRound, LogOut, Shield, User } from 'lucide-react-native';
 import { AppHeader } from '@/components/common/AppHeader';
 import { AppText } from '@/components/common/AppText';
 import { AppCard } from '@/components/common/AppCard';
+import { FeedbackModal } from '@/components/common/FeedbackModal';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { shadows } from '@/theme';
@@ -124,6 +125,12 @@ type PasswordForm = {
   confirmPassword: string;
 };
 
+type SettingsFeedback = {
+  variant: 'success' | 'error';
+  title: string;
+  description: string;
+};
+
 export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
   const logout = useAuthStore((state) => state.logout);
   const user = useAuthStore((state) => state.user);
@@ -132,6 +139,7 @@ export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | undefined>(user?.avatarUrl);
+  const [feedback, setFeedback] = useState<SettingsFeedback | null>(null);
   const [passwordForm, setPasswordForm] = useState<PasswordForm>({
     currentPassword: '',
     newPassword: '',
@@ -225,9 +233,17 @@ export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
       await setUser(updatedUser);
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setIsEditing(false);
-      Alert.alert('Profile updated', 'Your profile changes have been saved successfully.');
+      setFeedback({
+        variant: 'success',
+        title: 'Profile updated',
+        description: 'Your profile changes have been saved successfully.',
+      });
     } catch (error) {
-      Alert.alert('Unable to save profile', error instanceof Error ? error.message : 'Please try again.');
+      setFeedback({
+        variant: 'error',
+        title: 'Unable to save profile',
+        description: error instanceof Error ? error.message : 'Please try again.',
+      });
     } finally {
       setSaving(false);
     }
@@ -431,6 +447,15 @@ export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
       </Pressable>
 
       <View style={{ height: 40 }} />
+
+      <FeedbackModal
+        visible={feedback !== null}
+        variant={feedback?.variant ?? 'success'}
+        title={feedback?.title ?? ''}
+        description={feedback?.description ?? ''}
+        buttonTitle={feedback?.variant === 'error' ? 'Try Again' : 'Continue'}
+        onClose={() => setFeedback(null)}
+      />
     </ScreenContainer>
   );
 }

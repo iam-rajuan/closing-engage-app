@@ -14,7 +14,7 @@ export function OnboardingScreen() {
   const completeOnboarding = useAuthStore((state) => state.completeOnboarding);
   const finish = async () => {
     await completeOnboarding();
-    router.push('/auth/login');
+    router.replace('/auth/login');
   };
   const slides = [
     {

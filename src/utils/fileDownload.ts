@@ -1,4 +1,5 @@
 import * as FileSystem from 'expo-file-system/legacy';
+import * as Notifications from 'expo-notifications';
 import * as Sharing from 'expo-sharing';
 import * as SecureStore from 'expo-secure-store';
 import * as IntentLauncher from 'expo-intent-launcher';
@@ -6,43 +7,27 @@ import { Platform, Alert } from 'react-native';
 import { registerAppNotificationResponseListener } from '@/utils/appNotifications';
 
 const DOWNLOAD_DIR_KEY = 'closing_engage_download_dir_uri';
-let notificationsUnavailableLogged = false;
 let notificationHandlerConfigured = false;
 
-type NotificationsModule = typeof import('expo-notifications');
-
-async function getNotificationsModule(): Promise<NotificationsModule | null> {
-  try {
-    const Notifications = await import('expo-notifications');
-
-    if (!notificationHandlerConfigured) {
-      Notifications.setNotificationHandler({
-        handleNotification: async () => ({
-          shouldPlaySound: true,
-          shouldSetBadge: false,
-          shouldShowBanner: true,
-          shouldShowList: true,
-        }),
-      });
-      notificationHandlerConfigured = true;
-    }
-
-    return Notifications;
-  } catch (error) {
-    if (__DEV__ && !notificationsUnavailableLogged) {
-      notificationsUnavailableLogged = true;
-      console.warn('expo-notifications is unavailable in the current runtime; download notifications are disabled.', error);
-    }
-    return null;
+function getNotificationsModule() {
+  if (!notificationHandlerConfigured) {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+    notificationHandlerConfigured = true;
   }
+
+  return Notifications;
 }
 
 async function requestNotificationPermission() {
   try {
-    const Notifications = await getNotificationsModule();
-    if (!Notifications) {
-      return false;
-    }
+    const Notifications = getNotificationsModule();
 
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
@@ -59,10 +44,7 @@ async function requestNotificationPermission() {
 
 async function triggerDownloadNotification(fileName: string, localUri: string, mimeType: string) {
   try {
-    const Notifications = await getNotificationsModule();
-    if (!Notifications) {
-      return;
-    }
+    const Notifications = getNotificationsModule();
 
     const hasPermission = await requestNotificationPermission();
     if (!hasPermission) {
@@ -296,11 +278,11 @@ export function registerNotificationResponseListener() {
   let removed = false;
   let subscription: { remove(): void } | null = null;
 
-  void getNotificationsModule().then((Notifications) => {
-    if (!Notifications || removed) {
+  Promise.resolve().then(() => {
+    if (removed) {
       return;
     }
-
+    const Notifications = getNotificationsModule();
     subscription = Notifications.addNotificationResponseReceivedListener(async (response) => {
       const data = response.notification.request.content.data as {
         localUri?: string;

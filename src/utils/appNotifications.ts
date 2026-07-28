@@ -1,32 +1,32 @@
+import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
 import { Platform } from 'react-native';
 import { NotificationItem } from '@/types/notification';
 import { UserRole } from '@/types/user';
 
 const DEFAULT_CHANNEL_ID = 'default';
-let notificationsUnavailableLogged = false;
-
-type NotificationsModule = typeof import('expo-notifications');
+let notificationHandlerConfigured = false;
 
 const normalizeOrderId = (linkId?: string) => (linkId || '').replace(/^#/, '');
 
-async function getNotificationsModule(): Promise<NotificationsModule | null> {
-  try {
-    return await import('expo-notifications');
-  } catch (error) {
-    if (__DEV__ && !notificationsUnavailableLogged) {
-      notificationsUnavailableLogged = true;
-      console.warn('expo-notifications is unavailable in the current runtime; notification features are disabled.', error);
-    }
-    return null;
+export function getNotificationsModule() {
+  if (!notificationHandlerConfigured) {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+    notificationHandlerConfigured = true;
   }
+
+  return Notifications;
 }
 
 export async function ensureAppNotificationPermission() {
-  const Notifications = await getNotificationsModule();
-  if (!Notifications) {
-    return false;
-  }
+  const Notifications = getNotificationsModule();
 
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   let finalStatus = existingStatus;
@@ -52,52 +52,22 @@ export async function ensureAppNotificationPermission() {
   return true;
 }
 
-export function shouldShowSystemNotification(notification: NotificationItem) {
-  return notification.type === 'order' && notification.title.trim().toLowerCase() === 'open order available';
-}
-
-export async function showOrderSystemNotification(notification: NotificationItem, role: UserRole) {
-  const granted = await ensureAppNotificationPermission();
-  if (!granted) {
-    return;
-  }
-
-  const Notifications = await getNotificationsModule();
-  if (!Notifications) {
-    return;
-  }
-
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: notification.title,
-      body: notification.message,
-      sound: true,
-      data: {
-        notificationType: notification.type,
-        role,
-        linkId: notification.linkId,
-      },
-    },
-    trigger: null,
-  });
-}
-
 export function registerAppNotificationResponseListener() {
   let removed = false;
   let subscription: { remove(): void } | null = null;
 
-  void getNotificationsModule().then((Notifications) => {
-    if (!Notifications || removed) {
+  Promise.resolve().then(() => {
+    if (removed) {
       return;
     }
-
+    const Notifications = getNotificationsModule();
     subscription = Notifications.addNotificationResponseReceivedListener((response) => {
       const data = response.notification.request.content.data as {
         localUri?: string;
         mimeType?: string;
         fileName?: string;
         notificationType?: string;
-        role?: UserRole;
+        role?: UserRole | 'admin';
         linkId?: string;
       };
 
@@ -112,7 +82,9 @@ export function registerAppNotificationResponseListener() {
           return;
         }
 
-        router.push({ pathname: '/company/orders/[id]', params: { id: orderId, from: 'notifications' } });
+        if (data.role === 'company') {
+          router.push({ pathname: '/company/orders/[id]', params: { id: orderId, from: 'notifications' } });
+        }
       }
     });
   });
@@ -123,4 +95,28 @@ export function registerAppNotificationResponseListener() {
       subscription?.remove();
     },
   };
+}
+
+export async function scheduleServerNotification(item: NotificationItem) {
+  const Notifications = getNotificationsModule();
+  const granted = await ensureAppNotificationPermission();
+  if (!granted) {
+    return false;
+  }
+
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: item.title,
+      body: item.message,
+      sound: true,
+      data: {
+        notificationType: item.type,
+        role: item.recipientRole,
+        linkId: item.linkId,
+      },
+    },
+    trigger: null,
+  });
+
+  return true;
 }
