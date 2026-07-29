@@ -1,4 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createStore } from 'zustand/vanilla';
 import { fetchPortalSession, loginPortal, logoutPortalSession, refreshPortalSession } from '@/services/auth.service';
 import {
@@ -53,6 +54,28 @@ const persistUser = async (user: User | null) => {
   await SecureStore.setItemAsync(AUTH_USER_KEY, JSON.stringify(user));
 };
 
+const getOnboardingStatus = async () => {
+  const [asyncValue, secureValue] = await Promise.all([
+    AsyncStorage.getItem(AUTH_ONBOARDING_KEY),
+    SecureStore.getItemAsync(AUTH_ONBOARDING_KEY),
+  ]);
+
+  if (asyncValue === 'true') {
+    return true;
+  }
+
+  if (secureValue === 'true') {
+    await AsyncStorage.setItem(AUTH_ONBOARDING_KEY, 'true');
+    return true;
+  }
+
+  return false;
+};
+
+const persistOnboardingStatus = async () => {
+  await AsyncStorage.setItem(AUTH_ONBOARDING_KEY, 'true');
+};
+
 const persistSessionTokens = async (accessToken: string | null, refreshToken: string | null) => {
   const writes: Promise<void>[] = [];
 
@@ -89,18 +112,17 @@ export const authStore = createStore<AuthState>((set) => ({
   hasCompletedOnboarding: false,
   isHydrated: false,
   hydrate: async () => {
-    const [token, onboarded, storedUserValue, storedRefreshToken] = await Promise.all([
+    const [token, hasCompletedOnboarding, storedUserValue, storedRefreshToken] = await Promise.all([
       SecureStore.getItemAsync(AUTH_TOKEN_KEY),
-      SecureStore.getItemAsync(AUTH_ONBOARDING_KEY),
+      getOnboardingStatus(),
       SecureStore.getItemAsync(AUTH_USER_KEY),
       SecureStore.getItemAsync(AUTH_REFRESH_TOKEN_KEY),
     ]);
-    const hasCompletedOnboarding = onboarded === 'true' || Boolean(token) || Boolean(storedRefreshToken);
     const storedUser = parseStoredUser(storedUserValue);
     const role = token ? decodeTokenRole(token) ?? storedUser?.role ?? null : null;
 
-    if (token && onboarded !== 'true') {
-      await SecureStore.setItemAsync(AUTH_ONBOARDING_KEY, 'true');
+    if ((token || storedRefreshToken) && !hasCompletedOnboarding) {
+      await persistOnboardingStatus();
     }
 
     if ((token || storedRefreshToken) && (role || storedUser?.role)) {
@@ -149,7 +171,7 @@ export const authStore = createStore<AuthState>((set) => ({
     });
   },
   completeOnboarding: async () => {
-    await SecureStore.setItemAsync(AUTH_ONBOARDING_KEY, 'true');
+    await persistOnboardingStatus();
     set({ hasCompletedOnboarding: true });
   },
   login: async (role, email, password) => {
@@ -157,7 +179,7 @@ export const authStore = createStore<AuthState>((set) => ({
     setAuthSessionTokens(session.accessToken, session.refreshToken);
     await Promise.all([
       persistSessionTokens(session.accessToken, session.refreshToken),
-      SecureStore.setItemAsync(AUTH_ONBOARDING_KEY, 'true'),
+      persistOnboardingStatus(),
       persistUser(session.user),
     ]);
     set({ token: session.accessToken, user: session.user, hasCompletedOnboarding: true });
