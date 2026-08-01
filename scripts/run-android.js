@@ -18,6 +18,11 @@ const buildDirs = [
   'android/app/build/generated/autolinking',
 ];
 
+const mirrorExcludedRoots = ['.git', '.expo', 'dist'];
+
+function isGradleCacheDir(entryName, parentPath) {
+  return entryName === '.gradle' && parentPath.toLowerCase().includes('gradle-plugin');
+}
 
 function stopGradleDaemons() {
   const gradleWrapper = path.join(projectRoot, 'android', isWindows ? 'gradlew.bat' : 'gradlew');
@@ -67,9 +72,14 @@ function collectNodeModulesAndroidArtifacts(root = projectRoot) {
         collected.add(fullPath);
       }
 
+      if (isGradleCacheDir(entry.name, parentPath)) {
+        collected.add(fullPath);
+      }
+
       if (entry.name === 'android') {
         collected.add(path.join(fullPath, 'build'));
         collected.add(path.join(fullPath, '.cxx'));
+        collected.add(path.join(fullPath, '.gradle'));
       }
 
       visit(fullPath);
@@ -444,9 +454,7 @@ function getMappedProjectRoot() {
     path.join(projectRoot, 'android', 'build'),
     path.join(projectRoot, 'android', 'app', 'build'),
     path.join(projectRoot, 'android', 'app', '.cxx'),
-    path.join(projectRoot, '.git'),
-    path.join(projectRoot, '.expo'),
-    path.join(projectRoot, 'dist'),
+    ...mirrorExcludedRoots.map((dir) => path.join(projectRoot, dir)),
   ];
 
   const syncResult = runCommand('robocopy', robocopyArgs);
