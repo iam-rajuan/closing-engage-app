@@ -25,7 +25,7 @@ export default (_context: ConfigContext): ExpoConfig => {
     userInterfaceStyle: 'light',
     icon: './assets/icon.png',
     splash: {
-      image: './assets/icon.png',
+      image: './assets/app-icon-512px.png',
       resizeMode: 'contain',
       backgroundColor: '#f4f8ff',
     },
@@ -50,7 +50,7 @@ export default (_context: ConfigContext): ExpoConfig => {
         'android.permission.SYSTEM_ALERT_WINDOW',
       ],
       adaptiveIcon: {
-        foregroundImage: './assets/adaptive-icon.png',
+        foregroundImage: './assets/app-icon-512px.png',
         backgroundColor: '#f4f8ff',
       },
       predictiveBackGestureEnabled: false,
