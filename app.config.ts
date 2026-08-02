@@ -50,7 +50,7 @@ export default (_context: ConfigContext): ExpoConfig => {
         'android.permission.SYSTEM_ALERT_WINDOW',
       ],
       adaptiveIcon: {
-        foregroundImage: './assets/app-icon-512px.png',
+        foregroundImage: './assets/icon.png',
         backgroundColor: '#f4f8ff',
       },
       predictiveBackGestureEnabled: false,
