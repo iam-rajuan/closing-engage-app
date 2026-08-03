@@ -160,8 +160,22 @@ export async function fetchPortalSession(role: UserRole): Promise<User> {
   return normalizeNotaryUser(result.notary);
 }
 
-export async function requestPasswordReset(email: string, role: UserRole) {
+export async function requestPasswordReset(email: string, role?: UserRole) {
   await unwrap(api.post('/api/v1/auth/forgot-password', { email, role }));
+}
+
+export async function verifyResetOtp(email: string, otp: string, role?: UserRole) {
+  await unwrap(api.post('/api/v1/auth/verify-otp', { email, otp, role }));
+}
+
+export async function resetPasswordWithOtp(
+  email: string,
+  otp: string,
+  role: UserRole | undefined,
+  newPassword: string,
+  confirmPassword: string
+) {
+  await unwrap(api.post('/api/v1/auth/reset-password', { email, otp, role, newPassword, confirmPassword }));
 }
 
 export async function updateCompanyProfile(input: {

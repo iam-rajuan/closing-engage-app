@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
 import { useState } from 'react';
 import {
@@ -35,7 +35,7 @@ import { useAuthStore } from '@/features/auth/auth.store';
 import { LoginForm, loginSchema } from '@/utils/validation';
 import { colors, shadows } from '@/theme';
 import { styles as sharedStyles } from '@/features/shared/styles/screenStyles';
-import { requestPasswordReset } from '@/services/auth.service';
+import { requestPasswordReset, verifyResetOtp, resetPasswordWithOtp } from '@/services/auth.service';
 import { describeApiError } from '@/services/api';
 
 /* ─── Role Selector Card ─── */
@@ -274,18 +274,26 @@ export function LoginScreen() {
 /* ─── Forgot Password Screen ─── */
 export function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<'company' | 'notary'>('company');
-  const [feedback, setFeedback] = useState<string | null>(null);
   const [errorFeedback, setErrorFeedback] = useState<{ title: string; description: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const submitReset = async () => {
+    if (!email.trim()) {
+      setErrorFeedback({
+        title: 'Email Required',
+        description: 'Please enter your email address to continue.',
+      });
+      return;
+    }
     setSubmitting(true);
-    setFeedback(null);
     setErrorFeedback(null);
     try {
-      await requestPasswordReset(email, role);
-      setFeedback('If your account exists, a verification code has been sent to your email.');
+      await requestPasswordReset(email);
+      // Navigate directly to the verify-otp screen passing email
+      router.push({
+        pathname: '/auth/verify-otp',
+        params: { email },
+      });
     } catch (error) {
       setErrorFeedback(
         describeApiError(
@@ -308,25 +316,10 @@ export function ForgotPasswordScreen() {
           placeholder="your@email.com"
           value={email}
           onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
         />
-        <View style={s.roleRow}>
-          <RoleCard
-            active={role === 'company'}
-            onPress={() => setRole('company')}
-            icon={<Building2 color={role === 'company' ? '#0a49a8' : '#94a3b8'} size={18} />}
-            title="Title Company"
-            subtitle="Company portal"
-          />
-          <RoleCard
-            active={role === 'notary'}
-            onPress={() => setRole('notary')}
-            icon={<PenTool color={role === 'notary' ? '#0a49a8' : '#94a3b8'} size={18} />}
-            title="Notary"
-            subtitle="Notary portal"
-          />
-        </View>
         <AppButton title={submitting ? 'Sending...' : 'Send Verification Code'} onPress={() => void submitReset()} />
-        {feedback ? <AppText style={s.resetInfoText}>{feedback}</AppText> : null}
       </AppCard>
 
       <FeedbackModal
@@ -336,6 +329,196 @@ export function ForgotPasswordScreen() {
         description={errorFeedback?.description ?? ''}
         buttonTitle="Try Again"
         onClose={() => setErrorFeedback(null)}
+      />
+    </ScreenContainer>
+  );
+}
+
+/* ─── Verify OTP Screen ─── */
+export function VerifyOtpScreen() {
+  const params = useLocalSearchParams<{ email: string; role?: 'company' | 'notary' }>();
+  const email = params.email ?? '';
+  const role = params.role;
+
+  const [otp, setOtp] = useState('');
+  const [errorFeedback, setErrorFeedback] = useState<{ title: string; description: string } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const submitVerify = async () => {
+    if (otp.length !== 6) {
+      setErrorFeedback({
+        title: 'Invalid Code',
+        description: 'Please enter the 6-digit code sent to your email.',
+      });
+      return;
+    }
+    setSubmitting(true);
+    setErrorFeedback(null);
+    try {
+      await verifyResetOtp(email, otp, role);
+      // Navigate to reset password screen passing email, role and otp
+      router.push({
+        pathname: '/auth/reset-password',
+        params: { email, role, otp },
+      });
+    } catch (error) {
+      setErrorFeedback(
+        describeApiError(
+          error,
+          'Verification Failed',
+          'The code you entered is invalid or expired. Please try again.',
+        ),
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <ScreenContainer>
+      <AppHeader back title="Verify Code" />
+      <AppCard style={[sharedStyles.formCard, { padding: 20, gap: 20 }]}>
+        <AppText style={s.resetInfoText}>
+          Enter the 6-digit verification code sent to {email}.
+        </AppText>
+        <AppInput
+          label="Verification Code"
+          placeholder="123456"
+          value={otp}
+          onChangeText={setOtp}
+          keyboardType="number-pad"
+          maxLength={6}
+        />
+        <AppButton title={submitting ? 'Verifying...' : 'Verify Code'} onPress={() => void submitVerify()} />
+      </AppCard>
+
+      <FeedbackModal
+        visible={errorFeedback !== null}
+        variant="error"
+        title={errorFeedback?.title ?? ''}
+        description={errorFeedback?.description ?? ''}
+        buttonTitle="Try Again"
+        onClose={() => setErrorFeedback(null)}
+      />
+    </ScreenContainer>
+  );
+}
+
+/* ─── Reset Password Screen ─── */
+export function ResetPasswordScreen() {
+  const params = useLocalSearchParams<{ email: string; role?: 'company' | 'notary'; otp: string }>();
+  const email = params.email ?? '';
+  const role = params.role;
+  const otp = params.otp ?? '';
+
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [errorFeedback, setErrorFeedback] = useState<{ title: string; description: string } | null>(null);
+  const [successFeedback, setSuccessFeedback] = useState<{ title: string; description: string } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const submitReset = async () => {
+    if (newPassword.length < 8) {
+      setErrorFeedback({
+        title: 'Weak Password',
+        description: 'New password must be at least 8 characters long.',
+      });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setErrorFeedback({
+        title: 'Passwords Mismatch',
+        description: 'New password and confirm password do not match.',
+      });
+      return;
+    }
+    setSubmitting(true);
+    setErrorFeedback(null);
+    try {
+      await resetPasswordWithOtp(email, otp, role, newPassword, confirmPassword);
+      setSuccessFeedback({
+        title: 'Success',
+        description: 'Your password has been successfully updated.',
+      });
+    } catch (error) {
+      setErrorFeedback(
+        describeApiError(
+          error,
+          'Reset Failed',
+          'We were unable to reset your password. Please try again.',
+        ),
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSuccessClose = () => {
+    setSuccessFeedback(null);
+    router.replace('/auth/login');
+  };
+
+  return (
+    <ScreenContainer>
+      <AppHeader back title="Update Password" />
+      <AppCard style={[sharedStyles.formCard, { padding: 20, gap: 20 }]}>
+        <AppText style={s.resetInfoText}>
+          Create a new password for your account.
+        </AppText>
+        <AppInput
+          label="New Password"
+          placeholder="Minimum 8 characters"
+          secureTextEntry={!showPassword}
+          leftIcon={<Lock color="#94a3b8" size={18} style={{ marginRight: 8 }} />}
+          rightElement={
+            <Pressable onPress={() => setShowPassword(!showPassword)} style={{ marginLeft: 8 }}>
+              {showPassword ? (
+                <EyeOff color="#94a3b8" size={18} />
+              ) : (
+                <Eye color="#94a3b8" size={18} />
+              )}
+            </Pressable>
+          }
+          value={newPassword}
+          onChangeText={setNewPassword}
+        />
+        <AppInput
+          label="Confirm Password"
+          placeholder="Repeat your password"
+          secureTextEntry={!showPassword}
+          leftIcon={<Lock color="#94a3b8" size={18} style={{ marginRight: 8 }} />}
+          rightElement={
+            <Pressable onPress={() => setShowPassword(!showPassword)} style={{ marginLeft: 8 }}>
+              {showPassword ? (
+                <EyeOff color="#94a3b8" size={18} />
+              ) : (
+                <Eye color="#94a3b8" size={18} />
+              )}
+            </Pressable>
+          }
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+        />
+        <AppButton title={submitting ? 'Updating...' : 'Update Password'} onPress={() => void submitReset()} />
+      </AppCard>
+
+      <FeedbackModal
+        visible={errorFeedback !== null}
+        variant="error"
+        title={errorFeedback?.title ?? ''}
+        description={errorFeedback?.description ?? ''}
+        buttonTitle="Try Again"
+        onClose={() => setErrorFeedback(null)}
+      />
+
+      <FeedbackModal
+        visible={successFeedback !== null}
+        variant="success"
+        title={successFeedback?.title ?? ''}
+        description={successFeedback?.description ?? ''}
+        buttonTitle="Go to Login"
+        onClose={handleSuccessClose}
       />
     </ScreenContainer>
   );

@@ -24,11 +24,7 @@ export default (_context: ConfigContext): ExpoConfig => {
     scheme: 'closingengage',
     userInterfaceStyle: 'light',
     icon: './assets/icon.png',
-    splash: {
-      image: './assets/app-icon-512px.png',
-      resizeMode: 'contain',
-      backgroundColor: '#f4f8ff',
-    },
+
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.closingengage.app',
@@ -55,7 +51,22 @@ export default (_context: ConfigContext): ExpoConfig => {
       },
       predictiveBackGestureEnabled: false,
     },
-    plugins: ['expo-router', 'expo-secure-store', 'expo-document-picker', 'expo-image-picker', 'expo-font', 'expo-notifications'],
+    plugins: [
+      'expo-router',
+      'expo-secure-store',
+      'expo-document-picker',
+      'expo-image-picker',
+      'expo-font',
+      'expo-notifications',
+      [
+        'expo-splash-screen',
+        {
+          image: './assets/splash-icon.png',
+          backgroundColor: '#f4f8ff',
+          imageWidth: 200,
+        },
+      ],
+    ],
     extra: {
       apiUrl,
       environment,
