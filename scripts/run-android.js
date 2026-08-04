@@ -1,10 +1,14 @@
 /* global __dirname */
 
+const fs = require('fs');
 const path = require('path');
 const { spawn, spawnSync } = require('child_process');
 
 const projectRoot = path.resolve(__dirname, '..');
 const isWindows = process.platform === 'win32';
+const shortProjectRoot = isWindows
+  ? process.env.CLOSING_ENGAGE_ANDROID_SHORT_PATH || path.join(path.parse(projectRoot).root, 'cea-app')
+  : projectRoot;
 const env = {
   ...process.env,
   NODE_ENV: process.env.NODE_ENV || 'development',
@@ -73,10 +77,40 @@ function clearAdbReverse() {
   }
 }
 
+function ensureShortProjectRoot() {
+  if (!isWindows) {
+    return projectRoot;
+  }
+
+  if (path.resolve(shortProjectRoot) === path.resolve(projectRoot)) {
+    return projectRoot;
+  }
+
+  try {
+    const stats = fs.lstatSync(shortProjectRoot);
+    if (stats.isSymbolicLink()) {
+      const existingTarget = fs.realpathSync(shortProjectRoot);
+      if (path.resolve(existingTarget) === path.resolve(projectRoot)) {
+        return shortProjectRoot;
+      }
+    }
+
+    fs.rmSync(shortProjectRoot, { recursive: true, force: true });
+  } catch (error) {
+    if (error && error.code !== 'ENOENT') {
+      throw error;
+    }
+  }
+
+  fs.symlinkSync(projectRoot, shortProjectRoot, 'junction');
+  return shortProjectRoot;
+}
+
 function execExpoRunAndroid() {
-  const expoCli = path.join(projectRoot, 'node_modules', '@expo', 'cli', 'main.js');
+  const buildRoot = ensureShortProjectRoot();
+  const expoCli = path.join(buildRoot, 'node_modules', '@expo', 'cli', 'main.js');
   const child = spawn(process.execPath, [expoCli, 'run:android', '--port', '8081'], {
-    cwd: projectRoot,
+    cwd: buildRoot,
     stdio: 'inherit',
     env,
   });

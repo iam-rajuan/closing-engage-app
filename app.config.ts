@@ -58,6 +58,8 @@ export default (_context: ConfigContext): ExpoConfig => {
       'expo-image-picker',
       'expo-font',
       'expo-notifications',
+      'expo-sharing',
+      'expo-web-browser',
       [
         'expo-splash-screen',
         {
