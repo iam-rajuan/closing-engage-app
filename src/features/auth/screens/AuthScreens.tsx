@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
+  AlertCircle,
   ArrowRight,
   Building2,
   Eye,
@@ -79,7 +80,7 @@ function RoleCard({
 export function LoginScreen() {
   const login = useAuthStore((state) => state.login);
   const [showPassword, setShowPassword] = useState(false);
-  const [submitFeedback, setSubmitFeedback] = useState<{ title: string; description: string } | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const {
     control,
@@ -95,18 +96,17 @@ export function LoginScreen() {
   const role = watch('role');
 
   const submit = handleSubmit(async (values) => {
-    setSubmitFeedback(null);
+    setAuthError(null);
     try {
       const user = await login(values.role, values.email, values.password);
       router.replace(user.role === 'company' ? '/company/home' : '/notary/home');
     } catch (error) {
-      setSubmitFeedback(
-        describeApiError(
-          error,
-          'Unable to sign in',
-          'We could not sign you in right now. Please try again.',
-        ),
+      const desc = describeApiError(
+        error,
+        'Unable to sign in',
+        'Invalid email or password. Please check your credentials.',
       );
+      setAuthError(desc.description || 'Invalid email or password.');
     }
   });
 
@@ -136,6 +136,13 @@ export function LoginScreen() {
 
           {/* ── Login Form Card ── */}
           <View style={s.formContainer}>
+            {authError ? (
+              <View style={s.authErrorBanner}>
+                <AlertCircle color="#dc2626" size={18} />
+                <AppText style={s.authErrorText}>{authError}</AppText>
+              </View>
+            ) : null}
+
             {/* Email Field */}
             <View style={s.fieldGroup}>
               <AppText weight="bold" style={s.fieldLabel}>EMAIL ADDRESS</AppText>
@@ -143,12 +150,15 @@ export function LoginScreen() {
                 control={control}
                 name="email"
                 render={({ field }) => (
-                  <View style={[s.inputShell, errors.email && s.inputError]}>
-                    <Mail color="#94a3b8" size={18} />
+                  <View style={[s.inputShell, (errors.email || authError) && s.inputError]}>
+                    <Mail color={authError || errors.email ? '#dc2626' : '#94a3b8'} size={18} />
                     <TextInput
                       style={s.input}
                       value={field.value}
-                      onChangeText={field.onChange}
+                      onChangeText={(val) => {
+                        field.onChange(val);
+                        if (authError) setAuthError(null);
+                      }}
                       placeholder="Email or username"
                       placeholderTextColor="#94a3b8"
                       autoCapitalize="none"
@@ -169,12 +179,15 @@ export function LoginScreen() {
                 control={control}
                 name="password"
                 render={({ field }) => (
-                  <View style={[s.inputShell, errors.password && s.inputError]}>
-                    <Lock color="#94a3b8" size={18} />
+                  <View style={[s.inputShell, (errors.password || authError) && s.inputError]}>
+                    <Lock color={authError || errors.password ? '#dc2626' : '#94a3b8'} size={18} />
                     <TextInput
                       style={s.input}
                       value={field.value}
-                      onChangeText={field.onChange}
+                      onChangeText={(val) => {
+                        field.onChange(val);
+                        if (authError) setAuthError(null);
+                      }}
                       placeholder="Enter your password"
                       placeholderTextColor="#94a3b8"
                       secureTextEntry={!showPassword}
@@ -185,9 +198,9 @@ export function LoginScreen() {
                       style={s.eyeBtn}
                     >
                       {showPassword ? (
-                        <EyeOff color="#94a3b8" size={18} />
+                        <EyeOff color={authError || errors.password ? '#dc2626' : '#94a3b8'} size={18} />
                       ) : (
-                        <Eye color="#94a3b8" size={18} />
+                        <Eye color={authError || errors.password ? '#dc2626' : '#94a3b8'} size={18} />
                       )}
                     </Pressable>
                   </View>
@@ -258,15 +271,6 @@ export function LoginScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-
-      <FeedbackModal
-        visible={submitFeedback !== null}
-        variant="error"
-        title={submitFeedback?.title ?? ''}
-        description={submitFeedback?.description ?? ''}
-        buttonTitle="Try Again"
-        onClose={() => setSubmitFeedback(null)}
-      />
     </SafeAreaView>
   );
 }
@@ -571,6 +575,24 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#f1f5f9',
     ...shadows.card,
+  },
+  authErrorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#fef2f2',
+    borderWidth: 1,
+    borderColor: '#fca5a5',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  authErrorText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#991b1b',
+    lineHeight: 18,
   },
   fieldGroup: {
     gap: 6,

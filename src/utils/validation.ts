@@ -16,6 +16,7 @@ export const orderSchema = z.object({
   state: z.string().min(2, 'State is required'),
   zip: z.string().min(5, 'Zip is required'),
   signingDate: z.string().min(1, 'Signing date is required'),
+  price: z.string().optional(),
   loanType: z.enum(allowedLoanTypes, { message: 'Select a valid loan type' }),
   requirements: z.string().optional(),
   preferredNotary: z.string().optional(),

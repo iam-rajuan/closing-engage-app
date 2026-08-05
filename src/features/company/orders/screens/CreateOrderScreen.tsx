@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Building, Calendar, ChevronDown, Clock, FileText, Info, Plus, Trash2, Zap } from 'lucide-react-native';
 import { AppButton } from '@/components/common/AppButton';
 import { AppCard } from '@/components/common/AppCard';
@@ -11,9 +11,11 @@ import { AppInput } from '@/components/common/AppInput';
 import { AppText } from '@/components/common/AppText';
 import { DatePickerModal } from '@/components/common/DatePickerModal';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
+import { StatePickerModal } from '@/components/common/StatePickerModal';
 import { UploadBox } from '@/components/documents/UploadBox';
 import { uploadDocumentBinary } from '@/services/documents.service';
 import { createOrder } from '@/services/orders.service';
+import { US_STATES } from '@/constants/usStates';
 import { colors } from '@/theme';
 import { allowedLoanTypes, OrderForm, orderSchema } from '@/utils/validation';
 
@@ -21,6 +23,7 @@ export function CreateOrderScreen() {
   const [priority, setPriority] = useState<'normal' | 'urgent'>('normal');
   const [scanBacks, setScanBacks] = useState<'yes' | 'no'>('no');
   const [datePickerVisible, setDatePickerVisible] = useState(false);
+  const [statePickerVisible, setStatePickerVisible] = useState(false);
   const [selectedFile, setSelectedFile] = useState<{ uri: string; name: string; size?: number; mimeType?: string } | null>(null);
 
   const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<OrderForm>({
@@ -33,6 +36,7 @@ export function CreateOrderScreen() {
       state: 'TX',
       zip: '',
       signingDate: '',
+      price: '',
       loanType: 'Refinance',
       requirements: '',
       preferredNotary: '',
@@ -50,6 +54,7 @@ export function CreateOrderScreen() {
         state: values.state,
         zip: values.zip,
         signingDate: values.signingDate,
+        price: values.price,
         loanType: values.loanType,
         preferredNotary: values.preferredNotary,
         instructions: values.instructions,
@@ -102,9 +107,36 @@ export function CreateOrderScreen() {
         {input('clientName', 'CLIENT NAME', 'Full legal name')}
         {input('propertyAddress', 'PROPERTY ADDRESS', 'Street address')}
         <View style={styles.threeCols}>
-          <View style={{ flex: 2 }}>{input('city', 'CITY')}</View>
-          <View style={{ flex: 1 }}>{input('state', 'STATE')}</View>
-          <View style={{ flex: 1 }}>{input('zip', 'ZIP')}</View>
+          <View style={{ flex: 1.6 }}>{input('city', 'CITY')}</View>
+          <View style={{ flex: 1.1 }}>
+            <Controller
+              control={control}
+              name="state"
+              render={({ field }) => (
+                <>
+                  <Pressable onPress={() => setStatePickerVisible(true)}>
+                    <View pointerEvents="none">
+                      <AppInput
+                        label="STATE"
+                        value={field.value || ''}
+                        placeholder="State"
+                        editable={false}
+                        error={errors.state?.message}
+                        rightElement={<ChevronDown color={colors.primary} size={18} />}
+                      />
+                    </View>
+                  </Pressable>
+                  <StatePickerModal
+                    visible={statePickerVisible}
+                    selectedValue={field.value || ''}
+                    onSelect={(code) => field.onChange(code)}
+                    onClose={() => setStatePickerVisible(false)}
+                  />
+                </>
+              )}
+            />
+          </View>
+          <View style={{ flex: 1.1 }}>{input('zip', 'ZIP')}</View>
         </View>
         <Controller
           control={control}
@@ -132,6 +164,7 @@ export function CreateOrderScreen() {
             </>
           )}
         />
+        {input('price', 'ORDER PRICE', '0.00')}
       </AppCard>
 
       <AppCard style={styles.formCard}>
@@ -312,6 +345,35 @@ const styles = StyleSheet.create({
   fieldErrorText: {
     fontSize: 12,
     color: '#ef4444',
+  },
+  stateField: {
+    gap: 8,
+  },
+  stateOptions: {
+    gap: 6,
+    paddingRight: 4,
+  },
+  stateChip: {
+    height: 44,
+    minWidth: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#dbe6f3',
+    backgroundColor: '#f8fbff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+  },
+  stateChipActive: {
+    borderColor: '#0a49a8',
+    backgroundColor: '#eff6ff',
+  },
+  stateChipText: {
+    fontSize: 12,
+    color: '#475569',
+  },
+  stateChipTextActive: {
+    color: '#0a49a8',
   },
   requirementLabel: {
     marginTop: 16,

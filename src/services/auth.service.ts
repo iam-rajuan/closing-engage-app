@@ -92,6 +92,11 @@ const normalizeNotaryUser = (input: Record<string, unknown>): User => {
     status: typeof input.status === 'string' ? input.status : undefined,
     avatarUrl: typeof input.avatarUrl === 'string' ? input.avatarUrl : undefined,
     avatarInitials: initialsFrom(name),
+    specialty: typeof input.specialty === 'string' ? input.specialty : undefined,
+    license: typeof input.license === 'string' ? input.license : undefined,
+    expiry: typeof input.expiry === 'string' ? input.expiry : undefined,
+    serviceArea: typeof input.serviceArea === 'string' ? input.serviceArea : undefined,
+    state: typeof input.state === 'string' ? input.state : undefined,
     permissions: {
       createOrders: false,
       viewOrders: true,
@@ -228,6 +233,7 @@ export async function updateNotaryProfile(input: {
   license: string;
   expiry?: string;
   serviceArea?: string;
+  state?: string;
   avatarUrl?: string;
   notifications?: {
     email: boolean;
@@ -243,6 +249,7 @@ export async function updateNotaryProfile(input: {
     license: input.license.trim() || undefined,
     expiry: input.expiry?.trim() || undefined,
     serviceArea: input.serviceArea?.trim() || undefined,
+    state: input.state?.trim() || undefined,
     avatarUrl: input.avatarUrl?.trim() || undefined,
     notifications: input.notifications,
   };

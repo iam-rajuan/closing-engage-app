@@ -54,6 +54,12 @@ export function OrderCard({
           <MapPin size={13} color="#94a3b8" />
           <AppText style={styles.locationText} numberOfLines={1}>{displayAddress}</AppText>
         </View>
+        <View style={styles.metaRow}>
+          <AppText style={styles.metaText}>State: {order.state || 'N/A'}</AppText>
+          <AppText style={styles.priceText}>
+            {typeof order.price === 'number' ? `$${order.price.toFixed(2)}` : 'Price not set'}
+          </AppText>
+        </View>
 
         {/* Divider */}
         <View style={styles.divider} />
@@ -152,6 +158,22 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#f1f5f9',
     marginVertical: 2,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 8,
+  },
+  metaText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#64748b',
+  },
+  priceText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#0f172a',
   },
   infoRow: {
     flexDirection: 'row',

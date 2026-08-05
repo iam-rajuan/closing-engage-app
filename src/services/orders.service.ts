@@ -23,6 +23,8 @@ type BackendOrderListItem = {
   status: Order['status'];
   date: string;
   time: string;
+  state?: string;
+  price?: number | null;
   loanType?: string;
   scanbacksRequired?: boolean;
   preferredNotaryName?: string;
@@ -45,6 +47,8 @@ type BackendOrderDetail = {
   signingTime: string;
   date: string;
   time: string;
+  state?: string;
+  price?: number | null;
   status: Order['status'];
   priority?: string;
   loanType?: string;
@@ -70,6 +74,7 @@ type CreateOrderInput = {
   zip: string;
   signingDate: string;
   signingTime?: string;
+  price?: string;
   loanType: string;
   preferredNotary?: string;
   instructions?: string;
@@ -115,6 +120,8 @@ export const normalizeOrderListItem = (item: BackendOrderListItem): Order => ({
   location: item.location,
   signingDate: item.date,
   signingTime: item.time,
+  state: item.state,
+  price: item.price ?? null,
   status: item.status,
   loanType: item.loanType,
   scanbacksRequired: item.scanbacksRequired,
@@ -139,6 +146,8 @@ export const normalizeOrderDetail = (detail: BackendOrderDetail): Order & { time
   location: detail.location,
   signingDate: detail.signingDate || detail.date,
   signingTime: detail.signingTime || detail.time,
+  state: detail.state,
+  price: detail.price ?? null,
   status: detail.status,
   priority: detail.priority === 'Rush' ? 'Urgent' : 'Normal',
   instructions: detail.specialInstructions,
@@ -194,6 +203,7 @@ export async function createOrder(payload: CreateOrderInput) {
       zip: payload.zip,
       signingDate: payload.signingDate,
       signingTime: payload.signingTime || 'TBD',
+      price: payload.price ? Number(payload.price) : undefined,
       loanType: payload.loanType,
       preferredNotary: payload.preferredNotary,
       instructions: payload.instructions,

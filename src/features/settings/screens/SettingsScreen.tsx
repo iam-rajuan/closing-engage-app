@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Image, Platform, Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
-import { Bell, Calendar, ChevronRight, Edit2, KeyRound, LogOut, Shield, User } from 'lucide-react-native';
+import { Bell, Calendar, ChevronDown, ChevronRight, Edit2, KeyRound, LogOut, Shield, User } from 'lucide-react-native';
 import { AppHeader } from '@/components/common/AppHeader';
 import { AppText } from '@/components/common/AppText';
 import { AppCard } from '@/components/common/AppCard';
 import { FeedbackModal } from '@/components/common/FeedbackModal';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
+import { StatePickerModal } from '@/components/common/StatePickerModal';
+import { getStateName } from '@/constants/usStates';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { shadows } from '@/theme';
 import {
@@ -113,6 +115,7 @@ type NotaryForm = {
   license: string;
   expiry: string;
   serviceArea: string;
+  state: string;
   avatarUrl: string;
   notifications: {
     email: boolean;
@@ -162,14 +165,17 @@ export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
     notifications: user?.notifications || { email: true, orders: true, documents: true },
   }), [user]);
 
+  const [stateModalVisible, setStateModalVisible] = useState(false);
+
   const initialNotaryForm = useMemo<NotaryForm>(() => ({
     fullName: user?.name || '',
-    specialty: 'Mobile Loan Signing Agent',
+    specialty: user?.specialty || 'Mobile Loan Signing Agent',
     email: user?.email || '',
     phone: user?.phone || '',
-    license: '',
-    expiry: '',
-    serviceArea: '',
+    license: user?.license || '',
+    expiry: user?.expiry || '',
+    serviceArea: user?.serviceArea || '',
+    state: user?.state || '',
     avatarUrl: user?.avatarUrl || '',
     notifications: user?.notifications || { email: true, orders: true, documents: true },
   }), [user]);
@@ -374,6 +380,26 @@ export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
             <InputField label="LICENSE NUMBER" value={notaryForm.license} onChangeText={(value) => setNotaryForm((current) => ({ ...current, license: value }))} editable={isEditing} />
             <InputField label="COMMISSION EXPIRY" value={notaryForm.expiry} onChangeText={(value) => setNotaryForm((current) => ({ ...current, expiry: value }))} editable={isEditing} rightIcon={<Calendar color="#94a3b8" size={18} />} />
             <InputField label="SERVICE AREA" value={notaryForm.serviceArea} onChangeText={(value) => setNotaryForm((current) => ({ ...current, serviceArea: value }))} editable={isEditing} />
+            <View style={s.inputGroup}>
+              <AppText style={s.fieldLabel}>STATE</AppText>
+              <Pressable
+                disabled={!isEditing}
+                onPress={() => setStateModalVisible(true)}
+                style={[s.inputShell, !isEditing && s.inputShellDisabled, { justifyContent: 'space-between' }]}
+              >
+                <AppText
+                  style={[
+                    s.input,
+                    !isEditing && s.inputDisabled,
+                    !notaryForm.state && { color: '#94a3b8' },
+                    { lineHeight: 44 },
+                  ]}
+                >
+                  {notaryForm.state ? getStateName(notaryForm.state) : 'Select State'}
+                </AppText>
+                <ChevronDown color={isEditing ? '#0a49a8' : '#94a3b8'} size={18} />
+              </Pressable>
+            </View>
           </AppCard>
         </View>
       ) : (
@@ -482,6 +508,13 @@ export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
         description={feedback?.description ?? ''}
         buttonTitle={feedback?.variant === 'error' ? 'Try Again' : 'Continue'}
         onClose={() => setFeedback(null)}
+      />
+
+      <StatePickerModal
+        visible={stateModalVisible}
+        selectedValue={notaryForm.state}
+        onSelect={(selectedState) => setNotaryForm((current) => ({ ...current, state: selectedState }))}
+        onClose={() => setStateModalVisible(false)}
       />
     </ScreenContainer>
   );

@@ -25,4 +25,10 @@ export type User = {
     orders: boolean;
     documents: boolean;
   };
+  specialty?: string;
+  license?: string;
+  expiry?: string;
+  serviceArea?: string;
+  state?: string;
 };
+

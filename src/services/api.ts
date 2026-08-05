@@ -103,7 +103,7 @@ const normalizeApiErrorMessage = (
   if (statusCode === 401) {
     return {
       kind: 'auth',
-      message: responseMessage || 'Your session could not be verified. Please sign in again.',
+      message: responseMessage || 'Invalid email/username or password.',
     };
   }
 
@@ -265,7 +265,9 @@ api.interceptors.response.use(
         }
       }
 
-      if (statusCode === 401 && !unauthorizedHandled) {
+      const isLoginEndpoint = String(url || '').includes('/auth/portal/login') || String(url || '').endsWith('/login');
+
+      if (statusCode === 401 && !isLoginEndpoint && !unauthorizedHandled) {
         unauthorizedHandled = true;
         console.log(`[API Auth] 401 Unauthorized detected for ${url}. Triggering unauthorizedHandler (logout).`);
         Promise.resolve(unauthorizedHandler?.())

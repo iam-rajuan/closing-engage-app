@@ -46,6 +46,8 @@ export type Order = {
   location: string;
   signingDate: string;
   signingTime?: string;
+  state?: string;
+  price?: number | null;
   status: OrderStatus;
   priority?: 'Normal' | 'Urgent';
   instructions?: string;
