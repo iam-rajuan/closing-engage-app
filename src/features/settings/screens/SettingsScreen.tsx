@@ -225,6 +225,15 @@ export function SettingsForm({ role }: { role: 'company' | 'notary' }) {
   };
 
   const saveProfile = async () => {
+    if (isNotary && !notaryForm.state) {
+      setFeedback({
+        variant: 'error',
+        title: 'State is required',
+        description: 'Select your notary commission state before saving your profile.',
+      });
+      return;
+    }
+
     setSaving(true);
     try {
       const updatedUser = isNotary
