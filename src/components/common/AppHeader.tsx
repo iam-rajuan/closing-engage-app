@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { Bell, ChevronLeft, MessageCircle } from 'lucide-react-native';
 import { router, useNavigation, type Href } from 'expo-router';
@@ -7,8 +6,6 @@ import { useNotificationStore } from '@/features/shared/notifications.store';
 import { colors, spacing } from '@/theme';
 import { BrandLogo } from './BrandLogo';
 import { AppText } from './AppText';
-
-const UNREAD_POLL_INTERVAL = 30000;
 
 type Props = {
   title?: string;
@@ -48,18 +45,10 @@ export function AppHeader({
   const navigation = useNavigation();
   const user = useAuthStore((state) => state.user);
   const unreadCount = useNotificationStore((state) => state.unreadCount);
-  const refreshUnread = useNotificationStore((state) => state.refreshUnread);
   const resolvedName = name === "Alex Thompson" ? user?.fullName || user?.name || name : name;
   const resolvedAvatar = avatar || user?.avatarUrl;
 
   const showBell = !back && showNotifications;
-
-  useEffect(() => {
-    if (!showBell || !user) return;
-    void refreshUnread();
-    const intervalId = setInterval(() => void refreshUnread(), UNREAD_POLL_INTERVAL);
-    return () => clearInterval(intervalId);
-  }, [showBell, user, refreshUnread]);
 
   const unreadLabel = unreadCount > 99 ? '99+' : String(unreadCount);
   

@@ -38,6 +38,8 @@ const rawBaseURL =
   'http://localhost:8000';
 const baseURL = resolveDevelopmentHost(normalizeBaseURL(rawBaseURL));
 
+export const getApiBaseURL = () => baseURL;
+
 export const AUTH_TOKEN_KEY = 'closing_engage_token';
 export const AUTH_REFRESH_TOKEN_KEY = 'closing_engage_refresh_token';
 export const AUTH_USER_KEY = 'closing_engage_user';

@@ -1,4 +1,4 @@
-export type NotificationType = 'order' | 'document' | 'user';
+export type NotificationType = 'order' | 'document' | 'user' | 'system';
 
 export type NotificationItem = {
   id: string;

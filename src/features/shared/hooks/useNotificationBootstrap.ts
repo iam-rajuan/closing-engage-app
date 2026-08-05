@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { useNotificationStore } from '@/features/shared/notifications.store';
 import { getNotifications } from '@/services/notifications.service';
+import { createNotificationSocket } from '@/services/notification-socket.service';
 import { getStoredPushToken, registerCurrentDevicePushToken } from '@/services/push-devices.service';
 import { scheduleServerNotification } from '@/utils/appNotifications';
 import { registerNotificationResponseListener } from '@/utils/fileDownload';
@@ -9,7 +10,12 @@ import { registerNotificationResponseListener } from '@/utils/fileDownload';
 export function useNotificationBootstrap() {
   const user = useAuthStore((state) => state.user);
   const isHydrated = useAuthStore((state) => state.isHydrated);
-  const setUnreadCount = useNotificationStore((state) => state.setUnreadCount);
+  const setNotifications = useNotificationStore((state) => state.setNotifications);
+  const upsertNotification = useNotificationStore((state) => state.upsertNotification);
+  const markNotificationReadLocally = useNotificationStore((state) => state.markNotificationReadLocally);
+  const markAllNotificationsReadLocally = useNotificationStore((state) => state.markAllNotificationsReadLocally);
+  const deleteNotificationLocally = useNotificationStore((state) => state.deleteNotificationLocally);
+  const clearNotificationsLocally = useNotificationStore((state) => state.clearNotificationsLocally);
   const pushRegistrationAttemptedRef = useRef<string | null>(null);
   const seededNotificationIdsRef = useRef<Set<string>>(new Set());
   const shouldMirrorServerNotificationsRef = useRef(false);
@@ -29,7 +35,7 @@ export function useNotificationBootstrap() {
 
   useEffect(() => {
     if (!isHydrated || !user?.role) {
-      setUnreadCount(0);
+      clearNotificationsLocally();
       return;
     }
 
@@ -58,9 +64,9 @@ export function useNotificationBootstrap() {
           }
         }
 
-        setUnreadCount(items.filter((item) => !item.read).length);
+        setNotifications(items);
       } catch {
-        // Keep the app usable if notification polling fails.
+        // Keep the app usable if notification sync fails.
       }
     };
 
@@ -75,13 +81,45 @@ export function useNotificationBootstrap() {
 
     void syncNotifications();
 
-    const interval = setInterval(() => {
-      void syncNotifications();
-    }, 15000);
+    let socketCleanup: (() => void) | null = null;
+    void (async () => {
+      const socket = await createNotificationSocket();
+      if (!active || !socket) {
+        socket?.disconnect();
+        return;
+      }
+
+      socket.on('connect', () => {
+        void syncNotifications();
+      });
+      socket.on('notifications:new', (notification) => {
+        seededNotificationIdsRef.current.add(notification.id);
+        upsertNotification(notification);
+      });
+      socket.on('notifications:read', ({ id }) => markNotificationReadLocally(id));
+      socket.on('notifications:read-all', markAllNotificationsReadLocally);
+      socket.on('notifications:deleted', ({ id }) => deleteNotificationLocally(id));
+      socket.on('notifications:cleared', clearNotificationsLocally);
+      socket.connect();
+
+      socketCleanup = () => {
+        socket.disconnect();
+      };
+    })();
 
     return () => {
       active = false;
-      clearInterval(interval);
+      socketCleanup?.();
     };
-  }, [isHydrated, setUnreadCount, user?.id, user?.role]);
+  }, [
+    clearNotificationsLocally,
+    deleteNotificationLocally,
+    isHydrated,
+    markAllNotificationsReadLocally,
+    markNotificationReadLocally,
+    setNotifications,
+    upsertNotification,
+    user?.id,
+    user?.role,
+  ]);
 }

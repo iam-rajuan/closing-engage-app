@@ -37,6 +37,11 @@ const notificationMeta: Record<NotificationItem['type'], { icon: ReactNode; bg: 
     bg: '#f0fdf4',
     color: '#16a34a',
   },
+  system: {
+    icon: <Bell color="#475569" size={18} />,
+    bg: '#f8fafc',
+    color: '#475569',
+  },
 };
 
 const normalizeLinkId = (linkId?: string) => (linkId || '').replace(/^#/, '');
@@ -46,17 +51,21 @@ export function NotificationsScreen() {
   const [markingAll, setMarkingAll] = useState(false);
   const [clearingAll, setClearingAll] = useState(false);
   const user = useAuthStore((state) => state.user);
-  const { data: notifications, loading, error, reload } = useAsyncResource(() => getNotifications(), [], {
+  const { data: fetchedNotifications, loading, error, reload } = useAsyncResource(() => getNotifications(), [], {
     cacheKey: `notifications:${user?.role ?? 'guest'}`,
   });
+  const notifications = useNotificationStore((state) => state.notifications);
 
   const unreadCount = useMemo(() => (notifications ?? []).filter((item) => !item.read).length, [notifications]);
   const hasNotifications = (notifications?.length ?? 0) > 0;
-  const setUnreadCount = useNotificationStore((state) => state.setUnreadCount);
+  const setNotifications = useNotificationStore((state) => state.setNotifications);
+  const markNotificationReadLocally = useNotificationStore((state) => state.markNotificationReadLocally);
+  const markAllNotificationsReadLocally = useNotificationStore((state) => state.markAllNotificationsReadLocally);
+  const clearNotificationsLocally = useNotificationStore((state) => state.clearNotificationsLocally);
 
   useEffect(() => {
-    if (notifications) setUnreadCount(unreadCount);
-  }, [notifications, unreadCount, setUnreadCount]);
+    if (fetchedNotifications) setNotifications(fetchedNotifications);
+  }, [fetchedNotifications, setNotifications]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -68,7 +77,7 @@ export function NotificationsScreen() {
     try {
       if (!notification.read) {
         await markNotificationRead(notification.id);
-        await reload();
+        markNotificationReadLocally(notification.id);
       }
     } catch {
       // Keep navigation usable even if mark-read fails.
@@ -106,7 +115,7 @@ export function NotificationsScreen() {
     setMarkingAll(true);
     try {
       await markAllNotificationsRead();
-      await reload();
+      markAllNotificationsReadLocally();
     } finally {
       setMarkingAll(false);
     }
@@ -120,8 +129,7 @@ export function NotificationsScreen() {
     setClearingAll(true);
     try {
       await clearAllNotifications();
-      await reload();
-      setUnreadCount(0);
+      clearNotificationsLocally();
     } finally {
       setClearingAll(false);
     }
@@ -186,7 +194,7 @@ export function NotificationsScreen() {
         </View>
       </View>
 
-      {loading && !notifications ? <LoadingState /> : null}
+      {loading && !notifications.length ? <LoadingState /> : null}
       {error ? <ErrorState message={error} /> : null}
 
       <View style={styles.list}>
