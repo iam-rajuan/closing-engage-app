@@ -5,7 +5,6 @@ import { Calendar, Download, FileText, Info, MapPin, UserRound } from 'lucide-re
 import { getDocumentDownloadUrl } from '@/services/documents.service';
 import { downloadFileToDevice } from '@/utils/fileDownload';
 import { DownloadSuccessModal } from '@/components/common/DownloadSuccessModal';
-import { SuccessModal } from '@/components/common/SuccessModal';
 import { DocumentIcon } from '@/components/common/DocumentIcon';
 import { AppCard } from '@/components/common/AppCard';
 import { AppHeader } from '@/components/common/AppHeader';
@@ -16,7 +15,7 @@ import { ErrorState } from '@/components/common/ErrorState';
 import { LoadingState } from '@/components/common/LoadingState';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { useAsyncResource } from '@/hooks/useAsyncResource';
-import { confirmOrderMeeting, getOrderById } from '@/services/orders.service';
+import { getOrderById } from '@/services/orders.service';
 import { colors } from '@/theme';
 
 function DetailField({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
@@ -49,19 +48,17 @@ export function CompanyOrderDetailsScreen() {
   const handleBack = useCallback(() => {
     router.replace(backTarget);
   }, [backTarget]);
-  const { data: order, loading, error, reload, setData } = useAsyncResource(
+  const { data: order, loading, error, reload } = useAsyncResource(
     () => getOrderById(orderId),
     [orderId],
     { cacheKey: `order:${orderId}` },
   );
-  const [isConfirmingMeeting, setIsConfirmingMeeting] = useState(false);
   const [downloadingDocId, setDownloadingDocId] = useState<string | null>(null);
   const [downloadSuccess, setDownloadSuccess] = useState<{
     name: string;
     localUri: string;
     mimeType: string;
   } | null>(null);
-  const [showMeetingConfirmed, setShowMeetingConfirmed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [activityExpanded, setActivityExpanded] = useState(false);
 
@@ -98,20 +95,6 @@ export function CompanyOrderDetailsScreen() {
       return () => subscription.remove();
     }, [handleBack]),
   );
-
-  const confirmMeeting = async () => {
-    if (!orderId) return;
-    setIsConfirmingMeeting(true);
-    try {
-      const updated = await confirmOrderMeeting(orderId);
-      setData(updated);
-      setShowMeetingConfirmed(true);
-    } catch (caught) {
-      Alert.alert('Unable to confirm meeting', caught instanceof Error ? caught.message : 'Please try again.');
-    } finally {
-      setIsConfirmingMeeting(false);
-    }
-  };
 
   return (
     <ScreenContainer scroll refreshing={refreshing} onRefresh={() => void handleRefresh()}>
@@ -183,20 +166,22 @@ export function CompanyOrderDetailsScreen() {
                     {order.meeting.date} • {order.meeting.time}
                   </AppText>
                   <AppText variant="caption" muted style={styles.engagementDescription} maxFontSizeMultiplier={1.15}>
-                    {order.meeting.status === 'confirmed' ? 'Confirmed and shared with the notary.' : 'The notary scheduled this meeting. Confirm it to notify them instantly.'}
+                    {order.meeting.status === 'confirmed'
+                      ? 'The notary accepted this schedule.'
+                      : order.meeting.status === 'rejected'
+                        ? 'The notary requested another schedule.'
+                        : 'Waiting for the notary to accept this schedule request.'}
                   </AppText>
                 </View>
                 <Badge
-                  label={order.meeting.status === 'confirmed' ? 'CONFIRMED' : 'PENDING'}
-                  tone={order.meeting.status === 'confirmed' ? 'green' : 'blue'}
+                  label={order.meeting.status === 'confirmed' ? 'CONFIRMED' : order.meeting.status === 'rejected' ? 'REJECTED' : 'REQUESTED'}
+                  tone={order.meeting.status === 'confirmed' ? 'green' : order.meeting.status === 'rejected' ? 'red' : 'blue'}
                 />
               </View>
-              {order.meeting.status === 'scheduled' ? (
-                <Pressable style={styles.confirmButton} onPress={() => void confirmMeeting()} disabled={isConfirmingMeeting}>
-                  <AppText weight="semibold" style={styles.confirmButtonText} maxFontSizeMultiplier={1.1}>
-                    {isConfirmingMeeting ? 'Confirming...' : 'Confirm Meeting'}
-                  </AppText>
-                </Pressable>
+              {order.meeting.status === 'rejected' ? (
+                <AppText variant="caption" muted style={styles.engagementDescription} maxFontSizeMultiplier={1.15}>
+                  {order.meeting.rejectionNote || 'No note provided.'}
+                </AppText>
               ) : null}
             </AppCard>
           ) : null}
@@ -442,13 +427,6 @@ export function CompanyOrderDetailsScreen() {
         onClose={() => setDownloadSuccess(null)}
       />
 
-      <SuccessModal
-        visible={showMeetingConfirmed}
-        title="Meeting Confirmed"
-        description="The notary has been notified that this closing is now confirmed and finalized."
-        buttonTitle="Done"
-        onClose={() => setShowMeetingConfirmed(false)}
-      />
     </ScreenContainer>
   );
 }

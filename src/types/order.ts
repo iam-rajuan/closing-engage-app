@@ -10,13 +10,18 @@ export type OrderStatus =
   | 'Rejected';
 
 export type OrderMeeting = {
-  status: 'scheduled' | 'confirmed';
+  status: 'scheduled' | 'confirmed' | 'rejected';
   date: string;
   time: string;
   scheduledByRole?: 'admin' | 'company' | 'notary';
   confirmedByRole?: 'admin' | 'company' | 'notary';
   scheduledAt?: string;
   confirmedAt?: string;
+  rejectedByRole?: 'notary';
+  rejectedAt?: string;
+  rejectionNote?: string;
+  preferredDate?: string;
+  preferredTime?: string;
 };
 
 export type OrderDocumentSummary = {

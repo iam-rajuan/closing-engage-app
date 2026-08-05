@@ -2,13 +2,18 @@ import { api, unwrap } from '@/services/api';
 import { Order, OrderDocumentSummary, TimelineStep } from '@/types/order';
 
 type BackendMeeting = {
-  status: 'scheduled' | 'confirmed';
+  status: 'scheduled' | 'confirmed' | 'rejected';
   date: string;
   time: string;
   scheduledByRole?: 'admin' | 'company' | 'notary';
   confirmedByRole?: 'admin' | 'company' | 'notary';
   scheduledAt?: string;
   confirmedAt?: string;
+  rejectedByRole?: 'notary';
+  rejectedAt?: string;
+  rejectionNote?: string;
+  preferredDate?: string;
+  preferredTime?: string;
 } | null;
 
 type BackendOrderListItem = {
@@ -228,6 +233,16 @@ export async function scheduleOrderMeeting(orderId: string, signingDate: string,
 export async function confirmOrderMeeting(orderId: string) {
   const result = await unwrap<BackendOrderDetail>(
     api.patch(`/api/v1/orders/${encodeURIComponent(orderId)}/meeting/confirm`),
+  );
+  return normalizeOrderDetail(result);
+}
+
+export async function rejectOrderMeeting(
+  orderId: string,
+  payload: { note: string; preferredDate?: string; preferredTime?: string },
+) {
+  const result = await unwrap<BackendOrderDetail>(
+    api.patch(`/api/v1/orders/${encodeURIComponent(orderId)}/meeting/reject`, payload),
   );
   return normalizeOrderDetail(result);
 }

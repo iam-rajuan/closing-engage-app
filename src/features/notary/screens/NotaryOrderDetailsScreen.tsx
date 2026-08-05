@@ -20,7 +20,7 @@ import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { notaryStyles } from '@/features/notary/styles';
 import { useAsyncResource } from '@/hooks/useAsyncResource';
 import { deleteDocument, resubmitDocument, uploadDocumentBinary } from '@/services/documents.service';
-import { acceptOpenOrder, confirmPrintedDocuments, getOrderById } from '@/services/orders.service';
+import { acceptOpenOrder, confirmOrderMeeting, confirmPrintedDocuments, getOrderById, rejectOrderMeeting } from '@/services/orders.service';
 import { colors } from '@/theme';
 import { pickDocument } from '@/utils/fileUpload';
 
@@ -104,6 +104,7 @@ export function NotaryOrderDetailsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [activityExpanded, setActivityExpanded] = useState(false);
   const [showUploadSuccess, setShowUploadSuccess] = useState(false);
+  const [respondingToSchedule, setRespondingToSchedule] = useState(false);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -175,6 +176,45 @@ export function NotaryOrderDetailsScreen() {
   const markPrinted = async () => {
     const updated = await confirmPrintedDocuments(orderId);
     setData(updated);
+  };
+
+  const acceptSchedule = async () => {
+    setRespondingToSchedule(true);
+    try {
+      const updated = await confirmOrderMeeting(orderId);
+      setData(updated);
+      Alert.alert('Schedule accepted', 'The title company can now see this closing as confirmed.');
+    } catch (error) {
+      Alert.alert('Unable to accept schedule', error instanceof Error ? error.message : 'Please try again.');
+    } finally {
+      setRespondingToSchedule(false);
+    }
+  };
+
+  const rejectSchedule = async () => {
+    Alert.alert('Reject schedule?', 'This will ask the title company to send another schedule request.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Reject',
+        style: 'destructive',
+        onPress: () => {
+          void (async () => {
+            setRespondingToSchedule(true);
+            try {
+              const updated = await rejectOrderMeeting(orderId, {
+                note: 'Notary is unavailable for the requested signing date/time and requests another schedule.',
+              });
+              setData(updated);
+              Alert.alert('Schedule rejected', 'The title company has been notified.');
+            } catch (error) {
+              Alert.alert('Unable to reject schedule', error instanceof Error ? error.message : 'Please try again.');
+            } finally {
+              setRespondingToSchedule(false);
+            }
+          })();
+        },
+      },
+    ]);
   };
 
   const browseFiles = async () => {
@@ -348,24 +388,33 @@ export function NotaryOrderDetailsScreen() {
                       {order.meeting.date} • {order.meeting.time}
                     </AppText>
                     <AppText variant="caption" muted style={styles.engagementDescription} maxFontSizeMultiplier={1.15}>
-                      {order.meeting.status === 'confirmed' ? 'Confirmed and shared with the company.' : 'Awaiting company confirmation.'}
+                      {order.meeting.status === 'confirmed'
+                        ? 'You accepted this schedule. The company can see it as confirmed.'
+                        : order.meeting.status === 'rejected'
+                          ? 'You rejected this schedule. The company can send another request.'
+                          : 'The company requested this schedule. Accept it or request another time.'}
                     </AppText>
                   </View>
                   <Badge
-                    label={order.meeting.status === 'confirmed' ? 'CONFIRMED' : 'PENDING'}
-                    tone={order.meeting.status === 'confirmed' ? 'green' : 'blue'}
+                    label={order.meeting.status === 'confirmed' ? 'CONFIRMED' : order.meeting.status === 'rejected' ? 'REJECTED' : 'REQUESTED'}
+                    tone={order.meeting.status === 'confirmed' ? 'green' : order.meeting.status === 'rejected' ? 'red' : 'blue'}
                   />
                 </View>
-                {!isOpenOrder ? (
-                  <Pressable
-                    style={styles.meetingAction}
-                    onPress={() => router.push(`/notary/assigned/schedule?orderId=${encodeURIComponent(order.id)}`)}
-                  >
-                    <AppText weight="semibold" style={styles.meetingActionText} maxFontSizeMultiplier={1.1}>
-                      {order.meeting ? 'Reschedule Closing' : 'Schedule Closing'}
-                    </AppText>
-                    <ArrowRight size={18} color={colors.primary} />
-                  </Pressable>
+                {!isOpenOrder && order.meeting.status === 'scheduled' ? (
+                  <View style={{ gap: 10 }}>
+                    <Pressable style={styles.meetingAction} onPress={() => void acceptSchedule()} disabled={respondingToSchedule}>
+                      <AppText weight="semibold" style={styles.meetingActionText} maxFontSizeMultiplier={1.1}>
+                        {respondingToSchedule ? 'Sending...' : 'Accept Schedule'}
+                      </AppText>
+                      <CheckCircle2 size={18} color={colors.primary} />
+                    </Pressable>
+                    <Pressable style={styles.meetingAction} onPress={() => void rejectSchedule()} disabled={respondingToSchedule}>
+                      <AppText weight="semibold" style={styles.meetingActionText} maxFontSizeMultiplier={1.1}>
+                        Reject / Request New Time
+                      </AppText>
+                      <ArrowRight size={18} color={colors.primary} />
+                    </Pressable>
+                  </View>
                 ) : null}
               </AppCard>
             ) : !isOpenOrder ? (
