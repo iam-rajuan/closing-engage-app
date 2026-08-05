@@ -285,7 +285,16 @@ export function NotaryOrderDetailsScreen() {
                 value={`${order.signingDate}, ${order.signingTime || 'TBD'}`}
                 icon={<Calendar color={colors.primary} size={14} />}
               />
-              <DetailField label="ORDER PRICE" value={typeof order.price === 'number' ? `$${order.price.toFixed(2)}` : 'Not set'} />
+              <DetailField
+                label="ORDER PRICE"
+                value={
+                  typeof order.price === 'number'
+                    ? `$${order.price.toFixed(2)}`
+                    : order.price
+                      ? `$${Number(order.price).toFixed(2)}`
+                      : 'Not set'
+                }
+              />
               <DetailField label="STATE" value={order.state || 'Not set'} />
               <DetailField
                 label="PROPERTY ADDRESS"

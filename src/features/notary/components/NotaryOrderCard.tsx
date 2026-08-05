@@ -68,8 +68,17 @@ export function NotaryOrderCard({
       <AppCard style={notaryStyles.orderCard}>
         {/* Row 1: Order # + Status badge */}
         <View style={notaryStyles.orderTopRow}>
-          <View style={notaryStyles.orderIdWrap}>
-            <AppText numberOfLines={1} style={notaryStyles.orderNum}>#{order.orderNumber.replace('#', '')}</AppText>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <View style={notaryStyles.orderIdWrap}>
+              <AppText numberOfLines={1} style={notaryStyles.orderNum}>#{order.orderNumber.replace('#', '')}</AppText>
+            </View>
+            {typeof order.price === 'number' && order.price > 0 ? (
+              <View style={{ backgroundColor: '#ecfdf5', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6, borderWidth: 1, borderColor: '#a7f3d0' }}>
+                <AppText weight="bold" style={{ color: '#047857', fontSize: 11 }}>
+                  ${order.price.toFixed(2)}
+                </AppText>
+              </View>
+            ) : null}
           </View>
           <Badge
             label={isOpenOrder ? 'Open for All' : order.status}

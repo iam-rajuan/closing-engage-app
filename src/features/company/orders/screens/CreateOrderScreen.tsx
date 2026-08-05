@@ -12,6 +12,7 @@ import { AppText } from '@/components/common/AppText';
 import { DatePickerModal } from '@/components/common/DatePickerModal';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { StatePickerModal } from '@/components/common/StatePickerModal';
+import { TimePickerModal } from '@/components/common/TimePickerModal';
 import { UploadBox } from '@/components/documents/UploadBox';
 import { uploadDocumentBinary } from '@/services/documents.service';
 import { createOrder } from '@/services/orders.service';
@@ -23,6 +24,7 @@ export function CreateOrderScreen() {
   const [priority, setPriority] = useState<'normal' | 'urgent'>('normal');
   const [scanBacks, setScanBacks] = useState<'yes' | 'no'>('no');
   const [datePickerVisible, setDatePickerVisible] = useState(false);
+  const [timePickerVisible, setTimePickerVisible] = useState(false);
   const [statePickerVisible, setStatePickerVisible] = useState(false);
   const [selectedFile, setSelectedFile] = useState<{ uri: string; name: string; size?: number; mimeType?: string } | null>(null);
 
@@ -36,6 +38,7 @@ export function CreateOrderScreen() {
       state: 'TX',
       zip: '',
       signingDate: '',
+      signingTime: '09:00 AM',
       price: '',
       loanType: 'Refinance',
       requirements: '',
@@ -54,6 +57,7 @@ export function CreateOrderScreen() {
         state: values.state,
         zip: values.zip,
         signingDate: values.signingDate,
+        signingTime: values.signingTime || '09:00 AM',
         price: values.price,
         loanType: values.loanType,
         preferredNotary: values.preferredNotary,
@@ -138,33 +142,79 @@ export function CreateOrderScreen() {
           </View>
           <View style={{ flex: 1.1 }}>{input('zip', 'ZIP')}</View>
         </View>
+        <View style={styles.twoCols}>
+          <View style={{ flex: 1 }}>
+            <Controller
+              control={control}
+              name="signingDate"
+              render={({ field }) => (
+                <>
+                  <Pressable onPress={() => setDatePickerVisible(true)}>
+                    <View pointerEvents="none">
+                      <AppInput
+                        label="SIGNING DATE"
+                        value={field.value ? String(field.value) : ''}
+                        placeholder="May 31, 2026"
+                        editable={false}
+                        error={errors.signingDate?.message}
+                        rightElement={<Calendar color={colors.primary} size={20} />}
+                      />
+                    </View>
+                  </Pressable>
+                  <DatePickerModal
+                    visible={datePickerVisible}
+                    value={field.value}
+                    onClose={() => setDatePickerVisible(false)}
+                    onChange={field.onChange}
+                  />
+                </>
+              )}
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Controller
+              control={control}
+              name="signingTime"
+              render={({ field }) => (
+                <>
+                  <Pressable onPress={() => setTimePickerVisible(true)}>
+                    <View pointerEvents="none">
+                      <AppInput
+                        label="SIGNING TIME"
+                        value={field.value ? String(field.value) : '09:00 AM'}
+                        placeholder="09:00 AM"
+                        editable={false}
+                        error={errors.signingTime?.message}
+                        rightElement={<Clock color={colors.primary} size={20} />}
+                      />
+                    </View>
+                  </Pressable>
+                  <TimePickerModal
+                    visible={timePickerVisible}
+                    value={field.value || '09:00 AM'}
+                    onClose={() => setTimePickerVisible(false)}
+                    onChange={field.onChange}
+                  />
+                </>
+              )}
+            />
+          </View>
+        </View>
         <Controller
           control={control}
-          name="signingDate"
+          name="price"
           render={({ field }) => (
-            <>
-              <Pressable onPress={() => setDatePickerVisible(true)}>
-                <View pointerEvents="none">
-                  <AppInput
-                    label="SIGNING DATE"
-                    value={field.value ? String(field.value) : ''}
-                    placeholder="May 31, 2026"
-                    editable={false}
-                    error={errors.signingDate?.message}
-                    rightElement={<Calendar color={colors.primary} size={20} />}
-                  />
-                </View>
-              </Pressable>
-              <DatePickerModal
-                visible={datePickerVisible}
-                value={field.value}
-                onClose={() => setDatePickerVisible(false)}
-                onChange={field.onChange}
-              />
-            </>
+            <AppInput
+              label="ORDER PRICE"
+              value={String(field.value ?? '')}
+              onChangeText={field.onChange}
+              placeholder="0.00"
+              keyboardType="decimal-pad"
+              leftIcon={<AppText weight="bold" style={{ color: colors.primary, fontSize: 16 }}>$</AppText>}
+              error={errors.price?.message}
+            />
           )}
         />
-        {input('price', 'ORDER PRICE', '0.00')}
       </AppCard>
 
       <AppCard style={styles.formCard}>
@@ -349,31 +399,13 @@ const styles = StyleSheet.create({
   stateField: {
     gap: 8,
   },
-  stateOptions: {
-    gap: 6,
-    paddingRight: 4,
+  threeCols: {
+    flexDirection: 'row',
+    gap: 12,
   },
-  stateChip: {
-    height: 44,
-    minWidth: 48,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#dbe6f3',
-    backgroundColor: '#f8fbff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 10,
-  },
-  stateChipActive: {
-    borderColor: '#0a49a8',
-    backgroundColor: '#eff6ff',
-  },
-  stateChipText: {
-    fontSize: 12,
-    color: '#475569',
-  },
-  stateChipTextActive: {
-    color: '#0a49a8',
+  twoCols: {
+    flexDirection: 'row',
+    gap: 12,
   },
   requirementLabel: {
     marginTop: 16,
@@ -428,10 +460,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#64748b',
     fontWeight: '700',
-  },
-  threeCols: {
-    flexDirection: 'row',
-    gap: 12,
   },
   actionRow: {
     flexDirection: 'row',
