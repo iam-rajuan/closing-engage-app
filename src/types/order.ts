@@ -17,7 +17,7 @@ export type OrderMeeting = {
   confirmedByRole?: 'admin' | 'company' | 'notary';
   scheduledAt?: string;
   confirmedAt?: string;
-  rejectedByRole?: 'notary';
+  rejectedByRole?: 'company' | 'notary' | 'admin';
   rejectedAt?: string;
   rejectionNote?: string;
   preferredDate?: string;

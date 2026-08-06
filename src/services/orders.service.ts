@@ -9,7 +9,7 @@ type BackendMeeting = {
   confirmedByRole?: 'admin' | 'company' | 'notary';
   scheduledAt?: string;
   confirmedAt?: string;
-  rejectedByRole?: 'notary';
+  rejectedByRole?: 'company' | 'notary' | 'admin';
   rejectedAt?: string;
   rejectionNote?: string;
   preferredDate?: string;
@@ -133,47 +133,51 @@ export const normalizeOrderListItem = (item: BackendOrderListItem): Order => ({
   preferredNotaryName: item.preferredNotaryName,
   notaryPrintedConfirmed: item.notaryPrintedConfirmed,
   openForAll: item.openForAll ?? false,
-  meeting: item.meeting ?? null,
+  meeting: item.openForAll ? null : item.meeting ?? null,
 });
 
-export const normalizeOrderDetail = (detail: BackendOrderDetail): Order & { timelineSteps: TimelineStep[] } => ({
-  id: detail.id,
-  orderNumber: normalizeOrderNumber(detail.id),
-  clientName: detail.clientName,
-  companyName: detail.companyName,
-  companyAvatarUrl: detail.companyAvatarUrl,
-  notaryName:
-    detail.assignedNotaryName && detail.assignedNotaryName !== '--' && detail.assignedNotaryName !== 'Open for All'
-      ? detail.assignedNotaryName
-      : undefined,
-  notaryAvatarUrl: detail.notaryAvatarUrl,
-  address: detail.propertyAddress,
-  location: detail.location,
-  signingDate: detail.signingDate || detail.date,
-  signingTime: detail.signingTime || detail.time,
-  state: detail.state,
-  price: detail.price ?? null,
-  status: detail.status,
-  priority: detail.priority === 'Rush' ? 'Urgent' : 'Normal',
-  instructions: detail.specialInstructions,
-  title: detail.title,
-  signerName: detail.signerName,
-  signerPhone: detail.signerPhone,
-  loanType: detail.loanType,
-  preferredNotaryName: detail.preferredNotaryName,
-  notaryPrintedConfirmed: detail.notaryPrintedConfirmed,
-  assignedNotaryId: detail.assignedNotaryId,
-  openForAll: detail.openForAll ?? false,
-  meeting: detail.meeting ?? null,
-  documents: detail.documents,
-  timeline: detail.timeline.map((event) => ({
-    title: event.title,
-    date: event.date,
-    tone: event.tone as 'blue' | 'slate' | 'green' | 'red',
-  })),
-  createdDate: detail.createdDate,
-  timelineSteps: toTimelineSteps(detail.timeline, detail.status),
-});
+export const normalizeOrderDetail = (detail: BackendOrderDetail): Order & { timelineSteps: TimelineStep[] } => {
+  const isOpenForAll = detail.openForAll ?? false;
+
+  return {
+    id: detail.id,
+    orderNumber: normalizeOrderNumber(detail.id),
+    clientName: detail.clientName,
+    companyName: detail.companyName,
+    companyAvatarUrl: detail.companyAvatarUrl,
+    notaryName:
+      detail.assignedNotaryName && detail.assignedNotaryName !== '--' && detail.assignedNotaryName !== 'Open for All'
+        ? detail.assignedNotaryName
+        : undefined,
+    notaryAvatarUrl: isOpenForAll ? undefined : detail.notaryAvatarUrl,
+    address: detail.propertyAddress,
+    location: detail.location,
+    signingDate: detail.signingDate || detail.date,
+    signingTime: detail.signingTime || detail.time,
+    state: detail.state,
+    price: detail.price ?? null,
+    status: detail.status,
+    priority: detail.priority === 'Rush' ? 'Urgent' : 'Normal',
+    instructions: detail.specialInstructions,
+    title: detail.title,
+    signerName: detail.signerName,
+    signerPhone: detail.signerPhone,
+    loanType: detail.loanType,
+    preferredNotaryName: detail.preferredNotaryName,
+    notaryPrintedConfirmed: isOpenForAll ? false : detail.notaryPrintedConfirmed,
+    assignedNotaryId: isOpenForAll ? undefined : detail.assignedNotaryId,
+    openForAll: isOpenForAll,
+    meeting: isOpenForAll ? null : detail.meeting ?? null,
+    documents: isOpenForAll ? detail.documents.filter((document) => document.uploadedBy !== 'Notary') : detail.documents,
+    timeline: detail.timeline.map((event) => ({
+      title: event.title,
+      date: event.date,
+      tone: event.tone as 'blue' | 'slate' | 'green' | 'red',
+    })),
+    createdDate: detail.createdDate,
+    timelineSteps: toTimelineSteps(detail.timeline, detail.status),
+  };
+};
 
 export async function getCompanyOrders() {
   const result = await unwrap<BackendOrderListItem[]>(api.get('/api/v1/orders'));

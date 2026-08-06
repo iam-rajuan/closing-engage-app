@@ -1,24 +1,27 @@
-import { Alert, ActivityIndicator, BackHandler, Image, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, ActivityIndicator, BackHandler, Image, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { Calendar, Download, FileText, Info, MapPin, UserRound } from 'lucide-react-native';
+import { useCallback, useState, type ReactNode } from 'react';
+import { Calendar, Clock, Download, FileText, Info, MapPin, UserRound } from 'lucide-react-native';
 import { getDocumentDownloadUrl } from '@/services/documents.service';
 import { downloadFileToDevice } from '@/utils/fileDownload';
 import { DownloadSuccessModal } from '@/components/common/DownloadSuccessModal';
 import { DocumentIcon } from '@/components/common/DocumentIcon';
+import { AppButton } from '@/components/common/AppButton';
 import { AppCard } from '@/components/common/AppCard';
 import { AppHeader } from '@/components/common/AppHeader';
 import { AppText } from '@/components/common/AppText';
 import { Badge } from '@/components/common/Badge';
+import { DatePickerModal } from '@/components/common/DatePickerModal';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
 import { LoadingState } from '@/components/common/LoadingState';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { useAsyncResource } from '@/hooks/useAsyncResource';
-import { getOrderById } from '@/services/orders.service';
+import { confirmOrderMeeting, getOrderById, rejectOrderMeeting, scheduleOrderMeeting } from '@/services/orders.service';
+import { TimePickerModal } from '@/components/common/TimePickerModal';
 import { colors } from '@/theme';
 
-function DetailField({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
+function DetailField({ label, value, icon, children }: { label: string; value: string; icon?: React.ReactNode; children?: ReactNode }) {
   return (
     <View style={styles.detailField}>
       <AppText variant="caption" muted style={styles.detailLabel} maxFontSizeMultiplier={1.1}>
@@ -30,6 +33,7 @@ function DetailField({ label, value, icon }: { label: string; value: string; ico
           {value}
         </AppText>
       </View>
+      {children}
     </View>
   );
 }
@@ -48,7 +52,7 @@ export function CompanyOrderDetailsScreen() {
   const handleBack = useCallback(() => {
     router.replace(backTarget);
   }, [backTarget]);
-  const { data: order, loading, error, reload } = useAsyncResource(
+  const { data: order, loading, error, reload, setData } = useAsyncResource(
     () => getOrderById(orderId),
     [orderId],
     { cacheKey: `order:${orderId}` },
@@ -61,6 +65,15 @@ export function CompanyOrderDetailsScreen() {
   } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [activityExpanded, setActivityExpanded] = useState(false);
+  const [respondingToSchedule, setRespondingToSchedule] = useState(false);
+  const [counterDate, setCounterDate] = useState('');
+  const [counterTime, setCounterTime] = useState('');
+  const [rejectNote, setRejectNote] = useState('');
+  const [counterDatePickerVisible, setCounterDatePickerVisible] = useState(false);
+  const [counterTimePickerVisible, setCounterTimePickerVisible] = useState(false);
+  const [rejectModalVisible, setRejectModalVisible] = useState(false);
+
+  const meeting = order?.meeting ?? null;
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -82,6 +95,57 @@ export function CompanyOrderDetailsScreen() {
       );
     } finally {
       setDownloadingDocId(null);
+    }
+  };
+
+  const acceptNotaryReschedule = async () => {
+    setRespondingToSchedule(true);
+    try {
+      const updated = await confirmOrderMeeting(orderId);
+      setData(updated);
+      Alert.alert('Preferred time accepted', 'The notary can now see the signing time as confirmed.');
+    } catch (error) {
+      Alert.alert('Unable to accept time', error instanceof Error ? error.message : 'Please try again.');
+    } finally {
+      setRespondingToSchedule(false);
+    }
+  };
+
+  const sendCounterSchedule = async () => {
+    if (!counterDate || !counterTime) {
+      Alert.alert('Select date and time', 'Choose the new signing date and time before sending.');
+      return;
+    }
+
+    setRespondingToSchedule(true);
+    try {
+      const updated = await scheduleOrderMeeting(orderId, counterDate, counterTime);
+      setData(updated);
+      Alert.alert('Schedule sent', 'The notary has been asked to confirm the new signing time.');
+    } catch (error) {
+      Alert.alert('Unable to send schedule', error instanceof Error ? error.message : 'Please try again.');
+    } finally {
+      setRespondingToSchedule(false);
+    }
+  };
+
+  const rejectNotaryReschedule = async () => {
+    if (!rejectNote.trim()) {
+      Alert.alert('Add rejection note', 'Tell the notary why the preferred time does not work.');
+      return;
+    }
+
+    setRespondingToSchedule(true);
+    try {
+      const updated = await rejectOrderMeeting(orderId, { note: rejectNote.trim() });
+      setData(updated);
+      setRejectModalVisible(false);
+      setRejectNote('');
+      Alert.alert('Reschedule rejected', 'The notary can still accept the current signing time or request another time.');
+    } catch (error) {
+      Alert.alert('Unable to reject reschedule', error instanceof Error ? error.message : 'Please try again.');
+    } finally {
+      setRespondingToSchedule(false);
     }
   };
 
@@ -119,7 +183,66 @@ export function CompanyOrderDetailsScreen() {
               label="SIGNING DATE & TIME"
               value={`${order.signingDate}, ${order.signingTime || 'TBD'}`}
               icon={<Calendar color={colors.primary} size={14} />}
-            />
+            >
+              {meeting?.status === 'confirmed' ? (
+                <View style={styles.scheduleNoticeSuccess}>
+                  <AppText weight="semibold" style={styles.scheduleNoticeSuccessText} maxFontSizeMultiplier={1.1}>
+                    Confirmed by notary
+                  </AppText>
+                </View>
+              ) : null}
+              {meeting?.status === 'rejected' ? (
+                <View style={styles.scheduleInlinePanel}>
+                  <View style={styles.notaryProposalNotice}>
+                    <AppText style={styles.notaryProposalText} maxFontSizeMultiplier={1.15}>
+                      {meeting.rejectionNote || 'No note provided.'}
+                    </AppText>
+                    {meeting.preferredDate || meeting.preferredTime ? (
+                      <AppText weight="semibold" style={styles.notaryProposalText} maxFontSizeMultiplier={1.15}>
+                        Preferred: {[meeting.preferredDate, meeting.preferredTime].filter(Boolean).join(' at ')}
+                      </AppText>
+                    ) : null}
+                  </View>
+
+                  {meeting.preferredDate || meeting.preferredTime ? (
+                    <AppButton
+                      title={respondingToSchedule ? 'Saving...' : 'Accept Preferred Time'}
+                      onPress={() => void acceptNotaryReschedule()}
+                      disabled={respondingToSchedule}
+                      style={styles.scheduleActionButton}
+                    />
+                  ) : null}
+
+                  <View style={styles.counterPickerGrid}>
+                    <Pressable style={styles.inlinePickerButton} onPress={() => setCounterDatePickerVisible(true)}>
+                      <Calendar size={16} color={colors.primary} />
+                      <AppText weight="semibold" style={styles.inlinePickerText} maxFontSizeMultiplier={1.1}>
+                        {counterDate || 'New date'}
+                      </AppText>
+                    </Pressable>
+                    <Pressable style={styles.inlinePickerButton} onPress={() => setCounterTimePickerVisible(true)}>
+                      <Clock size={16} color={colors.primary} />
+                      <AppText weight="semibold" style={styles.inlinePickerText} maxFontSizeMultiplier={1.1}>
+                        {counterTime || 'New time'}
+                      </AppText>
+                    </Pressable>
+                  </View>
+                  <AppButton
+                    title={respondingToSchedule ? 'Sending...' : 'Send New Time'}
+                    onPress={() => void sendCounterSchedule()}
+                    disabled={respondingToSchedule}
+                    style={styles.scheduleActionButton}
+                  />
+                  <AppButton
+                    title="Reject Reschedule"
+                    variant="secondary"
+                    onPress={() => setRejectModalVisible(true)}
+                    disabled={respondingToSchedule}
+                    style={styles.scheduleActionButton}
+                  />
+                </View>
+              ) : null}
+            </DetailField>
             <DetailField
               label="ORDER PRICE"
               value={
@@ -150,40 +273,6 @@ export function CompanyOrderDetailsScreen() {
                 </AppText>
               </View>
             </View>
-          ) : null}
-
-          {order.meeting ? (
-            <AppCard style={styles.engagementCard}>
-              <View style={styles.engagementTopRow}>
-                <View style={styles.engagementIconBox}>
-                  <Calendar color={colors.primary} size={24} />
-                </View>
-                <View style={styles.flexContent}>
-                  <AppText variant="caption" muted style={styles.engagementSub} maxFontSizeMultiplier={1.1}>
-                    Closing Meeting
-                  </AppText>
-                  <AppText weight="semibold" style={styles.engagementTitle} maxFontSizeMultiplier={1.15}>
-                    {order.meeting.date} • {order.meeting.time}
-                  </AppText>
-                  <AppText variant="caption" muted style={styles.engagementDescription} maxFontSizeMultiplier={1.15}>
-                    {order.meeting.status === 'confirmed'
-                      ? 'The notary accepted this schedule.'
-                      : order.meeting.status === 'rejected'
-                        ? 'The notary requested another schedule.'
-                        : 'Waiting for the notary to accept this schedule request.'}
-                  </AppText>
-                </View>
-                <Badge
-                  label={order.meeting.status === 'confirmed' ? 'CONFIRMED' : order.meeting.status === 'rejected' ? 'REJECTED' : 'REQUESTED'}
-                  tone={order.meeting.status === 'confirmed' ? 'green' : order.meeting.status === 'rejected' ? 'red' : 'blue'}
-                />
-              </View>
-              {order.meeting.status === 'rejected' ? (
-                <AppText variant="caption" muted style={styles.engagementDescription} maxFontSizeMultiplier={1.15}>
-                  {order.meeting.rejectionNote || 'No note provided.'}
-                </AppText>
-              ) : null}
-            </AppCard>
           ) : null}
 
           <View style={styles.detailsSection}>
@@ -427,6 +516,62 @@ export function CompanyOrderDetailsScreen() {
         onClose={() => setDownloadSuccess(null)}
       />
 
+      <Modal
+        transparent
+        visible={rejectModalVisible}
+        animationType="fade"
+        onRequestClose={() => setRejectModalVisible(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.scheduleModalCard}>
+            <AppText weight="bold" style={styles.scheduleModalTitle} maxFontSizeMultiplier={1.15}>
+              Reject Reschedule
+            </AppText>
+            <AppText style={styles.scheduleModalSubtitle} maxFontSizeMultiplier={1.15}>
+              Decline the notary’s preferred time and leave the current signing time available for acceptance.
+            </AppText>
+            <TextInput
+              value={rejectNote}
+              onChangeText={setRejectNote}
+              placeholder="Explain why this preferred time does not work"
+              multiline
+              textAlignVertical="top"
+              style={styles.scheduleNoteInput}
+              placeholderTextColor="#94a3b8"
+            />
+            <View style={styles.modalActions}>
+              <AppButton
+                title="Cancel"
+                variant="secondary"
+                onPress={() => setRejectModalVisible(false)}
+                disabled={respondingToSchedule}
+                style={styles.modalActionButton}
+              />
+              <AppButton
+                title={respondingToSchedule ? 'Sending...' : 'Reject'}
+                variant="danger"
+                onPress={() => void rejectNotaryReschedule()}
+                disabled={respondingToSchedule}
+                style={styles.modalActionButton}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <DatePickerModal
+        visible={counterDatePickerVisible}
+        value={counterDate}
+        onClose={() => setCounterDatePickerVisible(false)}
+        onChange={setCounterDate}
+      />
+      <TimePickerModal
+        visible={counterTimePickerVisible}
+        value={counterTime}
+        onClose={() => setCounterTimePickerVisible(false)}
+        onChange={setCounterTime}
+      />
+
     </ScreenContainer>
   );
 }
@@ -480,6 +625,61 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#1e293b',
     lineHeight: 19,
+  },
+  scheduleInlinePanel: {
+    marginTop: 10,
+    gap: 10,
+  },
+  scheduleActionButton: {
+    minHeight: 44,
+    borderRadius: 12,
+  },
+  scheduleNoticeSuccess: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    backgroundColor: '#dcfce7',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  scheduleNoticeSuccessText: {
+    color: '#15803d',
+    fontSize: 11,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  notaryProposalNotice: {
+    borderWidth: 1,
+    borderColor: '#fecaca',
+    backgroundColor: '#fff7f7',
+    borderRadius: 12,
+    padding: 12,
+    gap: 5,
+  },
+  notaryProposalText: {
+    color: '#475569',
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  counterPickerGrid: {
+    gap: 10,
+  },
+  inlinePickerButton: {
+    minHeight: 46,
+    borderWidth: 1,
+    borderColor: '#dbeafe',
+    backgroundColor: '#f8fbff',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  inlinePickerText: {
+    flex: 1,
+    minWidth: 0,
+    color: '#1e293b',
+    fontSize: 13,
   },
   flexContent: {
     flex: 1,
@@ -556,6 +756,52 @@ const styles = StyleSheet.create({
   },
   confirmButtonText: {
     color: colors.white,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.48)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  scheduleModalCard: {
+    width: '100%',
+    maxWidth: 420,
+    borderRadius: 20,
+    backgroundColor: colors.white,
+    padding: 20,
+    gap: 12,
+  },
+  scheduleModalTitle: {
+    fontSize: 20,
+    lineHeight: 26,
+    color: '#0f172a',
+  },
+  scheduleModalSubtitle: {
+    color: '#64748b',
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  scheduleNoteInput: {
+    minHeight: 112,
+    borderWidth: 1,
+    borderColor: '#dbeafe',
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    color: '#1e293b',
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  modalActionButton: {
+    flex: 1,
+    minHeight: 46,
+    borderRadius: 12,
   },
   detailsSection: {
     marginTop: 24,
