@@ -6,6 +6,7 @@ import { getDocumentDownloadUrl } from '@/services/documents.service';
 import { downloadFileToDevice } from '@/utils/fileDownload';
 import { DownloadSuccessModal } from '@/components/common/DownloadSuccessModal';
 import { ConfirmationModal } from '@/components/common/ConfirmationModal';
+import { FeedbackModal } from '@/components/common/FeedbackModal';
 import { SuccessModal } from '@/components/common/SuccessModal';
 import { DocumentIcon } from '@/components/common/DocumentIcon';
 import { AppButton } from '@/components/common/AppButton';
@@ -104,6 +105,7 @@ export function NotaryOrderDetailsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [activityExpanded, setActivityExpanded] = useState(false);
   const [showUploadSuccess, setShowUploadSuccess] = useState(false);
+  const [rescheduleSuccessVisible, setRescheduleSuccessVisible] = useState(false);
   const [respondingToSchedule, setRespondingToSchedule] = useState(false);
 
   const handleRefresh = async () => {
@@ -205,7 +207,7 @@ export function NotaryOrderDetailsScreen() {
                 note: 'Notary is unavailable for the requested signing date/time and requests another schedule.',
               });
               setData(updated);
-              Alert.alert('Schedule rejected', 'The title company has been notified.');
+              setRescheduleSuccessVisible(true);
             } catch (error) {
               Alert.alert('Unable to reject schedule', error instanceof Error ? error.message : 'Please try again.');
             } finally {
@@ -881,6 +883,15 @@ export function NotaryOrderDetailsScreen() {
         title="Scanback Deleted"
         description="Your scanback document was removed successfully."
         onClose={() => setDeleteSuccessVisible(false)}
+      />
+
+      <FeedbackModal
+        visible={rescheduleSuccessVisible}
+        title="Reschedule Request Sent"
+        description="The title company has been notified with your request."
+        variant="success"
+        buttonTitle="OK"
+        onClose={() => setRescheduleSuccessVisible(false)}
       />
 
       <ConfirmationModal
