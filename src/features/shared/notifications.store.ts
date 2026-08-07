@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { getNotifications } from '@/services/notifications.service';
+import { getNotifications, normalizeNotificationTitle } from '@/services/notifications.service';
 import { NotificationItem } from '@/types/notification';
 
 interface NotificationState {
@@ -30,14 +30,18 @@ const unreadCountFor = (notifications: NotificationItem[]) => notifications.filt
 export const useNotificationStore = create<NotificationState>((set) => ({
   notifications: [],
   unreadCount: 0,
-  setNotifications: (notifications) => set({ notifications, unreadCount: unreadCountFor(notifications) }),
+  setNotifications: (notifications) => {
+    const normalized = notifications.map(normalizeNotificationTitle);
+    set({ notifications: normalized, unreadCount: unreadCountFor(normalized) });
+  },
   upsertNotification: (notification) =>
     set((state) => {
-      const existingIndex = state.notifications.findIndex((item) => item.id === notification.id);
+      const normalizedNotification = normalizeNotificationTitle(notification);
+      const existingIndex = state.notifications.findIndex((item) => item.id === normalizedNotification.id);
       const notifications =
         existingIndex >= 0
-          ? state.notifications.map((item) => (item.id === notification.id ? notification : item))
-          : [notification, ...state.notifications];
+          ? state.notifications.map((item) => (item.id === normalizedNotification.id ? normalizedNotification : item))
+          : [normalizedNotification, ...state.notifications];
 
       return { notifications, unreadCount: unreadCountFor(notifications) };
     }),

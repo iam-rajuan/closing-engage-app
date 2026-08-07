@@ -1,13 +1,23 @@
 import { api, unwrap } from '@/services/api';
 import { NotificationItem } from '@/types/notification';
 
+export const normalizeNotificationTitle = (item: NotificationItem): NotificationItem => {
+  if (item.type === 'order' && item.title === 'Open Order Available') {
+    return { ...item, title: 'Signing Available' };
+  }
+
+  return item;
+};
+
 export async function getNotifications() {
-  return unwrap<NotificationItem[]>(api.get('/api/v1/notifications'));
+  const notifications = await unwrap<NotificationItem[]>(api.get('/api/v1/notifications'));
+  return notifications.map(normalizeNotificationTitle);
 }
 
 export async function markNotificationRead(id: string) {
   const encodedId = encodeURIComponent(id);
-  return unwrap<NotificationItem>(api.patch(`/api/v1/notifications/${encodedId}/read`));
+  const notification = await unwrap<NotificationItem>(api.patch(`/api/v1/notifications/${encodedId}/read`));
+  return normalizeNotificationTitle(notification);
 }
 
 export async function markAllNotificationsRead() {

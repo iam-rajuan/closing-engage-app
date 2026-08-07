@@ -1,6 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
 import { Platform } from 'react-native';
+import { normalizeNotificationTitle } from '@/services/notifications.service';
 import { NotificationItem } from '@/types/notification';
 import { UserRole } from '@/types/user';
 
@@ -99,6 +100,7 @@ export function registerAppNotificationResponseListener() {
 }
 
 export async function scheduleServerNotification(item: NotificationItem) {
+  const normalizedItem = normalizeNotificationTitle(item);
   const Notifications = getNotificationsModule();
   const granted = await ensureAppNotificationPermission();
   if (!granted) {
@@ -107,13 +109,13 @@ export async function scheduleServerNotification(item: NotificationItem) {
 
   await Notifications.scheduleNotificationAsync({
     content: {
-      title: item.title,
-      body: item.message,
+      title: normalizedItem.title,
+      body: normalizedItem.message,
       sound: true,
       data: {
-        notificationType: item.type,
-        role: item.recipientRole,
-        linkId: item.linkId,
+        notificationType: normalizedItem.type,
+        role: normalizedItem.recipientRole,
+        linkId: normalizedItem.linkId,
       },
     },
     trigger: null,
