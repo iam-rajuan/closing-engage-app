@@ -81,7 +81,7 @@ export function NotaryOrderCard({
             ) : null}
           </View>
           <Badge
-            label={isOpenOrder ? 'Open for All' : order.status}
+            label={isOpenOrder ? 'Signing Available' : order.status}
             tone={isOpenOrder ? 'blue' : getStatusTone(order.status)}
           />
         </View>

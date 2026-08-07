@@ -314,8 +314,8 @@ export function NotaryOrderDetailsScreen() {
                 <AppText style={styles.detailsOrderNum} numberOfLines={1} maxFontSizeMultiplier={1.15}>
                   {order.orderNumber}
                 </AppText>
-                <Badge
-                  label={isOpenOrder ? 'OPEN FOR ALL' : order.status.toUpperCase()}
+              <Badge
+                  label={isOpenOrder ? 'SIGNING AVAILABLE' : order.status.toUpperCase()}
                   tone={isOpenOrder ? 'blue' : order.status === 'Completed' ? 'green' : 'blue'}
                   style={styles.detailsBadge}
                 />
@@ -367,7 +367,7 @@ export function NotaryOrderDetailsScreen() {
                   <Info size={18} color="#2563eb" />
                 </View>
                 <View style={styles.flexContent}>
-                  <AppText style={styles.infoLabel} maxFontSizeMultiplier={1.05}>OPEN ORDER</AppText>
+                  <AppText style={styles.infoLabel} maxFontSizeMultiplier={1.05}>SIGNING AVAILABLE</AppText>
                   <AppText weight="semibold" style={styles.infoValue} maxFontSizeMultiplier={1.15}>
                     First notary to accept will be assigned automatically.
                   </AppText>
