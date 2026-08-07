@@ -13,7 +13,6 @@ function getNotificationsModule() {
   if (!notificationHandlerConfigured) {
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
-        shouldShowAlert: true,
         shouldPlaySound: true,
         shouldSetBadge: false,
         shouldShowBanner: true,

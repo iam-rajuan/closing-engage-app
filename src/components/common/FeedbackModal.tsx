@@ -52,7 +52,7 @@ export function FeedbackModal({
   visible,
   title,
   description,
-  buttonTitle = 'Continue',
+  buttonTitle = 'OK',
   variant = 'success',
   onClose,
 }: Props) {

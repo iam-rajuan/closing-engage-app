@@ -1,9 +1,9 @@
 import React from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, View, ActivityIndicator } from 'react-native';
 import { LucideIcon, ShieldAlert } from 'lucide-react-native';
-import { colors, spacing } from '@/theme';
-import { AppButton } from './AppButton';
 import { AppText } from './AppText';
+
+export type ConfirmationModalVariant = 'danger' | 'warning' | 'primary' | 'success';
 
 type Props = {
   visible: boolean;
@@ -11,11 +11,43 @@ type Props = {
   description: string;
   confirmTitle: string;
   cancelTitle?: string;
+  variant?: ConfirmationModalVariant;
   iconColor?: string;
   Icon?: LucideIcon;
   loading?: boolean;
   onCancel: () => void;
   onConfirm: () => void;
+};
+
+const VARIANT_CONFIGS: Record<ConfirmationModalVariant, { iconColor: string; bgRing: string; innerRing: string; confirmBg: string; confirmText: string }> = {
+  danger: {
+    iconColor: '#ef4444',
+    bgRing: '#fef2f2',
+    innerRing: '#fee2e2',
+    confirmBg: '#dc2626',
+    confirmText: '#ffffff',
+  },
+  warning: {
+    iconColor: '#f59e0b',
+    bgRing: '#fffbeb',
+    innerRing: '#fef3c7',
+    confirmBg: '#d97706',
+    confirmText: '#ffffff',
+  },
+  primary: {
+    iconColor: '#0a49a8',
+    bgRing: '#eff6ff',
+    innerRing: '#dbeafe',
+    confirmBg: '#0a49a8',
+    confirmText: '#ffffff',
+  },
+  success: {
+    iconColor: '#10b981',
+    bgRing: '#f0fdf4',
+    innerRing: '#dcfce7',
+    confirmBg: '#059669',
+    confirmText: '#ffffff',
+  },
 };
 
 export function ConfirmationModal({
@@ -24,20 +56,24 @@ export function ConfirmationModal({
   description,
   confirmTitle,
   cancelTitle = 'Cancel',
-  iconColor = '#dc2626',
+  variant = 'danger',
+  iconColor: customIconColor,
   Icon = ShieldAlert,
   loading = false,
   onCancel,
   onConfirm,
 }: Props) {
+  const config = VARIANT_CONFIGS[variant] || VARIANT_CONFIGS.danger;
+  const iconColor = customIconColor || config.iconColor;
+
   return (
     <Modal transparent visible={visible} animationType="fade" onRequestClose={onCancel}>
       <Pressable style={styles.overlay} onPress={onCancel}>
         <Pressable style={styles.dialog} onPress={(event) => event.stopPropagation()}>
-          <View style={styles.iconContainer}>
-            <View style={[styles.iconBackground, { borderColor: `${iconColor}33`, backgroundColor: `${iconColor}10` }]}>
-              <View style={[styles.iconInner, { backgroundColor: `${iconColor}22` }]}>
-                <Icon color={iconColor} size={36} strokeWidth={2.5} />
+          <View style={styles.iconWrapper}>
+            <View style={[styles.outerRing, { backgroundColor: config.bgRing, borderColor: `${iconColor}30` }]}>
+              <View style={[styles.innerRing, { backgroundColor: config.innerRing }]}>
+                <Icon color={iconColor} size={30} strokeWidth={2.2} />
               </View>
             </View>
           </View>
@@ -51,20 +87,25 @@ export function ConfirmationModal({
           </AppText>
 
           <View style={styles.buttonRow}>
-            <AppButton
-              title={cancelTitle}
-              variant="secondary"
-              onPress={onCancel}
-              style={styles.button}
-            />
-            <AppButton
-              title={confirmTitle}
-              variant="danger"
-              loading={loading}
+            <Pressable style={styles.cancelBtn} onPress={onCancel} disabled={loading}>
+              <AppText weight="semibold" style={styles.cancelBtnText}>
+                {cancelTitle}
+              </AppText>
+            </Pressable>
+
+            <Pressable
+              style={[styles.confirmBtn, { backgroundColor: config.confirmBg }, loading && styles.disabledBtn]}
               onPress={onConfirm}
-              style={styles.button}
-              textStyle={styles.confirmText}
-            />
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color={config.confirmText} size="small" />
+              ) : (
+                <AppText weight="bold" style={[styles.confirmBtnText, { color: config.confirmText }]}>
+                  {confirmTitle}
+                </AppText>
+              )}
+            </Pressable>
           </View>
         </Pressable>
       </Pressable>
@@ -75,70 +116,92 @@ export function ConfirmationModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.xl || 24,
+    paddingHorizontal: 24,
   },
   dialog: {
     width: '100%',
-    maxWidth: 320,
+    maxWidth: 330,
     borderRadius: 24,
-    backgroundColor: colors.surface,
+    backgroundColor: '#ffffff',
     padding: 24,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#f1f5f9',
     shadowColor: '#0f172a',
     shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.18,
     shadowRadius: 24,
-    elevation: 10,
+    elevation: 12,
   },
-  iconContainer: {
-    marginBottom: spacing.lg,
+  iconWrapper: {
+    marginBottom: 16,
   },
-  iconBackground: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  outerRing: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
   },
-  iconInner: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  innerRing: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
-    fontSize: 19,
+    fontSize: 20,
     lineHeight: 26,
-    color: colors.text,
+    color: '#0f172a',
     textAlign: 'center',
-    marginBottom: spacing.xs,
+    marginBottom: 8,
   },
   description: {
     textAlign: 'center',
-    color: colors.textMuted,
-    fontSize: 13,
-    lineHeight: 18,
-    paddingHorizontal: spacing.sm,
-    marginBottom: spacing.xl,
+    color: '#64748b',
+    fontSize: 14,
+    lineHeight: 20,
+    paddingHorizontal: 4,
+    marginBottom: 24,
   },
   buttonRow: {
     width: '100%',
     flexDirection: 'row',
-    gap: spacing.sm,
+    gap: 12,
   },
-  button: {
+  cancelBtn: {
     flex: 1,
-    minHeight: 48,
+    height: 46,
     borderRadius: 12,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  confirmText: {
-    color: '#b91c1c',
+  cancelBtnText: {
+    color: '#475569',
+    fontSize: 14,
+  },
+  confirmBtn: {
+    flex: 1,
+    height: 46,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#dc2626',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  confirmBtnText: {
+    fontSize: 14,
+  },
+  disabledBtn: {
+    opacity: 0.6,
   },
 });
