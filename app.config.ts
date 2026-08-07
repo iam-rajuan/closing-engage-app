@@ -28,6 +28,7 @@ export default (_context: ConfigContext): ExpoConfig => {
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.closingengage.app',
+      googleServicesFile: process.env.GOOGLE_SERVICES_INFO_PLIST ?? './GoogleService-Info.plist',
       infoPlist: {
         NSPhotoLibraryUsageDescription: 'Allow access to your photo library so you can upload profile images and documents.',
         ITSAppUsesNonExemptEncryption: false,
@@ -35,6 +36,7 @@ export default (_context: ConfigContext): ExpoConfig => {
     },
     android: {
       package: 'com.closingengage.app',
+      googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? './google-services.json',
       permissions: [
         'android.permission.INTERNET',
         'android.permission.VIBRATE',

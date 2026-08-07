@@ -64,33 +64,40 @@ export async function registerCurrentDevicePushToken() {
     return null;
   }
 
-  const expoPushToken = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
-  const previousPushToken = await getStoredPushToken();
+  try {
+    const expoPushToken = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+    const previousPushToken = await getStoredPushToken();
 
-  await unwrap<Record<string, unknown>>(
-    api.post('/api/v1/push-devices/register', {
-      expoPushToken,
-      platform: mobilePlatform,
-      deviceName: Device.deviceName ?? undefined,
-      deviceModel: Device.modelName ?? undefined,
-      appVersion: Constants.expoConfig?.version ?? undefined,
-    }),
-  );
+    await unwrap<Record<string, unknown>>(
+      api.post('/api/v1/push-devices/register', {
+        expoPushToken,
+        platform: mobilePlatform,
+        deviceName: Device.deviceName ?? undefined,
+        deviceModel: Device.modelName ?? undefined,
+        appVersion: Constants.expoConfig?.version ?? undefined,
+      }),
+    );
 
-  if (previousPushToken && previousPushToken !== expoPushToken) {
-    try {
-      await unwrap<Record<string, never>>(
-        api.post('/api/v1/push-devices/unregister', {
-          expoPushToken: previousPushToken,
-        }),
-      );
-    } catch {
-      // Ignore stale-token cleanup failures; the new token has already been registered.
+    if (previousPushToken && previousPushToken !== expoPushToken) {
+      try {
+        await unwrap<Record<string, never>>(
+          api.post('/api/v1/push-devices/unregister', {
+            expoPushToken: previousPushToken,
+          }),
+        );
+      } catch {
+        // Ignore stale-token cleanup failures; the new token has already been registered.
+      }
     }
-  }
 
-  await storePushToken(expoPushToken);
-  return expoPushToken;
+    await storePushToken(expoPushToken);
+    return expoPushToken;
+  } catch (error) {
+    if (__DEV__) {
+      console.warn('Expo push token registration failed:', error);
+    }
+    return null;
+  }
 }
 
 export async function unregisterCurrentDevicePushToken() {
