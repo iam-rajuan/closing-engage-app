@@ -113,6 +113,31 @@ const toTimelineSteps = (
   });
 };
 
+const usStateCodesSet = new Set([
+  'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA',
+  'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+  'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT',
+  'VA', 'WA', 'WV', 'WI', 'WY'
+]);
+
+const extractStateFromAddress = (address?: string | null): string => {
+  if (!address) return '';
+  const segments = address.split(',').map((segment) => segment.trim()).filter(Boolean);
+  for (const segment of segments) {
+    const upper = segment.toUpperCase();
+    if (usStateCodesSet.has(upper)) return upper;
+  }
+  for (let i = segments.length - 1; i >= 0; i--) {
+    const segment = segments[i];
+    if (!segment) continue;
+    const parts = segment.split(/\s+/).map((part) => part.trim().toUpperCase()).filter(Boolean);
+    for (const part of parts) {
+      if (usStateCodesSet.has(part)) return part;
+    }
+  }
+  return '';
+};
+
 export const normalizeOrderListItem = (item: BackendOrderListItem): Order => ({
   id: item.id,
   orderNumber: normalizeOrderNumber(item.id),
@@ -125,8 +150,8 @@ export const normalizeOrderListItem = (item: BackendOrderListItem): Order => ({
   location: item.location,
   signingDate: item.date,
   signingTime: item.time,
-  state: item.state,
-  price: item.price ?? null,
+  state: item.state?.trim() || extractStateFromAddress(item.propertyAddress || item.location),
+  price: item.price ?? (item as any).pricing ?? (item as any).orderPrice ?? null,
   status: item.status,
   loanType: item.loanType,
   scanbacksRequired: item.scanbacksRequired,
@@ -154,8 +179,8 @@ export const normalizeOrderDetail = (detail: BackendOrderDetail): Order & { time
     location: detail.location,
     signingDate: detail.signingDate || detail.date,
     signingTime: detail.signingTime || detail.time,
-    state: detail.state,
-    price: detail.price ?? null,
+    state: detail.state?.trim() || extractStateFromAddress(detail.propertyAddress || detail.location),
+    price: detail.price ?? (detail as any).pricing ?? (detail as any).orderPrice ?? null,
     status: detail.status,
     priority: detail.priority === 'Rush' ? 'Urgent' : 'Normal',
     instructions: detail.specialInstructions,

@@ -163,11 +163,11 @@ export function NotificationsScreen() {
             disabled={!unreadCount || markingAll || clearingAll}
           >
             {markingAll ? (
-              <AppText weight="bold" style={styles.summaryActionText}>Updating...</AppText>
+              <AppText weight="bold" style={styles.summaryActionText} numberOfLines={1} maxFontSizeMultiplier={1.1}>Updating...</AppText>
             ) : (
               <>
-                <CheckCheck color={colors.primary} size={16} />
-                <AppText weight="bold" style={styles.summaryActionText}>Mark all read</AppText>
+                <CheckCheck color={colors.primary} size={15} />
+                <AppText weight="bold" style={styles.summaryActionText} numberOfLines={1} maxFontSizeMultiplier={1.1}>Mark all read</AppText>
               </>
             )}
           </Pressable>
@@ -183,11 +183,11 @@ export function NotificationsScreen() {
             disabled={!hasNotifications || clearingAll || markingAll}
           >
             {clearingAll ? (
-              <AppText weight="bold" style={styles.clearAllButtonText}>Clearing...</AppText>
+              <AppText weight="bold" style={styles.clearAllButtonText} numberOfLines={1} maxFontSizeMultiplier={1.1}>Clearing...</AppText>
             ) : (
               <>
-                <Trash2 color="#b91c1c" size={16} />
-                <AppText weight="bold" style={styles.clearAllButtonText}>Clear all</AppText>
+                <Trash2 color="#b91c1c" size={15} />
+                <AppText weight="bold" style={styles.clearAllButtonText} numberOfLines={1} maxFontSizeMultiplier={1.1}>Clear all</AppText>
               </>
             )}
           </Pressable>
@@ -269,20 +269,20 @@ const styles = StyleSheet.create({
   },
   summaryActions: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexWrap: 'nowrap',
     gap: 8,
     alignItems: 'center',
-    justifyContent: 'flex-start',
+    width: '100%',
   },
   summaryActionButton: {
-    minHeight: 38,
-    paddingHorizontal: 12,
-    borderRadius: 12,
+    flex: 1,
+    height: 38,
+    paddingHorizontal: 8,
+    borderRadius: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    flexShrink: 0,
+    gap: 5,
   },
   markAllButton: {
     backgroundColor: '#eff6ff',

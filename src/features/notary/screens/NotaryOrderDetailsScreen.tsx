@@ -1,7 +1,7 @@
 import { Alert, ActivityIndicator, BackHandler, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useCallback, useState, type ReactNode } from 'react';
-import { Building, Calendar, CalendarX2, CheckCircle2, Clock, CloudUpload, Download, FileText, Info, MapPin, MessagesSquare, RefreshCcw, Send, Trash2, UserRound } from 'lucide-react-native';
+import { Building, Calendar, CalendarX2, CheckCircle2, Clock, CloudUpload, Download, FileText, Info, MapPin, MessagesSquare, RefreshCcw, Send, ShieldAlert, Trash2, UserRound } from 'lucide-react-native';
 import { getDocumentDownloadUrl } from '@/services/documents.service';
 import { downloadFileToDevice } from '@/utils/fileDownload';
 import { DownloadSuccessModal } from '@/components/common/DownloadSuccessModal';
@@ -23,7 +23,7 @@ import { TimePickerModal } from '@/components/common/TimePickerModal';
 import { notaryStyles } from '@/features/notary/styles';
 import { useAsyncResource } from '@/hooks/useAsyncResource';
 import { deleteDocument, resubmitDocument, uploadDocumentBinary } from '@/services/documents.service';
-import { acceptOpenOrder, confirmOrderMeeting, confirmPrintedDocuments, getOrderById, rejectOrderMeeting } from '@/services/orders.service';
+import { acceptOpenOrder, confirmOrderMeeting, confirmPrintedDocuments, getOrderById, rejectOrderMeeting, updateNotaryOrderStatus } from '@/services/orders.service';
 import { colors } from '@/theme';
 import { pickDocument } from '@/utils/fileUpload';
 
@@ -125,6 +125,32 @@ export function NotaryOrderDetailsScreen() {
     description: string;
     variant: 'success' | 'error' | 'info';
   } | null>(null);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [showCompletionSuccessModal, setShowCompletionSuccessModal] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+  const handleMarkAsCompleted = async () => {
+    if (!order || order.status === 'Completed') return;
+
+    if (order.status !== 'Approved') {
+      setShowApprovalModal(true);
+      return;
+    }
+
+    try {
+      setIsUpdatingStatus(true);
+      await updateNotaryOrderStatus(orderId, 'Completed');
+      await reload();
+      setShowCompletionSuccessModal(true);
+    } catch (err) {
+      Alert.alert(
+        'Unable to complete order',
+        err instanceof Error ? err.message : 'Please try again.'
+      );
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -723,53 +749,90 @@ export function NotaryOrderDetailsScreen() {
                 </Pressable>
               </View>
             ) : !isOpenOrder ? (
-              <View style={styles.actionsContainer}>
-                <Pressable
-                  style={[
-                    styles.btnHalf,
-                    order.notaryPrintedConfirmed ? styles.btnSuccessOutline : styles.btnSecondaryOutline
-                  ]}
-                  disabled={order.notaryPrintedConfirmed}
-                  onPress={() => void markPrinted()}
-                >
-                  {order.notaryPrintedConfirmed ? (
-                    <>
-                      <CheckCircle2 color="#10b981" size={16} />
-                      <AppText weight="bold" style={styles.btnTextSuccess}>
-                        Printed
-                      </AppText>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 color="#0a49a8" size={16} />
-                      <AppText weight="bold" style={styles.btnTextSecondary}>
-                        Confirm Print
-                      </AppText>
-                    </>
-                  )}
-                </Pressable>
+              <>
+                <View style={styles.actionsContainer}>
+                  <Pressable
+                    style={[
+                      styles.btnHalf,
+                      order.notaryPrintedConfirmed ? styles.btnSuccessOutline : styles.btnSecondaryOutline
+                    ]}
+                    disabled={order.notaryPrintedConfirmed}
+                    onPress={() => void markPrinted()}
+                  >
+                    {order.notaryPrintedConfirmed ? (
+                      <>
+                        <CheckCircle2 color="#10b981" size={16} />
+                        <AppText weight="bold" style={styles.btnTextSuccess}>
+                          Printed
+                        </AppText>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 color="#0a49a8" size={16} />
+                        <AppText weight="bold" style={styles.btnTextSecondary}>
+                          Confirm Print
+                        </AppText>
+                      </>
+                    )}
+                  </Pressable>
 
-                <Pressable
-                  style={[
-                    styles.btnHalf,
-                    styles.btnPrimary,
-                    (!selectedFile || uploading) && styles.btnDisabled
-                  ]}
-                  disabled={!selectedFile || uploading}
-                  onPress={() => void submitUpload()}
-                >
-                  {uploading ? (
-                    <ActivityIndicator color="#fff" size="small" />
-                  ) : (
-                    <>
-                      <Send color="#fff" size={16} />
-                      <AppText weight="bold" style={styles.btnTextPrimary}>
-                        Upload & Submit
-                      </AppText>
-                    </>
-                  )}
-                </Pressable>
-              </View>
+                  <Pressable
+                    style={[
+                      styles.btnHalf,
+                      styles.btnPrimary,
+                      (!selectedFile || uploading) && styles.btnDisabled
+                    ]}
+                    disabled={!selectedFile || uploading}
+                    onPress={() => void submitUpload()}
+                  >
+                    {uploading ? (
+                      <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                      <>
+                        <Send color="#fff" size={16} />
+                        <AppText weight="bold" style={styles.btnTextPrimary}>
+                          Upload & Submit
+                        </AppText>
+                      </>
+                    )}
+                  </Pressable>
+                </View>
+
+                {/* ── Mark as Completed Action ── */}
+                <View style={styles.completedButtonBlock}>
+                  <Pressable
+                    style={[
+                      styles.btnCompletedAction,
+                      order.status === 'Completed'
+                        ? styles.btnCompletedActionDone
+                        : order.status === 'Approved'
+                          ? styles.btnCompletedActionReady
+                          : styles.btnCompletedActionPending,
+                      isUpdatingStatus && styles.btnDisabled,
+                    ]}
+                    onPress={() => void handleMarkAsCompleted()}
+                    disabled={isUpdatingStatus || order.status === 'Completed'}
+                  >
+                    {isUpdatingStatus ? (
+                      <ActivityIndicator color="#ffffff" size="small" />
+                    ) : order.status === 'Completed' ? (
+                      <>
+                        <CheckCircle2 color="#ffffff" size={18} />
+                        <AppText weight="bold" style={styles.btnCompletedActionTextDone} maxFontSizeMultiplier={1.15}>
+                          Completed
+                        </AppText>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 color="#ffffff" size={18} />
+                        <AppText weight="bold" style={styles.btnCompletedActionTextReady} maxFontSizeMultiplier={1.15}>
+                          Mark as Completed
+                        </AppText>
+                      </>
+                    )}
+                  </Pressable>
+                </View>
+              </>
             ) : null}
 
             {/* ── Order Status Timeline (hidden in open-order view-only mode) ── */}
@@ -1049,6 +1112,98 @@ export function NotaryOrderDetailsScreen() {
           if (!documentToDelete) return;
           void handleDeleteDocument(documentToDelete.id);
         }}
+      />
+
+      {/* ── Approval Required Modal ── */}
+      <Modal transparent visible={showApprovalModal} animationType="fade" onRequestClose={() => setShowApprovalModal(false)}>
+        <Pressable style={styles.approvalOverlay} onPress={() => setShowApprovalModal(false)}>
+          <Pressable style={styles.approvalDialog} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.approvalIconOuter}>
+              <View style={styles.approvalIconInner}>
+                <ShieldAlert color="#d97706" size={32} strokeWidth={2.2} />
+              </View>
+            </View>
+
+            <AppText weight="bold" style={styles.approvalEyebrow} maxFontSizeMultiplier={1.1}>
+              APPROVAL REQUIRED
+            </AppText>
+            <AppText variant="subtitle" weight="bold" style={styles.approvalTitle} maxFontSizeMultiplier={1.15}>
+              Order Must Be Approved First
+            </AppText>
+            <AppText variant="body" muted style={styles.approvalDescription} maxFontSizeMultiplier={1.1}>
+              This order cannot be marked as completed yet. Your scanbacks must be submitted and approved by the title company or admin before completion.
+            </AppText>
+
+            <View style={styles.statusComparisonBox}>
+              <View style={styles.statusComparisonCol}>
+                <AppText variant="caption" muted style={styles.statusComparisonLabel} maxFontSizeMultiplier={1.05}>
+                  CURRENT STATUS
+                </AppText>
+                <View style={styles.statusPillCurrent}>
+                  <AppText weight="bold" style={styles.statusPillCurrentText} maxFontSizeMultiplier={1.1}>
+                    {order?.status || 'Pending'}
+                  </AppText>
+                </View>
+              </View>
+              <View style={styles.statusArrowBox}>
+                <AppText style={styles.statusArrow}>→</AppText>
+              </View>
+              <View style={styles.statusComparisonCol}>
+                <AppText variant="caption" muted style={styles.statusComparisonLabel} maxFontSizeMultiplier={1.05}>
+                  REQUIRED STATUS
+                </AppText>
+                <View style={styles.statusPillRequired}>
+                  <AppText weight="bold" style={styles.statusPillRequiredText} maxFontSizeMultiplier={1.1}>
+                    Approved
+                  </AppText>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.approvalStepsList}>
+              <View style={styles.approvalStepRow}>
+                <View style={styles.approvalStepNum}>
+                  <AppText weight="bold" style={styles.approvalStepNumText}>1</AppText>
+                </View>
+                <AppText style={styles.approvalStepText} maxFontSizeMultiplier={1.1}>
+                  Upload and submit scanback documents
+                </AppText>
+              </View>
+              <View style={styles.approvalStepRow}>
+                <View style={styles.approvalStepNum}>
+                  <AppText weight="bold" style={styles.approvalStepNumText}>2</AppText>
+                </View>
+                <AppText style={styles.approvalStepText} maxFontSizeMultiplier={1.1}>
+                  Wait for company or admin to review & approve
+                </AppText>
+              </View>
+              <View style={styles.approvalStepRow}>
+                <View style={styles.approvalStepNum}>
+                  <AppText weight="bold" style={styles.approvalStepNumText}>3</AppText>
+                </View>
+                <AppText style={styles.approvalStepText} maxFontSizeMultiplier={1.1}>
+                  Tap "Mark as Completed" once approved
+                </AppText>
+              </View>
+            </View>
+
+            <Pressable style={styles.approvalBtnGotIt} onPress={() => setShowApprovalModal(false)}>
+              <AppText weight="bold" style={styles.approvalBtnGotItText} maxFontSizeMultiplier={1.1}>
+                Got it, Understood
+              </AppText>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* ── Completion Success Modal ── */}
+      <FeedbackModal
+        visible={showCompletionSuccessModal}
+        variant="success"
+        title="Order Marked as Completed!"
+        description={`Order ${order?.orderNumber || ''} has been marked as completed successfully.`}
+        buttonTitle="Done"
+        onClose={() => setShowCompletionSuccessModal(false)}
       />
     </ScreenContainer>
   );
@@ -1738,5 +1893,203 @@ const styles = StyleSheet.create({
   btnTextSuccess: {
     color: '#10b981',
     fontSize: 13,
+  },
+  /* ── Mark as Completed ── */
+  completedButtonBlock: {
+    marginTop: 10,
+    marginBottom: 6,
+  },
+  btnCompletedAction: {
+    width: '100%',
+    height: 48,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  btnCompletedActionReady: {
+    backgroundColor: '#10b981',
+    shadowColor: '#10b981',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  btnCompletedActionPending: {
+    backgroundColor: '#10b981',
+    shadowColor: '#10b981',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  btnCompletedActionDone: {
+    backgroundColor: '#047857',
+    opacity: 0.9,
+  },
+  btnCompletedActionTextReady: {
+    color: '#ffffff',
+    fontSize: 15,
+  },
+  btnCompletedActionTextDone: {
+    color: '#ffffff',
+    fontSize: 15,
+  },
+  /* ── Approval Required Modal ── */
+  approvalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  approvalDialog: {
+    width: '100%',
+    maxWidth: 380,
+    backgroundColor: '#ffffff',
+    borderRadius: 24,
+    padding: 24,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  approvalIconOuter: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#fffbeb',
+    borderWidth: 6,
+    borderColor: '#fef3c7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+  },
+  approvalIconInner: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  approvalEyebrow: {
+    fontSize: 11,
+    letterSpacing: 1.2,
+    color: '#d97706',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+  },
+  approvalTitle: {
+    fontSize: 18,
+    color: '#0f172a',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  approvalDescription: {
+    fontSize: 13,
+    color: '#64748b',
+    textAlign: 'center',
+    lineHeight: 19,
+    marginBottom: 16,
+  },
+  statusComparisonBox: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#f8fafc',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    padding: 12,
+    marginBottom: 16,
+  },
+  statusComparisonCol: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statusComparisonLabel: {
+    fontSize: 10,
+    letterSpacing: 0.8,
+    color: '#94a3b8',
+    marginBottom: 4,
+  },
+  statusPillCurrent: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: '#eff6ff',
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+  },
+  statusPillCurrentText: {
+    fontSize: 12,
+    color: '#2563eb',
+  },
+  statusArrowBox: {
+    paddingHorizontal: 4,
+  },
+  statusArrow: {
+    fontSize: 16,
+    color: '#94a3b8',
+    fontWeight: 'bold',
+  },
+  statusPillRequired: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: '#f0fdf4',
+    borderWidth: 1,
+    borderColor: '#b7f0d6',
+  },
+  statusPillRequiredText: {
+    fontSize: 12,
+    color: '#16a34a',
+  },
+  approvalStepsList: {
+    width: '100%',
+    backgroundColor: '#fafafb',
+    borderRadius: 14,
+    padding: 12,
+    gap: 10,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  approvalStepRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  approvalStepNum: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#fef3c7',
+    borderWidth: 1,
+    borderColor: '#fde68a',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  approvalStepNumText: {
+    fontSize: 11,
+    color: '#d97706',
+  },
+  approvalStepText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#334155',
+  },
+  approvalBtnGotIt: {
+    width: '100%',
+    height: 46,
+    borderRadius: 12,
+    backgroundColor: '#d97706',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  approvalBtnGotItText: {
+    color: '#ffffff',
+    fontSize: 14,
   },
 });
