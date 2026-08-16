@@ -1,9 +1,8 @@
 import { Alert, ActivityIndicator, BackHandler, Image, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useCallback, useState, type ReactNode } from 'react';
-import { Calendar, CheckCircle2, Clock, Download, FileText, Info, MapPin, Sparkles, UserRound } from 'lucide-react-native';
-import { getDocumentDownloadUrl } from '@/services/documents.service';
-import { uploadDocumentBinary } from '@/services/documents.service';
+import { Calendar, CheckCircle2, Clock, Download, FileText, Info, MapPin, Sparkles, Trash2, UserRound } from 'lucide-react-native';
+import { deleteDocument, getDocumentDownloadUrl, uploadDocumentBinary } from '@/services/documents.service';
 import { downloadFileToDevice } from '@/utils/fileDownload';
 import { DownloadSuccessModal } from '@/components/common/DownloadSuccessModal';
 import { FeedbackModal } from '@/components/common/FeedbackModal';
@@ -61,6 +60,7 @@ export function CompanyOrderDetailsScreen() {
     { cacheKey: `order:${orderId}` },
   );
   const [downloadingDocId, setDownloadingDocId] = useState<string | null>(null);
+  const [deletingDocumentId, setDeletingDocumentId] = useState<string | null>(null);
   const [downloadSuccess, setDownloadSuccess] = useState<{
     name: string;
     localUri: string;
@@ -161,6 +161,60 @@ export function CompanyOrderDetailsScreen() {
     } finally {
       setUploadingCompanyDocument(false);
     }
+  };
+
+  const canDeleteCompanyDocument = (document: { id?: string; uploadedBy?: string; status?: string }) => {
+    const uploadedBy = document.uploadedBy?.trim().toLowerCase();
+    const status = document.status?.trim().toLowerCase();
+
+    return Boolean(
+      document.id &&
+      uploadedBy === 'title company' &&
+      status !== 'approved' &&
+      status !== 'verified',
+    );
+  };
+
+  const handleDeleteCompanyDocument = (document: { id?: string; name: string; uploadedBy?: string; status?: string }) => {
+    if (!document.id || !canDeleteCompanyDocument(document)) return;
+
+    Alert.alert(
+      'Delete document',
+      `Are you sure you want to delete "${document.name}"? This action cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            void (async () => {
+              try {
+                setDeletingDocumentId(document.id!);
+                await deleteDocument(document.id!);
+                await reload();
+                setFeedbackModal({
+                  visible: true,
+                  title: 'Document Deleted',
+                  description: `${document.name} has been removed from this order.`,
+                  variant: 'success',
+                  buttonTitle: 'Done',
+                });
+              } catch (error) {
+                setFeedbackModal({
+                  visible: true,
+                  title: 'Unable to Delete',
+                  description: error instanceof Error ? error.message : 'Please try again.',
+                  variant: 'error',
+                  buttonTitle: 'Dismiss',
+                });
+              } finally {
+                setDeletingDocumentId(null);
+              }
+            })();
+          },
+        },
+      ],
+    );
   };
 
   const acceptNotaryReschedule = async () => {
@@ -533,17 +587,32 @@ export function CompanyOrderDetailsScreen() {
                           </AppText>
                         </View>
                         {document.id ? (
-                          <Pressable
-                            style={styles.downloadBtn}
-                            onPress={() => void handleDownload(document.id!, document.name)}
-                            disabled={downloadingDocId !== null}
-                          >
-                            {downloadingDocId === document.id ? (
-                              <ActivityIndicator color="#2563eb" size="small" />
-                            ) : (
-                              <Download color="#2563eb" size={18} />
-                            )}
-                          </Pressable>
+                          <View style={styles.rightActionContainer}>
+                            {canDeleteCompanyDocument(document) ? (
+                              <Pressable
+                                style={({ pressed }) => [styles.deleteIconBtn, pressed && styles.deleteIconBtnPressed]}
+                                onPress={() => handleDeleteCompanyDocument(document)}
+                                disabled={deletingDocumentId !== null}
+                              >
+                                {deletingDocumentId === document.id ? (
+                                  <ActivityIndicator color="#dc2626" size="small" />
+                                ) : (
+                                  <Trash2 color="#dc2626" size={18} />
+                                )}
+                              </Pressable>
+                            ) : null}
+                            <Pressable
+                              style={styles.downloadBtn}
+                              onPress={() => void handleDownload(document.id!, document.name)}
+                              disabled={downloadingDocId !== null}
+                            >
+                              {downloadingDocId === document.id ? (
+                                <ActivityIndicator color="#2563eb" size="small" />
+                              ) : (
+                                <Download color="#2563eb" size={18} />
+                              )}
+                            </Pressable>
+                          </View>
                         ) : (
                           <AppText variant="caption" muted>Available in Documents</AppText>
                         )}
@@ -1287,6 +1356,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#f1f5f9',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  rightActionContainer: {
+    marginLeft: 8,
+    gap: 8,
+  },
+  deleteIconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#fef2f2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#fecaca',
+  },
+  deleteIconBtnPressed: {
+    backgroundColor: '#fee2e2',
+    borderColor: '#fca5a5',
   },
   avatarImage: {
     width: 44,
