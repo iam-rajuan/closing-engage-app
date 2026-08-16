@@ -146,27 +146,36 @@ export function getMimeType(fileName: string, fallbackMimeType: string = 'applic
   }
 }
 
+export async function downloadFileToCache(
+  url: string,
+  fileName: string,
+  mimeType: string,
+): Promise<{ localUri: string; mimeType: string }> {
+  const resolvedMime = getMimeType(fileName, mimeType || 'application/octet-stream');
+  const safeName = encodeURIComponent(fileName.replace(/\s+/g, '_'));
+  const localUri = `${FileSystem.cacheDirectory}${safeName}`;
+  const downloadResult = await FileSystem.downloadAsync(url, localUri);
+
+  if (downloadResult.status !== 200) {
+    throw new Error('Server returned status ' + downloadResult.status);
+  }
+
+  return { localUri, mimeType: resolvedMime };
+}
+
 export async function downloadFileToDevice(url: string, fileName: string, mimeType: string): Promise<{ localUri: string; mimeType: string }> {
   try {
-    const resolvedMime = getMimeType(fileName, mimeType || 'application/octet-stream');
-    const cleanName = encodeURIComponent(fileName.replace(/\s+/g, '_'));
-    const tempUri = FileSystem.cacheDirectory + cleanName;
-    
-    // 1. Download to local cache directory first
-    const downloadResult = await FileSystem.downloadAsync(url, tempUri);
-    if (downloadResult.status !== 200) {
-      throw new Error('Server returned status ' + downloadResult.status);
-    }
+    const { localUri: tempUri, mimeType: resolvedMime } = await downloadFileToCache(url, fileName, mimeType);
     
     // 2. Platform-specific saving
     if (Platform.OS === 'ios') {
       // iOS: sandboxed OS, use standard Share sheet (enables "Save to Files")
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(downloadResult.uri, {
+        await Sharing.shareAsync(tempUri, {
           mimeType: resolvedMime,
           dialogTitle: `Save ${fileName}`,
         });
-        await triggerDownloadNotification(fileName, downloadResult.uri, resolvedMime);
+        await triggerDownloadNotification(fileName, tempUri, resolvedMime);
       } else {
         throw new Error('Sharing/Saving is not available on this device');
       }
@@ -188,7 +197,7 @@ export async function downloadFileToDevice(url: string, fileName: string, mimeTy
                     const permissions = await StorageAccessFramework.requestDirectoryPermissionsAsync();
                     if (permissions.granted) {
                       await SecureStore.setItemAsync(DOWNLOAD_DIR_KEY, permissions.directoryUri);
-                      await saveToSAF(permissions.directoryUri, downloadResult.uri, fileName, resolvedMime);
+                      await saveToSAF(permissions.directoryUri, tempUri, fileName, resolvedMime);
                       resolve({ localUri: tempUri, mimeType: resolvedMime });
                     } else {
                       Alert.alert('Permission Denied', 'Unable to save document without a folder selection.');
@@ -211,7 +220,7 @@ export async function downloadFileToDevice(url: string, fileName: string, mimeTy
         });
       } else {
         try {
-          await saveToSAF(directoryUri, downloadResult.uri, fileName, resolvedMime);
+          await saveToSAF(directoryUri, tempUri, fileName, resolvedMime);
         } catch (err) {
           console.warn('Cached directory access failed, retrying folder picker:', err);
           // If the cached directoryUri is invalid or revoked, clear it and retry permission flow
@@ -221,7 +230,7 @@ export async function downloadFileToDevice(url: string, fileName: string, mimeTy
             StorageAccessFramework.requestDirectoryPermissionsAsync().then(async (permissions) => {
               if (permissions.granted) {
                 await SecureStore.setItemAsync(DOWNLOAD_DIR_KEY, permissions.directoryUri);
-                await saveToSAF(permissions.directoryUri, downloadResult.uri, fileName, resolvedMime);
+                await saveToSAF(permissions.directoryUri, tempUri, fileName, resolvedMime);
                 resolve({ localUri: tempUri, mimeType: resolvedMime });
               } else {
                 Alert.alert('Permission Denied', 'Unable to save document without a folder selection.');

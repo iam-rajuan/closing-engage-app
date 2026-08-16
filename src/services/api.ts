@@ -11,8 +11,31 @@ const normalizeBaseURL = (value: string) => {
   return trimmed.endsWith(API_PREFIX) ? trimmed.slice(0, -API_PREFIX.length) : trimmed;
 };
 
-const debuggerHost = (Constants as unknown as { expoGoConfig?: { debuggerHost?: string } }).expoGoConfig?.debuggerHost;
-const expoHost = debuggerHost ? debuggerHost.split(':')[0]?.trim() || undefined : undefined;
+const hostFrom = (value?: string | null) => {
+  if (!value) return undefined;
+
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  const withoutProtocol = trimmed.replace(/^[a-z]+:\/\//i, '');
+  const host = withoutProtocol.split('/')[0]?.split(':')[0]?.trim();
+  return host || undefined;
+};
+
+const constantsHostCandidates = Constants as unknown as {
+  expoGoConfig?: { debuggerHost?: string };
+  expoConfig?: { hostUri?: string; extra?: { apiUrl?: string } };
+  manifest2?: { extra?: { expoClient?: { hostUri?: string } } };
+  manifest?: { debuggerHost?: string };
+  linkingUri?: string;
+};
+
+const expoHost =
+  hostFrom(constantsHostCandidates.expoGoConfig?.debuggerHost) ??
+  hostFrom(constantsHostCandidates.expoConfig?.hostUri) ??
+  hostFrom(constantsHostCandidates.manifest2?.extra?.expoClient?.hostUri) ??
+  hostFrom(constantsHostCandidates.manifest?.debuggerHost) ??
+  hostFrom(constantsHostCandidates.linkingUri);
 const isAndroidEmulator = Platform.OS === 'android' && !Device.isDevice;
 
 const resolveDevelopmentHost = (url: string) => {
@@ -37,6 +60,8 @@ const rawBaseURL =
   (Constants.expoConfig?.extra?.apiUrl as string | undefined) ??
   'http://localhost:8000';
 const baseURL = resolveDevelopmentHost(normalizeBaseURL(rawBaseURL));
+
+console.log(`[API Base URL] ${baseURL}`);
 
 export const getApiBaseURL = () => baseURL;
 

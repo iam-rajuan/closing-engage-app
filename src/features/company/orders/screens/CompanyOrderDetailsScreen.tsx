@@ -1,12 +1,12 @@
 import { Alert, ActivityIndicator, BackHandler, Image, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useCallback, useState, type ReactNode } from 'react';
-import { Calendar, CheckCircle2, Clock, Download, FileText, Info, MapPin, Sparkles, Trash2, UserRound } from 'lucide-react-native';
+import { ArrowUpRight, Calendar, CheckCircle2, Clock, Download, FileText, Info, MapPin, Sparkles, Trash2, Upload, UserRound } from 'lucide-react-native';
 import { deleteDocument, getDocumentDownloadUrl, uploadDocumentBinary } from '@/services/documents.service';
-import { downloadFileToDevice } from '@/utils/fileDownload';
+import { downloadFileToCache, downloadFileToDevice, getMimeType, openDownloadedFile } from '@/utils/fileDownload';
 import { DownloadSuccessModal } from '@/components/common/DownloadSuccessModal';
 import { FeedbackModal } from '@/components/common/FeedbackModal';
-import { DocumentIcon } from '@/components/common/DocumentIcon';
+import { DocumentIcon, getFileCategory } from '@/components/common/DocumentIcon';
 import { AppButton } from '@/components/common/AppButton';
 import { AppCard } from '@/components/common/AppCard';
 import { AppHeader } from '@/components/common/AppHeader';
@@ -41,6 +41,11 @@ function DetailField({ label, value, icon, children }: { label: string; value: s
 }
 
 const firstParam = (value?: string | string[]) => (Array.isArray(value) ? value[0] : value);
+const titleCase = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
+const fileKindLabel = (fileName: string) => {
+  const category = getFileCategory(fileName);
+  return category === 'other' ? 'File' : titleCase(category);
+};
 
 export function CompanyOrderDetailsScreen() {
   const params = useLocalSearchParams<{ id?: string; from?: string }>();
@@ -61,6 +66,7 @@ export function CompanyOrderDetailsScreen() {
   );
   const [downloadingDocId, setDownloadingDocId] = useState<string | null>(null);
   const [deletingDocumentId, setDeletingDocumentId] = useState<string | null>(null);
+  const [openingDocumentId, setOpeningDocumentId] = useState<string | null>(null);
   const [downloadSuccess, setDownloadSuccess] = useState<{
     name: string;
     localUri: string;
@@ -97,7 +103,7 @@ export function CompanyOrderDetailsScreen() {
     try {
       setDownloadingDocId(docId);
       const url = await getDocumentDownloadUrl(docId);
-      const { localUri, mimeType } = await downloadFileToDevice(url, name, 'application/pdf');
+      const { localUri, mimeType } = await downloadFileToDevice(url, name, getMimeType(name, 'application/octet-stream'));
       setDownloadSuccess({ name, localUri, mimeType });
     } catch (error) {
       console.error('Download error:', error);
@@ -110,6 +116,26 @@ export function CompanyOrderDetailsScreen() {
       });
     } finally {
       setDownloadingDocId(null);
+    }
+  };
+
+  const handleOpenDocument = async (docId: string, name: string) => {
+    try {
+      setOpeningDocumentId(docId);
+      const url = await getDocumentDownloadUrl(docId);
+      const { localUri, mimeType } = await downloadFileToCache(url, name, getMimeType(name, 'application/octet-stream'));
+      await openDownloadedFile(localUri, mimeType, name);
+    } catch (error) {
+      console.error('Open document error:', error);
+      setFeedbackModal({
+        visible: true,
+        title: 'Unable to Open',
+        description: error instanceof Error ? error.message : 'Could not open this document on your device.',
+        variant: 'error',
+        buttonTitle: 'Dismiss',
+      });
+    } finally {
+      setOpeningDocumentId(null);
     }
   };
 
@@ -556,66 +582,124 @@ export function CompanyOrderDetailsScreen() {
             return (
               <>
                 <View style={styles.detailsSection}>
-                <AppText weight="semibold" style={styles.detailsSectionTitle} maxFontSizeMultiplier={1.1}>
-                  Title Documents
-                </AppText>
-                  <AppButton
-                    title={uploadingCompanyDocument ? 'Uploading...' : 'Upload Documents'}
-                    onPress={() => void handleCompanyUpload()}
-                    disabled={uploadingCompanyDocument || !canUploadCompanyDocuments}
-                    style={
-                      canUploadCompanyDocuments
-                        ? styles.inlineUploadButton
-                        : { ...styles.inlineUploadButton, ...styles.inlineUploadButtonDisabled }
-                    }
-                  />
-                  <AppText variant="caption" muted style={styles.inlineUploadHint} maxFontSizeMultiplier={1.05}>
-                    {canUploadCompanyDocuments
-                      ? 'Uploads are enabled after assignment or open broadcast.'
-                      : 'Uploads unlock after assignment or open broadcast.'}
+                  <AppText weight="semibold" style={styles.detailsSectionTitle} maxFontSizeMultiplier={1.1}>
+                    Title Documents
                   </AppText>
+                  <AppCard style={styles.documentUploadPanel}>
+                    <View style={styles.documentUploadHeader}>
+                      <View style={styles.documentUploadCopy}>
+                        <AppText weight="bold" style={styles.documentUploadTitle} maxFontSizeMultiplier={1.1}>
+                          Secure title package
+                        </AppText>
+                        <AppText variant="caption" muted style={styles.documentUploadSubtitle} maxFontSizeMultiplier={1.05}>
+                          Upload disclosures, PDFs, images, and docs for the assigned notary.
+                        </AppText>
+                      </View>
+                      <View style={styles.documentCountBadge}>
+                        <AppText weight="bold" style={styles.documentCountBadgeText} maxFontSizeMultiplier={1}>
+                          {companyDocs.length}
+                        </AppText>
+                      </View>
+                    </View>
+
+                    <AppButton
+                      title={uploadingCompanyDocument ? 'Uploading...' : 'Upload Documents'}
+                      onPress={() => void handleCompanyUpload()}
+                      disabled={uploadingCompanyDocument || !canUploadCompanyDocuments}
+                      icon={<Upload color={colors.white} size={16} />}
+                      style={
+                        canUploadCompanyDocuments
+                          ? styles.inlineUploadButton
+                          : { ...styles.inlineUploadButton, ...styles.inlineUploadButtonDisabled }
+                      }
+                    />
+
+                    <View style={styles.documentUploadHintRow}>
+                      <View
+                        style={[
+                          styles.documentUploadHintDot,
+                          canUploadCompanyDocuments ? styles.documentUploadHintDotActive : styles.documentUploadHintDotLocked,
+                        ]}
+                      />
+                      <AppText variant="caption" muted style={styles.inlineUploadHint} maxFontSizeMultiplier={1.05}>
+                        {canUploadCompanyDocuments
+                          ? 'Uploads are enabled after assignment or open broadcast.'
+                          : 'Uploads unlock after assignment or open broadcast.'}
+                      </AppText>
+                    </View>
+                  </AppCard>
                   {companyDocs.length ? (
                     companyDocs.map((document, index) => (
-                      <AppCard key={`company-doc-${index}`} style={styles.fileCardDetails}>
-                        <DocumentIcon fileName={document.name} size={44} iconSize={20} />
-                        <View style={styles.flexContent}>
-                          <AppText weight="semibold" numberOfLines={1} ellipsizeMode="middle" style={styles.documentName} maxFontSizeMultiplier={1.1}>
-                            {document.name}
-                          </AppText>
-                          <AppText variant="caption" muted style={styles.documentMeta} numberOfLines={1} maxFontSizeMultiplier={1.05}>
-                            {document.meta} • Provided by Company
-                          </AppText>
-                        </View>
+                      <AppCard key={`company-doc-${index}`} style={styles.documentCard}>
+                        <Pressable
+                          style={({ pressed }) => [styles.documentMainPressable, pressed && styles.documentMainPressablePressed]}
+                          onPress={() => (document.id ? void handleOpenDocument(document.id, document.name) : undefined)}
+                          disabled={!document.id || openingDocumentId !== null}
+                        >
+                          <DocumentIcon fileName={document.name} size={48} iconSize={22} style={styles.documentCardIcon} />
+                          <View style={styles.flexContent}>
+                            <View style={styles.documentTitleRow}>
+                              <AppText weight="semibold" numberOfLines={1} ellipsizeMode="middle" style={styles.documentName} maxFontSizeMultiplier={1.1}>
+                                {document.name}
+                              </AppText>
+                              {document.id ? (
+                                <View style={styles.tapToOpenPill}>
+                                  {openingDocumentId === document.id ? (
+                                    <ActivityIndicator color="#1d4ed8" size={10} />
+                                  ) : (
+                                    <ArrowUpRight color="#1d4ed8" size={12} />
+                                  )}
+                                  <AppText weight="bold" style={styles.tapToOpenText} maxFontSizeMultiplier={1}>
+                                    {openingDocumentId === document.id ? 'Opening' : 'Open'}
+                                  </AppText>
+                                </View>
+                              ) : null}
+                            </View>
+                            <AppText variant="caption" muted style={styles.documentMeta} numberOfLines={1} maxFontSizeMultiplier={1.05}>
+                              {document.meta} • Provided by Company
+                            </AppText>
+                            <View style={styles.documentChipRow}>
+                              <View style={styles.documentTypeChip}>
+                                <AppText weight="bold" style={styles.documentTypeChipText} maxFontSizeMultiplier={1}>
+                                  {fileKindLabel(document.name)}
+                                </AppText>
+                              </View>
+                              {document.id ? (
+                                <AppText variant="caption" muted style={styles.documentTapHint} maxFontSizeMultiplier={1}>
+                                  Tap card to open in your device viewer
+                                </AppText>
+                              ) : null}
+                            </View>
+                          </View>
+                        </Pressable>
                         {document.id ? (
-                          <View style={styles.rightActionContainer}>
-                            {canDeleteCompanyDocument(document) ? (
-                              <Pressable
-                                style={({ pressed }) => [styles.deleteIconBtn, pressed && styles.deleteIconBtnPressed]}
-                                onPress={() => handleDeleteCompanyDocument(document)}
-                                disabled={deletingDocumentId !== null}
-                              >
-                                {deletingDocumentId === document.id ? (
-                                  <ActivityIndicator color="#dc2626" size="small" />
-                                ) : (
-                                  <Trash2 color="#dc2626" size={18} />
-                                )}
-                              </Pressable>
-                            ) : null}
+                          <View style={styles.documentActionRail}>
                             <Pressable
-                              style={styles.downloadBtn}
+                              style={({ pressed }) => [styles.documentActionBtn, styles.documentDownloadActionBtn, pressed && styles.documentActionBtnPressed]}
                               onPress={() => void handleDownload(document.id!, document.name)}
                               disabled={downloadingDocId !== null}
                             >
                               {downloadingDocId === document.id ? (
                                 <ActivityIndicator color="#2563eb" size="small" />
                               ) : (
-                                <Download color="#2563eb" size={18} />
+                                <Download color="#2563eb" size={17} />
                               )}
                             </Pressable>
+                            {canDeleteCompanyDocument(document) ? (
+                              <Pressable
+                                style={({ pressed }) => [styles.documentActionBtn, styles.documentDeleteActionBtn, pressed && styles.documentDeleteActionBtnPressed]}
+                                onPress={() => handleDeleteCompanyDocument(document)}
+                                disabled={deletingDocumentId !== null}
+                              >
+                                {deletingDocumentId === document.id ? (
+                                  <ActivityIndicator color="#dc2626" size="small" />
+                                ) : (
+                                  <Trash2 color="#dc2626" size={17} />
+                                )}
+                              </Pressable>
+                            ) : null}
                           </View>
-                        ) : (
-                          <AppText variant="caption" muted>Available in Documents</AppText>
-                        )}
+                        ) : null}
                       </AppCard>
                     ))
                   ) : (
@@ -629,31 +713,63 @@ export function CompanyOrderDetailsScreen() {
                   </AppText>
                   {notaryDocs.length ? (
                     notaryDocs.map((document, index) => (
-                      <AppCard key={`notary-doc-${index}`} style={styles.fileCardDetails}>
-                        <DocumentIcon fileName={document.name} size={44} iconSize={20} />
-                        <View style={styles.flexContent}>
-                          <AppText weight="semibold" numberOfLines={1} ellipsizeMode="middle" style={styles.documentName} maxFontSizeMultiplier={1.1}>
-                            {document.name}
-                          </AppText>
-                          <AppText variant="caption" muted style={styles.documentMeta} numberOfLines={1} maxFontSizeMultiplier={1.05}>
-                            {document.meta} • Provided by Notary
-                          </AppText>
-                        </View>
+                      <AppCard key={`notary-doc-${index}`} style={styles.documentCard}>
+                        <Pressable
+                          style={({ pressed }) => [styles.documentMainPressable, pressed && styles.documentMainPressablePressed]}
+                          onPress={() => (document.id ? void handleOpenDocument(document.id, document.name) : undefined)}
+                          disabled={!document.id || openingDocumentId !== null}
+                        >
+                          <DocumentIcon fileName={document.name} size={48} iconSize={22} style={styles.documentCardIcon} />
+                          <View style={styles.flexContent}>
+                            <View style={styles.documentTitleRow}>
+                              <AppText weight="semibold" numberOfLines={1} ellipsizeMode="middle" style={styles.documentName} maxFontSizeMultiplier={1.1}>
+                                {document.name}
+                              </AppText>
+                              {document.id ? (
+                                <View style={[styles.tapToOpenPill, styles.tapToOpenPillGreen]}>
+                                  {openingDocumentId === document.id ? (
+                                    <ActivityIndicator color="#047857" size={10} />
+                                  ) : (
+                                    <ArrowUpRight color="#047857" size={12} />
+                                  )}
+                                  <AppText weight="bold" style={[styles.tapToOpenText, styles.tapToOpenTextGreen]} maxFontSizeMultiplier={1}>
+                                    {openingDocumentId === document.id ? 'Opening' : 'Open'}
+                                  </AppText>
+                                </View>
+                              ) : null}
+                            </View>
+                            <AppText variant="caption" muted style={styles.documentMeta} numberOfLines={1} maxFontSizeMultiplier={1.05}>
+                              {document.meta} • Provided by Notary
+                            </AppText>
+                            <View style={styles.documentChipRow}>
+                              <View style={[styles.documentTypeChip, styles.documentTypeChipGreen]}>
+                                <AppText weight="bold" style={[styles.documentTypeChipText, styles.documentTypeChipTextGreen]} maxFontSizeMultiplier={1}>
+                                  {fileKindLabel(document.name)}
+                                </AppText>
+                              </View>
+                              {document.id ? (
+                                <AppText variant="caption" muted style={styles.documentTapHint} maxFontSizeMultiplier={1}>
+                                  Tap card to open in your device viewer
+                                </AppText>
+                              ) : null}
+                            </View>
+                          </View>
+                        </Pressable>
                         {document.id ? (
-                          <Pressable
-                            style={styles.downloadBtn}
-                            onPress={() => void handleDownload(document.id!, document.name)}
-                            disabled={downloadingDocId !== null}
-                          >
-                            {downloadingDocId === document.id ? (
-                              <ActivityIndicator color="#2563eb" size="small" />
-                            ) : (
-                              <Download color="#2563eb" size={18} />
-                            )}
-                          </Pressable>
-                        ) : (
-                          <AppText variant="caption" muted>Available in Documents</AppText>
-                        )}
+                          <View style={styles.documentActionRail}>
+                            <Pressable
+                              style={({ pressed }) => [styles.documentActionBtn, styles.documentDownloadActionBtn, pressed && styles.documentActionBtnPressed]}
+                              onPress={() => void handleDownload(document.id!, document.name)}
+                              disabled={downloadingDocId !== null}
+                            >
+                              {downloadingDocId === document.id ? (
+                                <ActivityIndicator color="#2563eb" size="small" />
+                              ) : (
+                                <Download color="#2563eb" size={17} />
+                              )}
+                            </Pressable>
+                          </View>
+                        ) : null}
                       </AppCard>
                     ))
                   ) : (
@@ -672,7 +788,7 @@ export function CompanyOrderDetailsScreen() {
               {order.timelineSteps.map((step, index) => {
                 const isLast = index === order.timelineSteps.length - 1;
                 const isCurrent = step.done && (isLast || !order.timelineSteps[index + 1]?.done);
-                
+
                 return (
                   <View key={step.label} style={styles.timelineRow}>
                     <View style={styles.timelineIndicatorColumn}>
@@ -685,12 +801,12 @@ export function CompanyOrderDetailsScreen() {
                           <View style={styles.checkmarkInner} />
                         ) : null}
                       </View>
-                      
+
                       {!isLast ? (
                         <View style={[
                           styles.timelineConnector,
-                          step.done && order.timelineSteps[index + 1]?.done 
-                            ? styles.timelineConnectorDone 
+                          step.done && order.timelineSteps[index + 1]?.done
+                            ? styles.timelineConnectorDone
                             : styles.timelineConnectorPending
                         ]} />
                       ) : null}
@@ -1303,17 +1419,102 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     letterSpacing: -0.1,
   },
+  documentUploadPanel: {
+    padding: 16,
+    marginBottom: 14,
+    backgroundColor: '#f8fbff',
+    borderWidth: 1,
+    borderColor: '#dbeafe',
+    gap: 12,
+  },
+  documentUploadHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  documentUploadCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  documentUploadTitle: {
+    fontSize: 15,
+    lineHeight: 20,
+    color: '#0f172a',
+  },
+  documentUploadSubtitle: {
+    marginTop: 4,
+    lineHeight: 17,
+  },
+  documentCountBadge: {
+    minWidth: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#dbeafe',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+  },
+  documentCountBadgeText: {
+    fontSize: 13,
+    color: '#1d4ed8',
+  },
   inlineUploadButton: {
-    marginBottom: 8,
-    minHeight: 40,
-    borderRadius: 10,
+    minHeight: 46,
+    borderRadius: 14,
   },
   inlineUploadButtonDisabled: {
     backgroundColor: '#94a3b8',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  documentUploadHintRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  documentUploadHintDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  documentUploadHintDotActive: {
+    backgroundColor: '#22c55e',
+  },
+  documentUploadHintDotLocked: {
+    backgroundColor: '#94a3b8',
   },
   inlineUploadHint: {
-    marginBottom: 12,
     lineHeight: 16,
+    flex: 1,
+  },
+  documentCard: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    padding: 0,
+    marginBottom: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    backgroundColor: '#ffffff',
+  },
+  documentMainPressable: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    padding: 14,
+  },
+  documentMainPressablePressed: {
+    backgroundColor: '#f8fbff',
+  },
+  documentCardIcon: {
+    marginTop: 2,
+  },
+  documentTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   fileCardDetails: {
     flexDirection: 'row',
@@ -1333,12 +1534,64 @@ const styles = StyleSheet.create({
   },
   documentName: {
     color: '#1e293b',
-    fontSize: 13,
+    fontSize: 13.5,
     lineHeight: 18,
+    flex: 1,
   },
   documentMeta: {
     marginTop: 3,
     lineHeight: 17,
+  },
+  tapToOpenPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    backgroundColor: '#eff6ff',
+    borderWidth: 1,
+    borderColor: '#dbeafe',
+    flexShrink: 0,
+  },
+  tapToOpenPillGreen: {
+    backgroundColor: '#ecfdf5',
+    borderColor: '#d1fae5',
+  },
+  tapToOpenText: {
+    fontSize: 10,
+    color: '#1d4ed8',
+    letterSpacing: 0.35,
+  },
+  tapToOpenTextGreen: {
+    color: '#047857',
+  },
+  documentChipRow: {
+    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  documentTypeChip: {
+    borderRadius: 999,
+    backgroundColor: '#eef2ff',
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+  },
+  documentTypeChipGreen: {
+    backgroundColor: '#ecfdf5',
+  },
+  documentTypeChipText: {
+    fontSize: 10,
+    color: '#4338ca',
+    letterSpacing: 0.35,
+  },
+  documentTypeChipTextGreen: {
+    color: '#047857',
+  },
+  documentTapHint: {
+    lineHeight: 15,
   },
   fileIconBox: {
     width: 44,
@@ -1349,7 +1602,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   downloadBtn: {
-    marginLeft: 8,
     width: 40,
     height: 40,
     borderRadius: 10,
@@ -1357,23 +1609,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rightActionContainer: {
-    marginLeft: 8,
-    gap: 8,
+  documentActionRail: {
+    width: 62,
+    borderLeftWidth: 1,
+    borderLeftColor: '#eef2f7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 12,
+    backgroundColor: '#fcfdff',
   },
-  deleteIconBtn: {
+  documentActionBtn: {
     width: 40,
     height: 40,
-    borderRadius: 10,
-    backgroundColor: '#fef2f2',
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#fecaca',
   },
-  deleteIconBtnPressed: {
-    backgroundColor: '#fee2e2',
-    borderColor: '#fca5a5',
+  documentActionBtnPressed: {
+    transform: [{ scale: 0.97 }],
+  },
+  documentDownloadActionBtn: {
+    backgroundColor: '#eff6ff',
+    borderColor: '#dbeafe',
+  },
+  documentDeleteActionBtn: {
+    backgroundColor: '#fff1f2',
+    borderColor: '#fecdd3',
+  },
+  documentDeleteActionBtnPressed: {
+    backgroundColor: '#ffe4e6',
+    borderColor: '#fda4af',
+    transform: [{ scale: 0.97 }],
   },
   avatarImage: {
     width: 44,
