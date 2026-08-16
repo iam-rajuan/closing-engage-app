@@ -1,7 +1,7 @@
 import { Alert, ActivityIndicator, BackHandler, Image, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useCallback, useState, type ReactNode } from 'react';
-import { ArrowUpRight, Calendar, CheckCircle2, Clock, Download, FileText, Info, MapPin, Sparkles, Trash2, Upload, UserRound } from 'lucide-react-native';
+import { ArrowUpRight, Calendar, CheckCircle2, Clock, Download, Eye, FileText, Info, MapPin, Sparkles, Trash2, Upload, UserRound } from 'lucide-react-native';
 import { deleteDocument, getDocumentDownloadUrl, uploadDocumentBinary } from '@/services/documents.service';
 import { downloadFileToCache, downloadFileToDevice, getMimeType, openDownloadedFile } from '@/utils/fileDownload';
 import { DownloadSuccessModal } from '@/components/common/DownloadSuccessModal';
@@ -629,79 +629,98 @@ export function CompanyOrderDetailsScreen() {
                     </View>
                   </AppCard>
                   {companyDocs.length ? (
-                    companyDocs.map((document, index) => (
-                      <AppCard key={`company-doc-${index}`} style={styles.documentCard}>
+                    companyDocs.map((document, index) => {
+                      const isOpening = openingDocumentId === document.id;
+                      const isDownloading = downloadingDocId === document.id;
+                      const isDeleting = deletingDocumentId === document.id;
+
+                      return (
                         <Pressable
-                          style={({ pressed }) => [styles.documentMainPressable, pressed && styles.documentMainPressablePressed]}
+                          key={`company-doc-${index}`}
+                          style={({ pressed }) => [
+                            styles.fileCardDetails,
+                            pressed && styles.fileCardPressed,
+                          ]}
                           onPress={() => (document.id ? void handleOpenDocument(document.id, document.name) : undefined)}
-                          disabled={!document.id || openingDocumentId !== null}
+                          disabled={!document.id || isOpening}
                         >
-                          <DocumentIcon fileName={document.name} size={48} iconSize={22} style={styles.documentCardIcon} />
+                          <DocumentIcon fileName={document.name} size={44} iconSize={20} />
                           <View style={styles.flexContent}>
-                            <View style={styles.documentTitleRow}>
-                              <AppText weight="semibold" numberOfLines={1} ellipsizeMode="middle" style={styles.documentName} maxFontSizeMultiplier={1.1}>
-                                {document.name}
-                              </AppText>
-                              {document.id ? (
-                                <View style={styles.tapToOpenPill}>
-                                  {openingDocumentId === document.id ? (
-                                    <ActivityIndicator color="#1d4ed8" size={10} />
-                                  ) : (
-                                    <ArrowUpRight color="#1d4ed8" size={12} />
-                                  )}
-                                  <AppText weight="bold" style={styles.tapToOpenText} maxFontSizeMultiplier={1}>
-                                    {openingDocumentId === document.id ? 'Opening' : 'Open'}
-                                  </AppText>
-                                </View>
-                              ) : null}
-                            </View>
-                            <AppText variant="caption" muted style={styles.documentMeta} numberOfLines={1} maxFontSizeMultiplier={1.05}>
-                              {document.meta} • Provided by Company
+                            <AppText weight="semibold" numberOfLines={1} ellipsizeMode="middle" style={styles.documentName} maxFontSizeMultiplier={1.1}>
+                              {document.name}
                             </AppText>
-                            <View style={styles.documentChipRow}>
-                              <View style={styles.documentTypeChip}>
-                                <AppText weight="bold" style={styles.documentTypeChipText} maxFontSizeMultiplier={1}>
-                                  {fileKindLabel(document.name)}
+                            <AppText variant="caption" muted style={styles.documentMeta} numberOfLines={1} maxFontSizeMultiplier={1.05}>
+                              {document.meta} • Title Company
+                            </AppText>
+                            {document.id ? (
+                              <View style={styles.previewBadge}>
+                                {isOpening ? (
+                                  <ActivityIndicator color="#2563eb" size={10} />
+                                ) : (
+                                  <Eye size={12} color="#2563eb" />
+                                )}
+                                <AppText style={styles.previewBadgeText} maxFontSizeMultiplier={1}>
+                                  {isOpening ? 'Opening document...' : 'Tap card to preview'}
                                 </AppText>
                               </View>
-                              {document.id ? (
-                                <AppText variant="caption" muted style={styles.documentTapHint} maxFontSizeMultiplier={1}>
-                                  Tap card to open in your device viewer
-                                </AppText>
-                              ) : null}
-                            </View>
-                          </View>
-                        </Pressable>
-                        {document.id ? (
-                          <View style={styles.documentActionRail}>
-                            <Pressable
-                              style={({ pressed }) => [styles.documentActionBtn, styles.documentDownloadActionBtn, pressed && styles.documentActionBtnPressed]}
-                              onPress={() => void handleDownload(document.id!, document.name)}
-                              disabled={downloadingDocId !== null}
-                            >
-                              {downloadingDocId === document.id ? (
-                                <ActivityIndicator color="#2563eb" size="small" />
-                              ) : (
-                                <Download color="#2563eb" size={17} />
-                              )}
-                            </Pressable>
-                            {canDeleteCompanyDocument(document) ? (
-                              <Pressable
-                                style={({ pressed }) => [styles.documentActionBtn, styles.documentDeleteActionBtn, pressed && styles.documentDeleteActionBtnPressed]}
-                                onPress={() => handleDeleteCompanyDocument(document)}
-                                disabled={deletingDocumentId !== null}
-                              >
-                                {deletingDocumentId === document.id ? (
-                                  <ActivityIndicator color="#dc2626" size="small" />
-                                ) : (
-                                  <Trash2 color="#dc2626" size={17} />
-                                )}
-                              </Pressable>
                             ) : null}
                           </View>
-                        ) : null}
-                      </AppCard>
-                    ))
+
+                          {document.id ? (
+                            <View style={styles.rightActionContainer}>
+                              <Pressable
+                                style={({ pressed }) => [styles.actionIconBtn, styles.viewIconBtn, pressed && styles.actionIconBtnPressed]}
+                                onPress={(e) => {
+                                  e.stopPropagation();
+                                  void handleOpenDocument(document.id!, document.name);
+                                }}
+                                disabled={isOpening || isDownloading || isDeleting}
+                              >
+                                {isOpening ? (
+                                  <ActivityIndicator color="#2563eb" size="small" />
+                                ) : (
+                                  <Eye color="#2563eb" size={17} />
+                                )}
+                              </Pressable>
+
+                              <Pressable
+                                style={({ pressed }) => [styles.actionIconBtn, styles.downloadIconBtn, pressed && styles.actionIconBtnPressed]}
+                                onPress={(e) => {
+                                  e.stopPropagation();
+                                  void handleDownload(document.id!, document.name);
+                                }}
+                                disabled={isOpening || isDownloading || isDeleting}
+                              >
+                                {isDownloading ? (
+                                  <ActivityIndicator color="#0284c7" size="small" />
+                                ) : (
+                                  <Download color="#0284c7" size={17} />
+                                )}
+                              </Pressable>
+
+                              {canDeleteCompanyDocument(document) ? (
+                                <Pressable
+                                  style={({ pressed }) => [styles.actionIconBtn, styles.deleteIconBtn, pressed && styles.deleteIconBtnPressed]}
+                                  onPress={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteCompanyDocument(document);
+                                  }}
+                                  disabled={isOpening || isDownloading || isDeleting}
+                                >
+                                  {isDeleting ? (
+                                    <ActivityIndicator color="#dc2626" size="small" />
+                                  ) : (
+                                    <Trash2 color="#dc2626" size={17} />
+                                  )}
+                                </Pressable>
+                              ) : null}
+                            </View>
+                          ) : (
+                            <AppText variant="caption" muted>Available in Documents</AppText>
+                          )}
+                        </Pressable>
+                      );
+                    })
                   ) : (
                     <EmptyState title="No title company documents uploaded yet" />
                   )}
@@ -712,66 +731,80 @@ export function CompanyOrderDetailsScreen() {
                     Notary Scanbacks
                   </AppText>
                   {notaryDocs.length ? (
-                    notaryDocs.map((document, index) => (
-                      <AppCard key={`notary-doc-${index}`} style={styles.documentCard}>
+                    notaryDocs.map((document, index) => {
+                      const isOpening = openingDocumentId === document.id;
+                      const isDownloading = downloadingDocId === document.id;
+
+                      return (
                         <Pressable
-                          style={({ pressed }) => [styles.documentMainPressable, pressed && styles.documentMainPressablePressed]}
+                          key={`notary-doc-${index}`}
+                          style={({ pressed }) => [
+                            styles.fileCardDetails,
+                            pressed && styles.fileCardPressed,
+                          ]}
                           onPress={() => (document.id ? void handleOpenDocument(document.id, document.name) : undefined)}
-                          disabled={!document.id || openingDocumentId !== null}
+                          disabled={!document.id || isOpening}
                         >
-                          <DocumentIcon fileName={document.name} size={48} iconSize={22} style={styles.documentCardIcon} />
+                          <DocumentIcon fileName={document.name} size={44} iconSize={20} />
                           <View style={styles.flexContent}>
-                            <View style={styles.documentTitleRow}>
-                              <AppText weight="semibold" numberOfLines={1} ellipsizeMode="middle" style={styles.documentName} maxFontSizeMultiplier={1.1}>
-                                {document.name}
-                              </AppText>
-                              {document.id ? (
-                                <View style={[styles.tapToOpenPill, styles.tapToOpenPillGreen]}>
-                                  {openingDocumentId === document.id ? (
-                                    <ActivityIndicator color="#047857" size={10} />
-                                  ) : (
-                                    <ArrowUpRight color="#047857" size={12} />
-                                  )}
-                                  <AppText weight="bold" style={[styles.tapToOpenText, styles.tapToOpenTextGreen]} maxFontSizeMultiplier={1}>
-                                    {openingDocumentId === document.id ? 'Opening' : 'Open'}
-                                  </AppText>
-                                </View>
-                              ) : null}
-                            </View>
+                            <AppText weight="semibold" numberOfLines={1} ellipsizeMode="middle" style={styles.documentName} maxFontSizeMultiplier={1.1}>
+                              {document.name}
+                            </AppText>
                             <AppText variant="caption" muted style={styles.documentMeta} numberOfLines={1} maxFontSizeMultiplier={1.05}>
                               {document.meta} • Provided by Notary
                             </AppText>
-                            <View style={styles.documentChipRow}>
-                              <View style={[styles.documentTypeChip, styles.documentTypeChipGreen]}>
-                                <AppText weight="bold" style={[styles.documentTypeChipText, styles.documentTypeChipTextGreen]} maxFontSizeMultiplier={1}>
-                                  {fileKindLabel(document.name)}
+                            {document.id ? (
+                              <View style={[styles.previewBadge, styles.previewBadgeEmerald]}>
+                                {isOpening ? (
+                                  <ActivityIndicator color="#059669" size={10} />
+                                ) : (
+                                  <Eye size={12} color="#059669" />
+                                )}
+                                <AppText style={[styles.previewBadgeText, styles.previewBadgeTextEmerald]} maxFontSizeMultiplier={1}>
+                                  {isOpening ? 'Opening document...' : 'Tap card to preview'}
                                 </AppText>
                               </View>
-                              {document.id ? (
-                                <AppText variant="caption" muted style={styles.documentTapHint} maxFontSizeMultiplier={1}>
-                                  Tap card to open in your device viewer
-                                </AppText>
-                              ) : null}
+                            ) : null}
+                          </View>
+
+                          {document.id ? (
+                            <View style={styles.rightActionContainer}>
+                              <Pressable
+                                style={({ pressed }) => [styles.actionIconBtn, styles.viewIconBtn, pressed && styles.actionIconBtnPressed]}
+                                onPress={(e) => {
+                                  e.stopPropagation();
+                                  void handleOpenDocument(document.id!, document.name);
+                                }}
+                                disabled={isOpening || isDownloading}
+                              >
+                                {isOpening ? (
+                                  <ActivityIndicator color="#2563eb" size="small" />
+                                ) : (
+                                  <Eye color="#2563eb" size={17} />
+                                )}
+                              </Pressable>
+
+                              <Pressable
+                                style={({ pressed }) => [styles.actionIconBtn, styles.downloadIconBtn, pressed && styles.actionIconBtnPressed]}
+                                onPress={(e) => {
+                                  e.stopPropagation();
+                                  void handleDownload(document.id!, document.name);
+                                }}
+                                disabled={isOpening || isDownloading}
+                              >
+                                {isDownloading ? (
+                                  <ActivityIndicator color="#0284c7" size="small" />
+                                ) : (
+                                  <Download color="#0284c7" size={17} />
+                                )}
+                              </Pressable>
                             </View>
-                          </View>
+                          ) : (
+                            <AppText variant="caption" muted>Available in Documents</AppText>
+                          )}
                         </Pressable>
-                        {document.id ? (
-                          <View style={styles.documentActionRail}>
-                            <Pressable
-                              style={({ pressed }) => [styles.documentActionBtn, styles.documentDownloadActionBtn, pressed && styles.documentActionBtnPressed]}
-                              onPress={() => void handleDownload(document.id!, document.name)}
-                              disabled={downloadingDocId !== null}
-                            >
-                              {downloadingDocId === document.id ? (
-                                <ActivityIndicator color="#2563eb" size="small" />
-                              ) : (
-                                <Download color="#2563eb" size={17} />
-                              )}
-                            </Pressable>
-                          </View>
-                        ) : null}
-                      </AppCard>
-                    ))
+                      );
+                    })
                   ) : (
                     <EmptyState title="No notary scanbacks uploaded yet" />
                   )}
@@ -1518,10 +1551,23 @@ const styles = StyleSheet.create({
   },
   fileCardDetails: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: 12,
     padding: 14,
     marginBottom: 10,
+    borderRadius: 16,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  fileCardPressed: {
+    backgroundColor: '#f8fafc',
+    borderColor: '#cbd5e1',
   },
   primaryRowText: {
     fontSize: 14,
@@ -1533,116 +1579,75 @@ const styles = StyleSheet.create({
     lineHeight: 17,
   },
   documentName: {
-    color: '#1e293b',
-    fontSize: 13.5,
-    lineHeight: 18,
-    flex: 1,
+    color: '#0f172a',
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 19,
   },
   documentMeta: {
-    marginTop: 3,
-    lineHeight: 17,
+    marginTop: 2,
+    fontSize: 12,
+    color: '#64748b',
+    lineHeight: 16,
   },
-  tapToOpenPill: {
+  previewBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
+    gap: 5,
+    marginTop: 6,
+    alignSelf: 'flex-start',
     backgroundColor: '#eff6ff',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
     borderWidth: 1,
     borderColor: '#dbeafe',
-    flexShrink: 0,
   },
-  tapToOpenPillGreen: {
+  previewBadgeEmerald: {
     backgroundColor: '#ecfdf5',
-    borderColor: '#d1fae5',
+    borderColor: '#a7f3d0',
   },
-  tapToOpenText: {
-    fontSize: 10,
-    color: '#1d4ed8',
-    letterSpacing: 0.35,
+  previewBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#2563eb',
   },
-  tapToOpenTextGreen: {
-    color: '#047857',
+  previewBadgeTextEmerald: {
+    color: '#059669',
   },
-  documentChipRow: {
-    marginTop: 8,
+  rightActionContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    flexWrap: 'wrap',
+    marginLeft: 6,
   },
-  documentTypeChip: {
-    borderRadius: 999,
-    backgroundColor: '#eef2ff',
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-  },
-  documentTypeChipGreen: {
-    backgroundColor: '#ecfdf5',
-  },
-  documentTypeChipText: {
-    fontSize: 10,
-    color: '#4338ca',
-    letterSpacing: 0.35,
-  },
-  documentTypeChipTextGreen: {
-    color: '#047857',
-  },
-  documentTapHint: {
-    lineHeight: 15,
-  },
-  fileIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 10,
-    backgroundColor: '#eff6ff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  downloadBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: '#f1f5f9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  documentActionRail: {
-    width: 62,
-    borderLeftWidth: 1,
-    borderLeftColor: '#eef2f7',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 12,
-    backgroundColor: '#fcfdff',
-  },
-  documentActionBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+  actionIconBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
   },
-  documentActionBtnPressed: {
-    transform: [{ scale: 0.97 }],
+  actionIconBtnPressed: {
+    opacity: 0.75,
+    transform: [{ scale: 0.95 }],
   },
-  documentDownloadActionBtn: {
+  viewIconBtn: {
     backgroundColor: '#eff6ff',
-    borderColor: '#dbeafe',
+    borderColor: '#bfdbfe',
   },
-  documentDeleteActionBtn: {
-    backgroundColor: '#fff1f2',
-    borderColor: '#fecdd3',
+  downloadIconBtn: {
+    backgroundColor: '#f0f9ff',
+    borderColor: '#bae6fd',
   },
-  documentDeleteActionBtnPressed: {
-    backgroundColor: '#ffe4e6',
-    borderColor: '#fda4af',
-    transform: [{ scale: 0.97 }],
+  deleteIconBtn: {
+    backgroundColor: '#fef2f2',
+    borderColor: '#fecaca',
+  },
+  deleteIconBtnPressed: {
+    backgroundColor: '#fee2e2',
+    borderColor: '#fca5a5',
   },
   avatarImage: {
     width: 44,
