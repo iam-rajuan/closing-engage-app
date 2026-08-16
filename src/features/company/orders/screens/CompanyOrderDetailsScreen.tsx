@@ -3,6 +3,7 @@ import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useCallback, useState, type ReactNode } from 'react';
 import { Calendar, CheckCircle2, Clock, Download, FileText, Info, MapPin, Sparkles, UserRound } from 'lucide-react-native';
 import { getDocumentDownloadUrl } from '@/services/documents.service';
+import { uploadDocumentBinary } from '@/services/documents.service';
 import { downloadFileToDevice } from '@/utils/fileDownload';
 import { DownloadSuccessModal } from '@/components/common/DownloadSuccessModal';
 import { FeedbackModal } from '@/components/common/FeedbackModal';
@@ -21,6 +22,7 @@ import { useAsyncResource } from '@/hooks/useAsyncResource';
 import { confirmOrderMeeting, getOrderById, rejectOrderMeeting, scheduleOrderMeeting } from '@/services/orders.service';
 import { TimePickerModal } from '@/components/common/TimePickerModal';
 import { colors } from '@/theme';
+import { pickDocument } from '@/utils/fileUpload';
 
 function DetailField({ label, value, icon, children }: { label: string; value: string; icon?: React.ReactNode; children?: ReactNode }) {
   return (
@@ -64,6 +66,7 @@ export function CompanyOrderDetailsScreen() {
     localUri: string;
     mimeType: string;
   } | null>(null);
+  const [uploadingCompanyDocument, setUploadingCompanyDocument] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [activityExpanded, setActivityExpanded] = useState(false);
   const [respondingToSchedule, setRespondingToSchedule] = useState(false);
@@ -82,6 +85,7 @@ export function CompanyOrderDetailsScreen() {
   } | null>(null);
 
   const meeting = order?.meeting ?? null;
+  const canUploadCompanyDocuments = Boolean(order?.assignedNotaryId || order?.openForAll);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -106,6 +110,56 @@ export function CompanyOrderDetailsScreen() {
       });
     } finally {
       setDownloadingDocId(null);
+    }
+  };
+
+  const handleCompanyUpload = async () => {
+    if (!order) return;
+    if (!canUploadCompanyDocuments) {
+      setFeedbackModal({
+        visible: true,
+        title: 'Upload Locked',
+        description: 'Documents can be uploaded only after the order is assigned or opened to notaries.',
+        variant: 'info',
+        buttonTitle: 'Got It',
+      });
+      return;
+    }
+
+    const picked = await pickDocument();
+    if (!picked) return;
+
+    try {
+      setUploadingCompanyDocument(true);
+      await uploadDocumentBinary({
+        orderNumber: order.orderNumber,
+        file: {
+          uri: picked.uri,
+          name: picked.name,
+          size: picked.size,
+          mimeType: picked.mimeType,
+        },
+        uploaderRole: 'company',
+        uploadedByName: 'Title Company',
+      });
+      await reload();
+      setFeedbackModal({
+        visible: true,
+        title: 'Document Uploaded',
+        description: `${picked.name} is now available in Title Documents.`,
+        variant: 'success',
+        buttonTitle: 'Done',
+      });
+    } catch (error) {
+      setFeedbackModal({
+        visible: true,
+        title: 'Upload Failed',
+        description: error instanceof Error ? error.message : 'Please try again.',
+        variant: 'error',
+        buttonTitle: 'Dismiss',
+      });
+    } finally {
+      setUploadingCompanyDocument(false);
     }
   };
 
@@ -242,7 +296,7 @@ export function CompanyOrderDetailsScreen() {
             <View style={styles.metricsRow}>
               <View style={styles.metricCell}>
                 <DetailField
-                  label="ORDER PRICE"
+                  label="TITLE COMPANY FEE"
                   value={
                     typeof order.price === 'number'
                       ? `$${order.price.toFixed(2)}`
@@ -448,8 +502,23 @@ export function CompanyOrderDetailsScreen() {
             return (
               <>
                 <View style={styles.detailsSection}>
-                  <AppText weight="semibold" style={styles.detailsSectionTitle} maxFontSizeMultiplier={1.1}>
-                    Title Documents
+                <AppText weight="semibold" style={styles.detailsSectionTitle} maxFontSizeMultiplier={1.1}>
+                  Title Documents
+                </AppText>
+                  <AppButton
+                    title={uploadingCompanyDocument ? 'Uploading...' : 'Upload Documents'}
+                    onPress={() => void handleCompanyUpload()}
+                    disabled={uploadingCompanyDocument || !canUploadCompanyDocuments}
+                    style={
+                      canUploadCompanyDocuments
+                        ? styles.inlineUploadButton
+                        : { ...styles.inlineUploadButton, ...styles.inlineUploadButtonDisabled }
+                    }
+                  />
+                  <AppText variant="caption" muted style={styles.inlineUploadHint} maxFontSizeMultiplier={1.05}>
+                    {canUploadCompanyDocuments
+                      ? 'Uploads are enabled after assignment or open broadcast.'
+                      : 'Uploads unlock after assignment or open broadcast.'}
                   </AppText>
                   {companyDocs.length ? (
                     companyDocs.map((document, index) => (
@@ -1164,6 +1233,18 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     lineHeight: 18,
     letterSpacing: -0.1,
+  },
+  inlineUploadButton: {
+    marginBottom: 8,
+    minHeight: 40,
+    borderRadius: 10,
+  },
+  inlineUploadButtonDisabled: {
+    backgroundColor: '#94a3b8',
+  },
+  inlineUploadHint: {
+    marginBottom: 12,
+    lineHeight: 16,
   },
   fileCardDetails: {
     flexDirection: 'row',

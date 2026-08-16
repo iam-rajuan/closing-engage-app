@@ -30,6 +30,9 @@ type BackendOrderListItem = {
   time: string;
   state?: string;
   price?: number | null;
+  companyFee?: number | null;
+  notaryFee?: number | null;
+  closingEngageRevenue?: number | null;
   loanType?: string;
   scanbacksRequired?: boolean;
   preferredNotaryName?: string;
@@ -54,6 +57,9 @@ type BackendOrderDetail = {
   time: string;
   state?: string;
   price?: number | null;
+  companyFee?: number | null;
+  notaryFee?: number | null;
+  closingEngageRevenue?: number | null;
   status: Order['status'];
   priority?: string;
   loanType?: string;
@@ -152,6 +158,9 @@ export const normalizeOrderListItem = (item: BackendOrderListItem): Order => ({
   signingTime: item.time,
   state: item.state?.trim() || extractStateFromAddress(item.propertyAddress || item.location),
   price: item.price ?? (item as any).pricing ?? (item as any).orderPrice ?? null,
+  companyFee: item.companyFee ?? null,
+  notaryFee: item.notaryFee ?? null,
+  closingEngageRevenue: item.closingEngageRevenue ?? null,
   status: item.status,
   loanType: item.loanType,
   scanbacksRequired: item.scanbacksRequired,
@@ -181,6 +190,9 @@ export const normalizeOrderDetail = (detail: BackendOrderDetail): Order & { time
     signingTime: detail.signingTime || detail.time,
     state: detail.state?.trim() || extractStateFromAddress(detail.propertyAddress || detail.location),
     price: detail.price ?? (detail as any).pricing ?? (detail as any).orderPrice ?? null,
+    companyFee: detail.companyFee ?? null,
+    notaryFee: detail.notaryFee ?? null,
+    closingEngageRevenue: detail.closingEngageRevenue ?? null,
     status: detail.status,
     priority: detail.priority === 'Rush' ? 'Urgent' : 'Normal',
     instructions: detail.specialInstructions,

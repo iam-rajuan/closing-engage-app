@@ -14,7 +14,6 @@ import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { StatePickerModal } from '@/components/common/StatePickerModal';
 import { TimePickerModal } from '@/components/common/TimePickerModal';
 import { UploadBox } from '@/components/documents/UploadBox';
-import { uploadDocumentBinary } from '@/services/documents.service';
 import { createOrder } from '@/services/orders.service';
 import { US_STATES } from '@/constants/usStates';
 import { colors } from '@/theme';
@@ -67,12 +66,10 @@ export function CreateOrderScreen() {
       });
 
       if (selectedFile) {
-        await uploadDocumentBinary({
-          orderNumber: order.orderNumber,
-          file: selectedFile,
-          uploaderRole: 'company',
-          uploadedByName: 'Title Company',
-        });
+        Alert.alert(
+          'Order created',
+          'Upload title documents after the admin assigns the order or opens it to notaries.',
+        );
       }
 
       router.replace('/company/orders');

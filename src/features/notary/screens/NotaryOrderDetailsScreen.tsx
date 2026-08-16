@@ -406,7 +406,7 @@ export function NotaryOrderDetailsScreen() {
               <DetailField label="CLIENT" value={order.clientName} />
 
               <DetailField
-                label="ORDER PRICE"
+                label="NOTARY FEE"
                 value={
                   typeof order.price === 'number'
                     ? `$${order.price.toFixed(2)}`

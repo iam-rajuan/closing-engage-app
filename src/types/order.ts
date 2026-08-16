@@ -53,6 +53,9 @@ export type Order = {
   signingTime?: string;
   state?: string;
   price?: number | null;
+  companyFee?: number | null;
+  notaryFee?: number | null;
+  closingEngageRevenue?: number | null;
   status: OrderStatus;
   priority?: 'Normal' | 'Urgent';
   instructions?: string;
