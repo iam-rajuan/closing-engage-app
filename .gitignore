@@ -4,8 +4,6 @@ dist/
 web-build/
 coverage/
 
-.env
-.env.*
 !.env.example
 
 npm-debug.log*
@@ -43,3 +41,4 @@ ce-ui.xml
 ce-ui2.xml
 current-device-screen.png
 unlocked-screen.png
+config.bat
